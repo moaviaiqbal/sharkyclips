@@ -38,6 +38,8 @@ from ..errors import SharkyClipsError
 from ..governor import JobCancelled  # noqa: F401 - re-exported, raised from governor checkpoints
 from ..ui import console, set_progress_sink
 
+_SAVE_LOCK = threading.Lock()
+
 # Progress bar descriptions in the pipeline -> stable stage keys the UI translates.
 STAGES = {
     "Downloading": "downloading",
@@ -183,6 +185,8 @@ class JobManager:
         self._lanes: dict[str, list[Job]] = {"gpu": [], "io": [], "net": []}
         self._next_id = 1
         self.store = store
+        self._save_seq = 0  # snapshots taken / written (the newest one wins on disk)
+        self._saved_seq = 0
         self.rev = 0  # bumped on every change; SSE clients watch it
         self.on_finished: list[Callable[[Job], None]] = []
         self.paused = False  # "Pause queue": no new job starts
@@ -424,6 +428,8 @@ class JobManager:
         if self.store is None:
             return
         with self._lock:
+            self._save_seq += 1
+            seq = self._save_seq
             order = {j.id: i for lane in self._lanes.values() for i, j in enumerate(lane)}
             persistent = [j for j in self._jobs.values() if j.persist]
             done = sorted((j for j in persistent if j.status not in ACTIVE), key=lambda j: j.finished or 0)
@@ -436,13 +442,23 @@ class JobManager:
             tombs = {k: v for k, v in self._tombs.items() if self._tombstoned(k)}
             payload = json.dumps({"version": 1, "paused": self.paused, "cancelled": tombs, "jobs": out},
                                  ensure_ascii=False, indent=1)
-        try:
-            self.store.parent.mkdir(parents=True, exist_ok=True)
-            tmp = self.store.with_suffix(".json.tmp")
-            tmp.write_text(payload, encoding="utf-8")
-            os.replace(tmp, self.store)
-        except OSError as exc:
-            console.print(f"[yellow]Could not save the job queue: {exc}[/]")
+        # Saves come from several worker threads at once. One at a time (never taking self._lock
+        # in here: callers may hold it), the newest snapshot wins, and each has its own temp file
+        # (one shared name collided on Windows: "Permission denied: _queue.json.tmp", 1.2.49).
+        with _SAVE_LOCK:
+            if seq <= self._saved_seq:
+                return  # a newer snapshot is already on disk
+            tmp = self.store.with_name(f"{self.store.stem}.{os.getpid()}.{threading.get_ident()}.tmp")
+            try:
+                self.store.parent.mkdir(parents=True, exist_ok=True)
+                tmp.write_text(payload, encoding="utf-8")
+                from ..project import replace_retry
+
+                replace_retry(tmp, self.store, seconds=2)
+                self._saved_seq = seq
+            except OSError as exc:
+                tmp.unlink(missing_ok=True)
+                console.print(f"[yellow]Could not save the job queue: {exc}[/]")
 
     # ----------------------------------------------------------------- worker
 

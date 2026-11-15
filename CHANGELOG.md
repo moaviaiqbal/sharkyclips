@@ -7,6 +7,65 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.49] - 2026-11-15
+### Fixed: SharkyClips didn't open after an update
+- With a speech-recognition (Whisper) model on the graphics card, SharkyClips could get stuck
+  while restarting after an update. It then didn't open any more ("Another SharkyClips is still
+  starting or not responding") until the computer was restarted.
+- Now it closes quickly and cleanly every time: running video / audio tools are ended first, and
+  if it is still stuck after 15 seconds it is ended from outside.
+- Opening SharkyClips now cleans up after a stuck or crashed one by itself: a SharkyClips that no
+  longer answers, and left-over background processes, are ended, and the app starts normally.
+- The job queue is saved reliably again when several jobs finish at the same moment.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Düzeltildi: güncellemeden sonra SharkyClips açılmıyordu
+- Ekran kartında bir konuşma tanıma (Whisper) modeli yüklüyken SharkyClips, güncellemeden sonra
+  yeniden başlarken takılı kalabiliyordu. Sonra bilgisayar yeniden başlatılana kadar açılmıyordu
+  ("Another SharkyClips is still starting or not responding").
+- Artık her seferinde hızlı ve temiz kapanıyor: çalışan video / ses araçları önce kapatılıyor, 15
+  saniye sonra hâlâ takılıysa dışarıdan sonlandırılıyor.
+- SharkyClips açılırken takılmış ya da çökmüş bir öncekinin arkasını kendisi topluyor: artık yanıt
+  vermeyen bir SharkyClips ve geride kalan arka plan işlemleri kapatılıyor, uygulama normal açılıyor.
+- Birkaç iş aynı anda bittiğinde iş kuyruğu yeniden sorunsuz kaydediliyor.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Behoben:** Mit einem Whisper-Modell auf der Grafikkarte konnte SharkyClips beim Neustart nach einem Update hängen bleiben und öffnete sich danach nicht mehr. Jetzt schließt es immer schnell (nach 15 Sekunden notfalls von außen), und beim Öffnen werden hängende Reste automatisch beendet.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Javítva:** ha Whisper-modell volt a videokártyán, a SharkyClips frissítés utáni újraindításkor elakadhatott, és utána nem nyílt meg. Most mindig gyorsan bezárul (szükség esetén 15 másodperc után kívülről), megnyitáskor pedig magától leállítja a beragadt maradványokat.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Исправлено:** с моделью Whisper на видеокарте SharkyClips мог зависнуть при перезапуске после обновления и потом не открывался. Теперь он всегда закрывается быстро (при необходимости через 15 секунд принудительно), а при открытии сам завершает зависшие остатки.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **إصلاح:** مع نموذج Whisper على بطاقة الرسومات كان SharkyClips قد يتعلق أثناء إعادة التشغيل بعد التحديث ثم لا يفتح. الآن يُغلق دائمًا بسرعة (وعند الحاجة يُنهى من الخارج بعد 15 ثانية)، وعند الفتح يُنهي البقايا العالقة تلقائيًا.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **已修复：** 当 Whisper 语音识别模型加载在显卡上时，SharkyClips 在更新后重启可能会卡住，之后就再也打不开了。现在它每次都能快速关闭（必要时在 15 秒后被强制结束），打开时也会自动清理卡住的旧进程，正常启动。
+- 多个任务同时完成时，任务队列也能可靠保存了。
+
+</details>
 ## [1.2.48] - 2026-11-15
 ### Fixed: "is in use" when deleting a project
 - Sometimes Windows keeps a project's folder itself open (the search indexer or the virus scanner,

@@ -519,7 +519,11 @@ def _run_server(args) -> int:
     from sharkyclips.web.app import app
 
     app.state.lan_url = os.environ.get("SHARKYCLIPS_LAN_URL") or None
-    uvicorn.run(app, host="0.0.0.0" if args.lan else "127.0.0.1", port=args.port, log_level="warning")
+    # Ctrl+C / stop: open requests get 5 s, then the process ends hard (children first). A
+    # normal interpreter exit would run the GPU libraries' unload code, which can hang (1.2.49).
+    uvicorn.run(app, host="0.0.0.0" if args.lan else "127.0.0.1", port=args.port, log_level="warning",
+                timeout_graceful_shutdown=5)
+    procs.hard_exit(0)
     return 0
 
 
@@ -586,12 +590,22 @@ def cmd_serve(args) -> int:
         # Locked, but nothing answers: the holder died a moment ago (the OS drops its lock
         # shortly after) or hangs. Take over once the lock is free instead of doing nothing.
         lock = instance.acquire(wait=5.0)
+        if lock is None and not (port and _sharkyclips_version_at(port, timeout=5)):
+            # Still held, still silent (1.2.49: a supervisor waiting for a server stuck while
+            # exiting with Whisper on the GPU): end that SharkyClips and start fresh.
+            if instance.take_over(instance.running() or {}):
+                console.print("[yellow]Ended a SharkyClips that had stopped responding.[/]")
+            lock = instance.acquire(wait=5.0)
         if lock is None:
             raise SharkyClipsError("Another SharkyClips is still starting or not responding.",
                                    "Wait a moment and open it again. If it keeps happening, quit "
                                    "SharkyClips from the tray icon (or restart the computer).")
     try:
         instance.note(args.port)
+        instance.clear_exit()
+        left = instance.clean_orphans()  # web servers of a supervisor that died / hung
+        if left:
+            console.print(f"[yellow]Ended {len(left)} left-over SharkyClips server process(es).[/]")
         return _serve_locked(args, RESTART_CODE)
     finally:
         instance.release(lock)
@@ -679,7 +693,7 @@ def _serve_locked(args, RESTART_CODE: int) -> int:  # noqa: N803 - the updater's
                 proc = subprocess.Popen(cmd, env=env, start_new_session=posix, **procs.no_window())
             state["proc"] = proc
             try:
-                rc = proc.wait()
+                rc = _wait_server(proc)
             except KeyboardInterrupt:  # Ctrl+C reaches the child too; give it time to stop cleanly
                 if posix:
                     _signal_group(proc.pid, "SIGINT")
@@ -703,6 +717,10 @@ def _serve_locked(args, RESTART_CODE: int) -> int:  # noqa: N803 - the updater's
                 if _port_free(args.port):
                     break
                 time.sleep(0.2)
+            else:  # something of ours still sits on it
+                from sharkyclips import instance
+
+                instance.clean_orphans()
 
     if not use_tray:
         return supervise()
@@ -728,6 +746,36 @@ def _serve_locked(args, RESTART_CODE: int) -> int:  # noqa: N803 - the updater's
     tray.run(local_url, quit_all, stopped)  # blocks until Quit (or the server is gone)
     stopped.wait(15)
     return result["rc"]
+
+
+def _wait_server(proc, grace: float | None = None) -> int:
+    """Wait for the web server child to end. When it said it's exiting (Restart / Quit) but is
+    still there `grace` seconds later - stuck in a GPU driver / Whisper / ffmpeg on the way out -
+    end it and everything below it, and report the exit code it meant (1.2.49: a server stuck
+    like that kept `serve` and its lock forever, and SharkyClips didn't open again)."""
+    import subprocess
+
+    from sharkyclips import instance
+
+    grace = instance.EXIT_GRACE if grace is None else grace
+    try:
+        while True:
+            try:
+                return proc.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
+            note = instance.exit_note(proc.pid)
+            if note and time.time() - float(note.get("at") or 0) > grace:
+                console.print("[yellow]The server didn't stop in time; ending it.[/]")
+                instance.kill_tree(proc.pid)
+                try:
+                    proc.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    pass
+                return int(note.get("code") or 0)
+    finally:
+        if proc.poll() is not None:
+            instance.clear_exit()
 
 
 def _quit_server(port: int, proc) -> None:

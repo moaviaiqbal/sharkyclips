@@ -12,7 +12,6 @@ import os
 import re
 import shutil
 import subprocess
-import threading
 import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -1171,13 +1170,9 @@ def api_quit(request: Request) -> dict:
         except Exception:  # noqa: BLE001
             pass
 
-    def bye() -> None:
-        from .. import procs
+    from .. import procs
 
-        procs.kill_children()
-        os._exit(0)
-
-    threading.Timer(0.3, bye).start()
+    procs.exit_soon(0)  # children first, then a hard exit that can't hang on the GPU (1.2.49)
     return {"ok": True}
 
 
@@ -2414,15 +2409,15 @@ def api_update_apply(request: Request) -> dict:
 
 @app.post("/api/update/restart")
 def api_update_restart(request: Request) -> dict:
-    import threading
-
-    from .. import updater
+    from .. import procs, updater
 
     if not _is_local(request):
         raise SharkyClipsError("Only the computer running SharkyClips can restart it.")
     if not _supervised():
         return {"restarting": False}
-    threading.Timer(0.4, lambda: os._exit(updater.RESTART_CODE)).start()
+    # A hard exit (ffmpeg & co. first): a normal one could hang with Whisper on the GPU, and
+    # the supervisor ends the server itself if it's still there after instance.EXIT_GRACE s.
+    procs.exit_soon(updater.RESTART_CODE, delay=0.4)
     return {"restarting": True}
 
 

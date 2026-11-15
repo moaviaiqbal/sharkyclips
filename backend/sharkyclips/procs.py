@@ -423,6 +423,41 @@ def kill_children() -> None:
     psutil.wait_procs(kids, timeout=3)
 
 
+def hard_exit(code: int = 0) -> None:
+    """End this process NOW: children first (ffmpeg, OCR workers ...), then this one.
+
+    os._exit() on Windows is ExitProcess(), which still runs every DLL's detach code. With a
+    Whisper model on the GPU (CTranslate2 / CUDA) that detach can hang forever: the server
+    never ends, `serve` keeps waiting for it and holds the lock, and SharkyClips won't open
+    again ("still starting or not responding", 1.2.49). TerminateProcess skips the detach; the
+    OS frees the GPU memory, files and sockets anyway."""
+    import sys
+
+    try:
+        kill_children()
+    except Exception:  # noqa: BLE001 - exiting anyway
+        pass
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.flush()
+        except Exception:  # noqa: BLE001 - pythonw: no stdout
+            pass
+    if IS_WIN:
+        _k32.TerminateProcess.argtypes = [wintypes.HANDLE, wintypes.UINT]
+        _k32.TerminateProcess(_k32.GetCurrentProcess(), code)
+    os._exit(code)
+
+
+def exit_soon(code: int, delay: float = 0.3) -> None:
+    """Restart / Quit from the web API: answer the request first, then hard_exit(code). The
+    supervisor is told first (instance.note_exit), so if even this exit hangs it ends the server
+    from outside after instance.EXIT_GRACE seconds."""
+    from . import instance
+
+    instance.note_exit(code)
+    threading.Timer(delay, hard_exit, args=(code,)).start()
+
+
 CREATE_NO_WINDOW = 0x08000000
 _CREATE_NEW_CONSOLE = 0x10
 _DETACHED_PROCESS = 0x8
