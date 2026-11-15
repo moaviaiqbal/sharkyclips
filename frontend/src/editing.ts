@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type RefObject } from "react";
 import { api, type Candidate, type ClipEdit, type ClipOptions, type EditPlanView } from "./api";
+import { attachBleeps } from "./previewAudio";
 
 // Editing tools (1.2.4): helpers shared by the project page, the transcript editor, the live
 // 9:16 preview and fast review. The preview's zoom / crop math is in previewMath.ts.
@@ -20,13 +21,24 @@ export function effectiveRange(c: Candidate, edit: ClipEdit | undefined): { star
   return end - start >= 1 ? { start, end } : { start: c.start, end: c.end };
 }
 
-/** Source-time ranges that are bleeped / muted (the review list's "on" items, every speaker). */
+/** Source-time ranges the render bleeps / mutes (1.2.45: the plan's own bleep_src, the exact
+ * moments audiomix uses - padding, the deep check's ranges, your edges and the post-render
+ * widening included; no second calculation here). */
 export function bleepRanges(plan: EditPlanView | null): [number, number][] {
   if (!plan || plan.bleep_mode === "off") return [];
-  const removed = plan.removed ?? [];
-  return (plan.swears ?? [])
-    .filter((s) => s.bleep && !removed.some((r) => (s.start + s.end) / 2 >= r.a && (s.start + s.end) / 2 <= r.b))
-    .map((s) => [s.start - 0.03, s.end + 0.03] as [number, number]);
+  return plan.bleep_src ?? [];
+}
+
+/** 1.2.45: the preview's bleeps, live, whenever the video plays (not only with "Play clip"):
+ * the sound ducks and the tone plays in exactly the render's ranges (previewAudio.ts). */
+export function useLiveBleeps(video: RefObject<HTMLVideoElement>, plan: EditPlanView | null) {
+  const ranges = bleepRanges(plan);
+  const key = JSON.stringify([plan?.bleep_mode ?? "off", plan?.bleep_sound ?? "", ranges, plan?.bleep_fade ?? 0.012]);
+  useEffect(() => {
+    const v = video.current;
+    if (!v || !plan) return;
+    return attachBleeps(v, { ranges, mode: plan.bleep_mode, sound: plan.bleep_sound, fade: plan.bleep_fade });
+  }, [video, key]); // eslint-disable-line react-hooks/exhaustive-deps
 }
 
 export function mergeRanges(r: [number, number][]): [number, number][] {
@@ -92,9 +104,9 @@ export function usePlan(
   return plan && plan.clip_id === cid ? plan : null;
 }
 
-/** While a clip plays in the preview: jump over cut parts, bleep / mute swear words, stop at
- * the clip's end - or, in a loop preview, jump from the end back to `loopStart` and keep going.
- * Runs every frame (timeupdate only fires ~4x a second). */
+/** While a clip plays in the preview: jump over cut parts, stop at the clip's end - or, in a
+ * loop preview, jump from the end back to `loopStart` and keep going. Runs every frame
+ * (timeupdate only fires ~4x a second). Bleeps: useLiveBleeps (always on, on the audio clock). */
 export function usePreviewPlayback(
   video: RefObject<HTMLVideoElement>,
   active: boolean,
@@ -103,48 +115,15 @@ export function usePreviewPlayback(
   onEnd: () => void,
   loopStart: number | null = null,
 ) {
-  const audio = useRef<{ ctx: AudioContext; osc: OscillatorNode; gain: GainNode } | null>(null);
   useEffect(() => {
     const v = video.current;
     if (!v || !active) return;
     const removed = plan?.removed ?? [];
-    const bleeps = bleepRanges(plan);
-    const mode = plan?.bleep_mode ?? "off";
     let raf = 0;
-    let wasMuted = v.muted;
-    let inBleep = false;
-    const beep = (on: boolean) => {
-      if (mode !== "bleep") return;
-      try {
-        if (!audio.current) {
-          const ctx = new AudioContext();
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.value = 1000;
-          gain.gain.value = 0;
-          osc.connect(gain).connect(ctx.destination);
-          osc.start();
-          audio.current = { ctx, osc, gain };
-        }
-        const a = audio.current;
-        a.gain.gain.setTargetAtTime(on ? 0.12 * v.volume : 0, a.ctx.currentTime, 0.005);
-      } catch {
-        /* no Web Audio: muting is enough */
-      }
-    };
     const tick = () => {
       const t = v.currentTime;
       const cut = removed.find((r) => t >= r.a - 0.02 && t < r.b - 0.02);
       if (cut) v.currentTime = cut.b;
-      const b = bleeps.some(([a, bb]) => t >= a && t <= bb);
-      if (b !== inBleep) {
-        inBleep = b;
-        if (b) {
-          wasMuted = v.muted;
-          v.muted = true;
-        } else v.muted = wasMuted;
-        beep(b);
-      }
       if (end != null && t >= end) {
         if (loopStart != null) {
           v.currentTime = loopStart; // the end flows into the start, again and again
@@ -165,19 +144,8 @@ export function usePreviewPlayback(
     return () => {
       cancelAnimationFrame(raf);
       v.removeEventListener("play", start);
-      if (inBleep) {
-        v.muted = wasMuted;
-        beep(false);
-      }
     };
   }, [video, active, plan, end, loopStart]); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(
-    () => () => {
-      audio.current?.ctx.close().catch(() => {});
-      audio.current = null;
-    },
-    [],
-  );
 }
 
 /** Undo / redo of review snapshots (accept, reject, transcript edits). */

@@ -45,7 +45,8 @@ import { useMeta } from "../meta";
 import { CountUp } from "../motion";
 import { href } from "../router";
 import { useToast } from "../toast";
-import { effectiveRange, maskWord, renderRange, typing, useHistory, usePlan, usePreviewPlayback } from "../editing";
+import { effectiveRange, renderRange, typing, useHistory, useLiveBleeps, usePlan, usePreviewPlayback } from "../editing";
+import { FinalPreview, PlatformOverlay, PlatformTabs, type PlatformView } from "../components/PreviewExtras";
 import HookTestDialog from "../components/HookTest";
 import { gameReasonLabel, whyText } from "./GameDebug";
 import { DubSwitch } from "../components/MyVoice";
@@ -322,6 +323,21 @@ export default function ProjectPage({ id }: { id: string }) {
   const [words, setWords] = useState<Word[]>([]);
   const [time, setTime] = useState(0);
   const [playingClip, setPlayingClip] = useState(false);
+  const [pview, setPview] = useState<PlatformView>(() => {
+    try {
+      return (localStorage.getItem("sc-pview") as PlatformView) || "none";
+    } catch {
+      return "none";
+    }
+  });
+  const choosePview = (v: PlatformView) => {
+    setPview(v);
+    try {
+      localStorage.setItem("sc-pview", v);
+    } catch {
+      /* private window */
+    }
+  };
   const [tab, setTab] = useState<"cands" | "clips">("cands");
   const [facecamOpen, setFacecamOpen] = useState(false);
   const [mode, setMode] = useState<Mode>("gaming");
@@ -472,7 +488,8 @@ export default function ProjectPage({ id }: { id: string }) {
     };
   }, [id, selected?.id, Math.round(ctxFrom), Math.round(ctxTo), voicesRev]); // eslint-disable-line react-hooks/exhaustive-deps
   const previewWords = useMemo(() => {
-    if (plan) return plan.words.filter((w) => !w.removed).map((w) => (w.bleep && plan.mask_captions ? { ...w, word: maskWord(w.word) } : w));
+    // 1.2.45: the caption text the render burns in (censored by the server's own function)
+    if (plan) return plan.words.filter((w) => !w.removed).map((w) => (w.shown != null ? { ...w, word: w.shown } : w));
     if (!range) return [];
     return words.filter((w) => (w.start + w.end) / 2 >= range.start && (w.start + w.end) / 2 <= range.end);
   }, [plan, words, range?.start, range?.end]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -538,6 +555,7 @@ export default function ProjectPage({ id }: { id: string }) {
     };
   }, [playingClip, selected, project?.highlights]);
 
+  useLiveBleeps(video, plan); // 1.2.45: the render's bleeps whenever the video plays
   usePreviewPlayback(
     video,
     playingClip,
@@ -645,7 +663,10 @@ export default function ProjectPage({ id }: { id: string }) {
   const setEdit = (cid: string, e: ClipEdit) => {
     history.push(snapshot());
     const edits = { ...(review?.edits ?? {}) };
-    if (e.start == null && e.end == null && !e.deleted?.length) delete edits[cid];
+    // 1.2.45: an edit with only bleep choices is an edit too (it used to be dropped here)
+    const empty = e.start == null && e.end == null && !e.deleted?.length && !e.bleep?.length && !e.unbleep?.length
+      && !e.bleep_set?.length && !e.bleep_type && !(e as { captions?: Record<string, string> }).captions;
+    if (empty) delete edits[cid];
     else edits[cid] = e;
     patchReview({ edits });
   };
@@ -1069,6 +1090,7 @@ export default function ProjectPage({ id }: { id: string }) {
                 </div>
                 <div className="stage-right">
                   <div className="vprev">
+                    <PlatformTabs value={pview} onChange={choosePview} />
                     <div
                       className="vprev-frame"
                       style={previewH ? { height: previewH, width: (previewH * 9) / 16 } : undefined}
@@ -1085,7 +1107,9 @@ export default function ProjectPage({ id }: { id: string }) {
                         fx={previewFx}
                         brand={options.brand ? activeBrand : null}
                       />
+                      <PlatformOverlay plan={plan} view={pview} />
                     </div>
+                    <FinalPreview projectId={id} cid={selected?.id ?? null} options={options} hook={hookText} />
                   </div>
                 </div>
               </div>
@@ -1179,6 +1203,8 @@ export default function ProjectPage({ id }: { id: string }) {
                 lang={project.language}
                 onChange={(e) => setEdit(selected.id, e)}
                 onPlay={playRange}
+                options={options}
+                onOptions={setOption}
               />
             )}
 

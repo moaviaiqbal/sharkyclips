@@ -68,6 +68,8 @@ def inputs_fingerprint(project, cand: dict, options: dict) -> str:
         "learned": _stamp(swearlearn.path()),
         "custom": _stamp(config.config_dir() / "bleep" / "custom.wav") if options.get("bleep_sound") == "custom" else None,
         "e": [edit.get("bleep") or [], edit.get("unbleep") or []],
+        **({"es": [edit.get("bleep_set") or [], edit.get("bleep_type") or ""]}
+           if edit.get("bleep_set") or edit.get("bleep_type") else {}),  # 1.2.45 (old hashes stay the same)
     }
     return hashlib.sha1(json.dumps(parts, sort_keys=True, default=str).encode()).hexdigest()[:12]
 

@@ -581,3 +581,18 @@ def test_disconnect_revokes_the_tiktok_token_at_tiktok(social):
     PF.forget("tiktok", everything=False)
     assert social.state.get("tt_revoked") == ["TT-ACCESS"] and not PF.connected("tiktok")
     assert PF.load_app("tiktok")  # the app keys stay for a one-click reconnect
+
+
+def test_a_clip_rendered_before_a_bleep_edit_is_never_posted(cfg):  # noqa: F811
+    """1.2.45: you moved / added a bleep after the clip was rendered: the post makes a fresh
+    export from the edited clip instead of sending the old file."""
+    from sharkyclips.web import multipost as MP, state
+
+    project = _project("pub-mp-stale")
+    _rendered(project, "c01")
+    state.save_clip(project, "c01", {**state.load_clips(project)["c01"], "edit_fp": ""})  # as the render job saves it
+    assert MP._source_info(project, "c01")["kind"] == "clip"
+    state.save_review(project, {"edits": {"c01": {"bleep": [[1.0, 1.4]]}}})
+    assert MP._source_info(project, "c01")["kind"] == "export"
+    state.save_review(project, {"edits": {}})
+    assert MP._source_info(project, "c01")["kind"] == "clip"

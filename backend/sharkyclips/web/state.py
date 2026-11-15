@@ -160,7 +160,24 @@ def clean_edit(e: dict | None) -> dict | None:
                 rs.append([round(a, 3), round(b, 3)])
         if rs:
             out[key] = sorted(rs)[:2000]
+    # 1.2.45 bleep editor: exact ranges dragged for detected swears [swear a, swear b, bleep a, bleep b]
+    # and this clip's bleep type (classic | boop | custom | mute)
+    sets = []
+    for r in e.get("bleep_set") or []:
+        try:
+            ws, we, a, b = (round(float(x), 3) for x in list(r)[:4])
+        except (TypeError, ValueError):
+            continue
+        if b > a and we >= ws:
+            sets.append([ws, we, a, b])
+    if sets:
+        out["bleep_set"] = sorted(sets)[:500]
+    if e.get("bleep_type") in ("classic", "boop", "custom", "mute"):
+        out["bleep_type"] = e["bleep_type"]
     return out or None
+
+
+BLEEP_EDIT_KEYS = ("bleep", "unbleep", "bleep_set", "bleep_type")
 
 
 def effective_cand(cand: dict, review: dict) -> dict:
@@ -174,7 +191,10 @@ def effective_cand(cand: dict, review: dict) -> dict:
     music = review.get("music") or {}
     return {**cand, "start": start, "end": end, "duration": round(end - start, 2),
             "edit": {"deleted": e.get("deleted") or [], "music": music.get(cid) if cid in music else None,
-                     "captions": e.get("captions") or {}},
+                     "captions": e.get("captions") or {},
+                     # 1.2.45: the swear review / bleep editor choices reach the plan (they were
+                     # dropped here before: switches and manual bleeps changed nothing)
+                     **{k: e[k] for k in BLEEP_EDIT_KEYS if e.get(k)}},
             "dub": (review.get("dub") or {}).get(cid) or ""}
 
 
@@ -189,6 +209,9 @@ def edit_fingerprint(cand: dict, review: dict, options: dict) -> str:
         parts["d"] = eff["edit"]["deleted"]
     if eff["edit"].get("captions"):
         parts["c"] = eff["edit"]["captions"]
+    bl = {k: eff["edit"][k] for k in BLEEP_EDIT_KEYS if eff["edit"].get(k)}
+    if bl and options.get("profanity", "auto") != "off":
+        parts["bl"] = bl  # 1.2.45: a bleep you changed makes the rendered clip old
     if options.get("music"):
         parts["m"] = eff["edit"]["music"]
     if options.get("brand"):

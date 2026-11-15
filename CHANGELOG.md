@@ -7,6 +7,126 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.45] - 2026-11-15
+### The preview bleeps exactly like the file that goes out
+- **You hear the bleeps in the preview.** On the project page the 9:16 preview now bleeps (or
+  mutes) the swears whenever the video plays, also with the player's own play button, not only
+  with "Play clip". The bleeps come from the same plan the render uses, so they sit at exactly
+  the same moments as in the exported file, with the same soft 12 ms edges. We measured it: on
+  a test clip the bleep edges differ by less than 0.2 ms, and on 37 bleeps of your own rendered
+  clips they line up to the sample.
+- **Captions show what the file shows.** A censored word appears in the preview exactly as it is
+  burned in ("****" or "s*****"), with the same setting.
+- **Final preview.** The new **Final preview** button renders the file the platforms get (small,
+  540×960) through the same steps as the export, bleep check included, and plays it.
+- **Edit the bleeps on the timeline.** In the Swears panel every bleep is a red mark with its
+  word, showing the range the render really bleeps. Click a mark to play it, turn it off,
+  delete it (your own bleeps) or go back to the automatic range. Drag its edges to move the start
+  or end. Drag across the wave to add a bleep anywhere.
+- **Bleep sound per clip:** classic bleep, silence or a sound effect. The "show censored words as
+  *** in the captions" switch is right there too.
+- **Platform view.** Tabs above the preview lay the YouTube Shorts, TikTok or Instagram Reels
+  screen over it, half see-through: the top bar, the buttons and the title area. You can see at a
+  glance whether a caption or the hook ends up under them. The areas are the ones the export
+  presets keep the text out of.
+
+### Fixed
+- **Bleep changes in the Swears panel were lost.** Switching a swear off, or bleeping a part by
+  hand, wasn't saved unless the clip also had a trim or a cut, and even then it never reached the
+  render. Both are fixed: your choices now go into the preview, the render, the export and the
+  posts. A clip you change is rendered again.
+- A clip that was rendered before you changed its bleeps or cuts is never posted as the old
+  file: the post makes a fresh export of the edited clip instead.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Önizleme, platformlara giden dosyayla birebir aynı bip'liyor
+- **Bipleri önizlemede duyuyorsun.** Proje sayfasındaki 9:16 önizleme, video her oynadığında
+  küfürleri bip'liyor (ya da susturuyor). Sadece "Klibi oynat" ile değil, oynatıcının kendi
+  oynat düğmesiyle de. Bipler render'ın kullandığı planın aynısından geliyor, bu yüzden export
+  edilen dosyadakiyle tam aynı anlarda ve aynı yumuşak 12 ms geçişlerle çalıyor. Ölçtük: test
+  klibinde bip kenarları arasındaki fark 0,2 ms'nin altında, senin render edilmiş kliplerindeki
+  37 bipte örnek düzeyinde birebir.
+- **Altyazı, dosyadaki gibi.** Sansürlenen kelime önizlemede de dosyaya basıldığı gibi görünüyor
+  ("****" ya da "s*****"), aynı ayarla.
+- **Final önizleme.** Yeni **Final önizleme** düğmesi, platformlara gidecek dosyayı export ile
+  aynı adımlardan (bip kontrolü dahil) küçük boyutta (540×960) render edip oynatıyor.
+- **Bipleri zaman çizelgesinde düzenle.** Küfürler panelinde her bip, kelimesiyle birlikte
+  kırmızı bir işaret. İşaret render'ın gerçekten bip'lediği aralığı gösteriyor. İşarete tıklayıp
+  oynatabilir, kapatabilir, (kendi eklediğin bipleri) silebilir ya da otomatik aralığa dönebilirsin.
+  Başlangıcı veya bitişi değiştirmek için kenarlarını sürükle. Bip eklemek için dalganın üzerinde
+  sürükle.
+- **Klip başına bip sesi:** klasik bip, sessizlik ya da ses efekti. "Sansürlenen kelimeleri
+  altyazıda *** olarak göster" anahtarı da hemen yanında.
+- **Platform görünümü.** Önizlemenin üstündeki sekmeler YouTube Shorts, TikTok ya da Instagram
+  Reels ekranını yarı saydam olarak üstüne koyar: üst çubuk, düğmeler ve başlık alanı. Bir
+  altyazının ya da hook yazısının bunların altında kalıp kalmadığını tek bakışta görürsün. Alanlar,
+  export ön ayarlarının yazıları dışında tuttuğu alanların aynısı.
+
+### Düzeltildi
+- **Küfürler panelindeki bip değişiklikleri kayboluyordu.** Bir küfrü kapatmak ya da bir kısmı elle
+  bip'lemek, klipte ayrıca bir kırpma veya kesim yoksa kaydedilmiyordu; olsa bile render'a hiç
+  ulaşmıyordu. İkisi de düzeldi: seçimlerin artık önizlemeye, render'a, export'a ve paylaşımlara
+  gidiyor. Değiştirdiğin klip yeniden render edilir.
+- Bip'leri veya kesimleri değiştirilmeden önce render edilmiş bir klip asla eski dosya olarak
+  paylaşılmaz: paylaşım, düzenlenmiş klipten taze bir export yapar.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Die Vorschau piept jetzt genau wie die Datei, die hochgeladen wird:** auch mit dem Play-Knopf des Players, an denselben Stellen und mit denselben weichen 12-ms-Kanten wie im Export (gemessen: unter 0,2 ms Unterschied).
+- Zensierte Wörter erscheinen in der Vorschau wie in der Datei. Neu: **Finale Vorschau** rendert die Datei für die Plattformen klein (540×960) und spielt sie ab.
+- **Pieps auf der Zeitleiste bearbeiten:** rote Markierungen mit dem Wort, Ränder ziehen, an/aus, löschen, über die Welle ziehen zum Hinzufügen. Piepton pro Clip: klassisch, Stille oder Soundeffekt.
+- **Plattformansicht:** Shorts-, TikTok- oder Reels-Oberfläche halbtransparent über der Vorschau.
+- **Behoben:** Piep-Änderungen im Schimpfwort-Panel gingen verloren und kamen nie im Render an. Ein veralteter Clip wird nie als alte Datei gepostet.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Az előnézet pontosan úgy sípol, mint a feltöltött fájl:** a lejátszó saját gombjával is, ugyanott és ugyanolyan lágy, 12 ms-os szélekkel, mint az exportban (mérve: 0,2 ms alatti eltérés).
+- A cenzúrázott szavak az előnézetben is úgy jelennek meg, mint a fájlban. Új: a **Végső előnézet** kicsiben (540×960) rendereli és lejátssza a platformokra kerülő fájlt.
+- **Sípolások szerkesztése az idővonalon:** piros jelölések a szóval, húzható szélek, be/ki, törlés, új sípolás a hullámon húzva. Sípolás hangja klipenként: klasszikus, csend vagy hangeffekt.
+- **Platform nézet:** a Shorts, TikTok vagy Reels felülete félig átlátszóan az előnézet felett.
+- **Javítva:** a káromkodás panel sípolásmódosításai elvesztek, és sosem kerültek a renderbe. Egy elavult klip sosem megy ki régi fájlként.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Превью запикивает так же, как файл, который уходит на платформы:** и при нажатии кнопки самого плеера, в тех же местах и с теми же мягкими краями 12 мс, что и в экспорте (измерено: разница меньше 0,2 мс).
+- Запиканные слова в превью выглядят как в файле. Новое: **Финальное превью** рендерит файл для платформ в малом размере (540×960) и проигрывает его.
+- **Правка пиков на таймлайне:** красные отметки со словом, перетаскивание краёв, вкл/выкл, удаление, добавление проведением по волне. Звук пика для каждого клипа: классический, тишина или звуковой эффект.
+- **Вид платформы:** интерфейс Shorts, TikTok или Reels полупрозрачно поверх превью.
+- **Исправлено:** изменения пиков в панели мата терялись и не попадали в рендер. Устаревший клип никогда не публикуется старым файлом.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **المعاينة تصفّر تمامًا مثل الملف الذي يُنشر:** حتى مع زر التشغيل في المشغّل نفسه، في نفس اللحظات وبنفس الحواف الناعمة 12 مللي ثانية كما في التصدير (بالقياس: فرق أقل من 0.2 مللي ثانية).
+- تظهر الكلمات المحجوبة في المعاينة كما في الملف. جديد: **المعاينة النهائية** تصيّر الملف الذي يذهب إلى المنصات بحجم صغير (540×960) وتشغّله.
+- **تحرير الصفير على الخط الزمني:** علامات حمراء مع الكلمة، اسحب الحواف، تشغيل/إيقاف، حذف، واسحب على الموجة للإضافة. صوت الصفير لكل مقطع: كلاسيكي أو صمت أو مؤثر صوتي.
+- **عرض المنصة:** واجهة Shorts أو TikTok أو Reels شبه شفافة فوق المعاينة.
+- **إصلاح:** كانت تغييرات الصفير في لوحة الشتائم تضيع ولا تصل إلى التصيير. ولا يُنشر مقطع قديم أبدًا بملفه القديم.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **预览的消音与发往平台的文件完全一致：** 使用播放器自带的播放按钮也会消音，位置和 12 毫秒柔和边缘都与导出相同（实测差异小于 0.2 毫秒）。
+- 预览中被消音的词与文件中显示的一样。新功能：**最终预览**以小尺寸（540×960）渲染发往平台的文件并播放。
+- **在时间线上编辑消音：** 带词语的红色标记，可拖动两端、开/关、删除，在波形上拖动即可添加。每个片段可选消音声音：经典哔声、静音或音效。
+- **平台视图：** 在预览上半透明叠加 Shorts、TikTok 或 Reels 界面。
+- **已修复：** 脏话面板中的消音修改会丢失，且从未进入渲染。过期的片段绝不会以旧文件发布。
+
+</details>
+
 ## [1.2.44] - 2026-11-15
 ### Fixed: automatic TikTok on the real TikTok Studio, and Instagram uploads that stopped
 - **Automatic TikTok passed its first real test.** A post planned two days ahead showed up in

@@ -61,10 +61,108 @@ def api_plan(project_id: str, cid: str, body: dict | None = None) -> dict:
         fc = body["facecam"] if "facecam" in body else review.get("facecam")
         w, h = _source_size(project)
         out["geometry"] = clips_mod.preview_geometry(opts.layout, w, h, Facecam.from_dict(fc))
+        out["safe_zones"] = safe_zones()
         if body.get("samples"):  # the render's zoom at these source times (preview check)
             lay = out["geometry"]["layout"]
             out["samples"] = [clips_mod.picture_at(plan, lay, float(t)) for t in list(body["samples"])[:200]]
     return out
+
+
+def safe_zones() -> dict:
+    """The platforms' own buttons / title areas on a 1080x1920 canvas (top, right, bottom, left):
+    the same numbers the export presets keep captions out of (export.PRESETS), for the preview's
+    platform overlay (1.2.45)."""
+    from ..export import PRESETS
+
+    return {k: list(PRESETS[p].safe) for k, p in (("shorts", "youtube_shorts"), ("tiktok", "tiktok"),
+                                                   ("reels", "instagram_reels"))}
+
+
+# ------------------------------------------------------------------ final preview (1.2.45)
+
+FINAL_SIZE = (540, 960)
+
+
+def _final_dir(project) -> "Any":
+    return project.cache_dir / "final"
+
+
+def _final_state(project, cid: str) -> dict:
+    from ..project import read_json
+
+    p = _final_dir(project) / f"{cid}.json"
+    d = read_json(p) if p.is_file() else {}
+    f = _final_dir(project) / f"{cid}.mp4"
+    return {**(d if isinstance(d, dict) else {}), "ready": f.is_file() and bool(d)}
+
+
+def submit_final_preview(project_id: str, cid: str, options: dict | None, hook: str | None):
+    """The file that would go to the platforms, small (540x960): render_clip itself - the same
+    plan, cuts, captions, sound mix, bleeps and bleep check as the clip / export - only the last
+    scale differs. Its bleep moments come back with it (preview check)."""
+    from ..clips import OutputSpec, render_clip
+    from ..project import write_json_atomic
+
+    A = _app()
+    project = A._project(project_id)
+
+    def run(job):
+        review = state.load_review(project)
+        cand = state.effective_cand(A._cand(project, cid), review)
+        opts_d = {**review["options"], **(options or {})}
+        hk = hook if hook is not None else review["hooks"].get(cid, cand.get("default_hook") or "")
+        opts = ClipOptions.from_dict({**opts_d, "hook_text": hk})
+        if opts.loop:
+            from .retention import polish_loop
+
+            polish_loop(project, cand, opts)
+        if opts.memes != "off":
+            from .retention import polish_memes
+
+            polish_memes(project, cand, opts)
+        out = _final_dir(project)
+        out.mkdir(parents=True, exist_ok=True)
+        dest = out / f"{cid}.mp4"
+        tmp = out / f"{cid}.part.mp4"
+        spec = OutputSpec(width=FINAL_SIZE[0], height=FINAL_SIZE[1], audio_k=160)
+        A.jobs.update(job, stage="rendering", progress=0.0)
+        res = render_clip(project, cand, opts, Facecam.from_dict(review.get("facecam")), tmp,
+                          on_progress=lambda s: A.jobs.update(job, progress=min(1.0, s / max(cand["duration"], 0.1))),
+                          spec=spec, on_stage=lambda n: A.jobs.update(job, stage=n, progress=None))
+        tmp.replace(dest)
+        fps = max(1, round(min(60.0, float(project.load_meta().get("fps") or 30))))
+        plan = plan_mod.build(project, cand, opts, vertical=True, fps=fps)  # after the check: its widened bleeps
+        info = {"at": state.now_iso(), "fingerprint": plan.fingerprint(), "duration": round(plan.out_duration, 3),
+                "bleeps": [[round(a, 4), round(b, 4)] for a, b in plan.bleeps],
+                "bleep_src": [[round(a, 4), round(b, 4)] for a, b in plan.bleep_src],
+                "bleep_mode": plan.bleep_mode, "size": res.size_bytes,
+                "bleep_report": (res.info or {}).get("bleep_report")}
+        write_json_atomic(out / f"{cid}.json", info)
+        return {"clip_id": cid, **info}
+
+    return A.jobs.submit("final_preview", "gpu", project_id, {"clip_id": cid, "title": cid}, run,
+                         key=f"final_preview:{project_id}:{cid}")
+
+
+@router.post("/api/projects/{project_id}/candidates/{cid}/final-preview")
+def api_final_preview(project_id: str, cid: str, body: dict | None = None) -> dict:
+    body = body or {}
+    job = submit_final_preview(project_id, cid, body.get("options"), body.get("hook"))
+    return {"job": job.to_dict()}
+
+
+@router.get("/api/projects/{project_id}/candidates/{cid}/final-preview")
+def api_final_preview_state(project_id: str, cid: str) -> dict:
+    return _final_state(_app()._project(project_id), cid)
+
+
+@router.get("/api/projects/{project_id}/candidates/{cid}/final-preview.mp4")
+def api_final_preview_file(project_id: str, cid: str):
+    project = _app()._project(project_id)
+    f = _final_dir(project) / f"{cid}.mp4"
+    if not f.is_file():
+        raise SharkyClipsError("Make the final preview first.")
+    return FileResponse(f, media_type="video/mp4", headers={"Cache-Control": "no-store"})
 
 
 _SIZES: dict[tuple[str, float], tuple[int, int]] = {}

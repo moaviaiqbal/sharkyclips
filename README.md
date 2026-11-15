@@ -19,7 +19,7 @@ No account, no cloud, no credits, no watermark.<br>
 
 <p align="center">
   <a href="https://github.com/utkualsir/sharkyclips/actions/workflows/ci.yml"><img src="https://github.com/utkualsir/sharkyclips/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/utkualsir/sharkyclips/releases/latest"><img src="https://img.shields.io/badge/version-1.2.44-1F6FE5" alt="Version 1.2.44"></a>
+  <a href="https://github.com/utkualsir/sharkyclips/releases/latest"><img src="https://img.shields.io/badge/version-1.2.45-1F6FE5" alt="Version 1.2.45"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E1A33" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS-0E1A33?logo=windows&logoColor=white" alt="Windows and macOS">
   <img src="https://img.shields.io/badge/runs-100%25%20locally-2ea043" alt="Runs 100% locally">
@@ -406,6 +406,7 @@ them. Nothing is installed before you confirm the list.
 - [x] Automatic TikTok through TikTok Studio, one Publish for YouTube + Instagram + TikTok, publish-queue check (1.2.42)
 - [x] TikTok login in your own installed Chrome, nothing attached (1.2.43)
 - [x] Automatic TikTok tested on the real TikTok Studio; Instagram uploads in parts (1.2.44)
+- [x] Preview = export: live bleeps, bleep timeline editor, final preview, platform overlays (1.2.45)
 - [x] Instagram + TikTok step-by-step posting without an account (1.2.39)
 - [x] Kick VOD + clip import with chat replay (1.2.38)
 - [x] One Publish for YouTube, TikTok and Instagram Reels (1.2.36)

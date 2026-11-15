@@ -241,7 +241,7 @@ class EditPlan:
             if s is None or e is None:
                 continue
             masked = bool(w.get("bleep") and self.mask_captions)
-            text = (profanity.censor(w["word"]) if self.censor_full else profanity.mask(w["word"])) if masked else w["word"]
+            text = self.caption_text(w)
             item = {"start": round(s, 3), "end": round(max(e, s + 0.05), 3), "word": text}
             if masked:
                 item["censored"] = True
@@ -249,6 +249,13 @@ class EditPlan:
                 item["spk"] = w["spk"]
             out.append(item)
         return out
+
+    def caption_text(self, w: dict) -> str:
+        """The word as the burned-in captions show it (a bleeped word censored, if asked): one
+        function for the render and the live preview (1.2.45)."""
+        if not (w.get("bleep") and self.mask_captions):
+            return w["word"]
+        return profanity.censor(w["word"]) if self.censor_full else profanity.mask(w["word"])
 
     def out_ranges(self, ranges: list[tuple[float, float]]) -> list[tuple[float, float]]:
         """Source ranges -> output ranges (the parts that survive the cuts)."""
@@ -298,10 +305,16 @@ class EditPlan:
             "duration": round(self.out_duration, 2),
             "words": [{"start": w["start"], "end": w["end"], "word": w["word"],
                        **({"spk": w["spk"]} if w.get("spk") else {}),
+                       **({"shown": self.caption_text(w)} if self.caption_text(w) != w["word"] else {}),
                        **{k: True for k in ("removed", "bleep", "filler", "maybe") if w.get(k)}}
                       for w in self.words],
             "bleep_mode": self.bleep_mode, "bleep_sound": self.bleep_sound,
             "bleeps": [[round(a, 3), round(b, 3)] for a, b in self.bleeps],
+            # 1.2.45: the same ranges in source time - what the live preview mutes / bleeps
+            # (audiomix.apply_bleeps gets bleeps = out_ranges(bleep_src): identical moments)
+            "bleep_src": [[round(a, 4), round(b, 4)] for a, b in self.bleep_src],
+            "bleep_fade": 0.012,
+            "censor_full": self.censor_full,
             "swears": self.swears, "speakers": self.speakers, "warnings": self.warnings,
             "mask_captions": self.mask_captions,
             "zoom_level": self.zoom_level, "pulses": [p.to_dict() for p in self.pulses],
@@ -475,6 +488,29 @@ def _safety_net(plan, words: list[dict], lang: str | None, start: float, end: fl
 # check: Whisper's word times are often 50-200 ms off, so a little more for vertical videos.
 BLEEP_PAD = {"normal": (0.08, 0.12), "strict": (0.12, 0.18), "paranoid": (0.15, 0.22)}
 BLEEP_MERGE_GAP = 0.15
+BLEEP_TYPES = ("classic", "boop", "custom")  # + "mute" (silence): edit["bleep_type"], 1.2.45
+
+
+def bleep_sets(edit: dict) -> list[tuple[float, float, float, float]]:
+    """1.2.45 bleep editor: [(swear start, swear end, bleep start, bleep end)] - the exact range
+    you dragged for one detected swear (it replaces the automatic padding / the deep check's range)."""
+    out = []
+    for r in edit.get("bleep_set") or []:
+        try:
+            ws, we, a, b = (float(x) for x in r[:4])
+        except (TypeError, ValueError):
+            continue
+        if b > a and we >= ws:
+            out.append((ws, we, a, b))
+    return out
+
+
+def set_for(it: dict, sets: list[tuple[float, float, float, float]]) -> tuple[float, float] | None:
+    mid = (float(it["start"]) + float(it["end"])) / 2
+    for ws, we, a, b in sets:
+        if ws - 0.05 <= mid <= we + 0.05:
+            return (a, b)
+    return None
 
 
 def build(project: Project, cand: dict, opts, *, vertical: bool = True, fps: float = 30.0,
@@ -610,6 +646,8 @@ def build(project: Project, cand: dict, opts, *, vertical: bool = True, fps: flo
     _safety_net(plan, words, lang, start, end, edit)
     if mode != "off":
         ranges = []
+        pinned: list[tuple[float, float]] = []  # 1.2.45: ranges you dragged by hand (exact, never widened)
+        sets = bleep_sets(edit)
         pre, post = BLEEP_PAD.get(strictness, BLEEP_PAD["normal"])
         for it in plan.swears:
             if not it["bleep"]:
@@ -618,23 +656,34 @@ def build(project: Project, cand: dict, opts, *, vertical: bool = True, fps: flo
                 words[it["i"]]["bleep"] = True
                 if words[it["i"]].get("removed"):
                     continue
-            if it.get("bleep_at"):  # aligned + checked by the deep check (+ the word's own time:
+            own = set_for(it, sets)
+            if own is not None:  # your exact range for this swear (bleep editor: dragged edges)
+                mine = [own]
+                pinned.append(own)
+            elif it.get("bleep_at"):  # aligned + checked by the deep check (+ the word's own time:
                 # 1.2.31, a misaligned check range never leaves the word itself unbleeped)
-                ranges.append((float(it["bleep_at"][0]), float(it["bleep_at"][1])))
-                ranges.append((it["start"] - pre, it["end"] + post))
+                mine = [(float(it["bleep_at"][0]), float(it["bleep_at"][1])), (it["start"] - pre, it["end"] + post)]
             elif it["status"] == "manual":
-                ranges.append((it["start"], it["end"]))
+                mine = [(it["start"], it["end"])]
             else:
-                ranges.append((it["start"] - pre, it["end"] + post))
+                mine = [(it["start"] - pre, it["end"] + post)]
+            ranges += mine
+            it["range"] = [round(min(a for a, _b in mine), 3), round(max(b for _a, b in mine), 3)]
         plan.bleep_mode = mode
         plan.bleep_sound = getattr(opts, "bleep_sound", "classic") or "classic"
+        kind = str(edit.get("bleep_type") or "")  # 1.2.45: this clip's own bleep sound / silence
+        if kind == "mute":
+            plan.bleep_mode = "mute"
+        elif kind in BLEEP_TYPES:
+            plan.bleep_mode, plan.bleep_sound = "bleep", kind
         plan.mask_captions = bool(getattr(opts, "profanity_captions", True))
         plan.censor_full = bool(getattr(opts, "bleep_visual", True))
         if not given and ranges:  # widened after a render where part of a swear was still heard
             from ..voices import swearscan
 
             fixes = [(float(x), float(y)) for x, y in swearscan.load_fixes(project).get(str(cand.get("id")), [])]
-            ranges += [f for f in fixes if any(f[0] < b + 0.2 and f[1] > a - 0.2 for a, b in ranges)]
+            ranges += [f for f in fixes if any(f[0] < b + 0.2 and f[1] > a - 0.2 for a, b in ranges)
+                       and not any(f[0] < b and f[1] > a for a, b in pinned)]  # your own edges win
         plan.bleep_src = merge(ranges, BLEEP_MERGE_GAP)
         plan.bleeps = plan.out_ranges(plan.bleep_src)
     for it in plan.swears:

@@ -505,9 +505,33 @@ def _source_info(project: Project, cid: str) -> dict:
     clip = state.load_clips(project).get(cid)
     if j is not None and j.status in ACTIVE:
         return {"kind": "rendering", "file": None}
-    if clip and (project.dir / "clips" / clip["file"]).is_file():
+    if clip and (project.dir / "clips" / clip["file"]).is_file() and not _clip_outdated(project, cid, clip):
         return {"kind": "clip", "file": str(project.dir / "clips" / clip["file"]), "stamp": clip.get("rendered_at")}
     return {"kind": "export", "file": None}
+
+
+def _clip_outdated(project: Project, cid: str, clip: dict) -> bool:
+    """1.2.45: the rendered clip no longer matches your edits (a bleep moved / added / switched
+    off, a cut, a caption fix) -> the post makes a fresh export from the edited clip instead
+    (never the old file). Judged with the options the clip was rendered with."""
+    if "edit_fp" not in clip and "bleep_fp" not in clip:
+        return False  # not a render of this app's render job (nothing to compare with)
+    try:
+        from ..clips import ClipOptions
+        from ..edit import bleepcheck
+
+        A = _app()
+        review = state.load_review(project)
+        cand = A._cand(project, cid)
+        opts = {**ClipOptions().to_dict(), **(clip.get("options") or {})}
+        if (clip.get("edit_fp") or "") != state.edit_fingerprint(cand, review, opts):
+            return True
+        if clip.get("bleep_fp") and clip["bleep_fp"] != bleepcheck.inputs_fingerprint(
+                project, state.effective_cand(cand, review), opts):
+            return True
+    except Exception:  # noqa: BLE001 - can't tell: the rendered clip, as before
+        return False
+    return False
 
 
 def cover_ms(cand: dict) -> int:

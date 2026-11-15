@@ -3907,7 +3907,19 @@ a.edit-note:hover { text-decoration: underline; }
 .swear-wave:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .swear-bars { position: absolute; inset: 4px 0; display: flex; align-items: center; pointer-events: none; overflow: hidden; }
 .swear-bars i { flex: 1 1 0; min-width: 0; background: color-mix(in srgb, var(--muted) 55%, transparent); border-inline: 0.5px solid var(--surface-2); }
-.swear-mark { position: absolute; top: 0; bottom: 0; min-width: 3px; background: color-mix(in srgb, var(--bleep) 45%, transparent); border-inline: 1px solid var(--bleep); pointer-events: none; }
+.swear-mark { position: absolute; top: 0; bottom: 0; min-width: 3px; background: color-mix(in srgb, var(--bleep) 45%, transparent); border-inline: 1px solid var(--bleep); pointer-events: auto; cursor: pointer; }
+/* 1.2.45 bleep editor: the render's real ranges under the marks, a word label, draggable edges */
+.swear-real { position: absolute; bottom: 0; height: 5px; background: var(--bleep); pointer-events: none; }
+.swear-mark.maybe { pointer-events: none; }
+.swear-mark.picked { box-shadow: inset 0 0 0 2px var(--text); z-index: 2; }
+.swear-label { position: absolute; top: 2px; inset-inline-start: 3px; max-width: calc(100% - 6px); font-size: 10px; font-style: normal; font-weight: 700; line-height: 1.1; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; pointer-events: none; }
+.swear-edge { position: absolute; top: 0; bottom: 0; width: 8px; cursor: ew-resize; touch-action: none; }
+.swear-edge.l { inset-inline-start: -4px; }
+.swear-edge.r { inset-inline-end: -4px; }
+.swear-edge:hover, .swear-mark.picked .swear-edge { background: color-mix(in srgb, var(--text) 35%, transparent); }
+.swear-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bleep) 8%, transparent); }
+.swear-pick > .muted.small { flex-basis: 100%; }
+.swear-type { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
 .swear-mark.manual { background: color-mix(in srgb, var(--gold) 45%, transparent); border-color: var(--gold); }
 .swear-mark.maybe { background: transparent; border: 1px dashed var(--bleep); }
 .swear-sel { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--mark) 30%, transparent); border-inline: 2px solid var(--mark); pointer-events: none; }
@@ -4559,3 +4571,18 @@ a.edit-note:hover { text-decoration: underline; }
 .tts-switch .segmented button { display: inline-flex; gap: 6px; align-items: center; justify-content: center; }
 .tts-api summary { cursor: pointer; font-size: 12.5px; color: var(--muted); }
 .tts-api[open] summary { margin-bottom: 8px; }
+
+/* 1.2.45 platform overlay over the 9:16 preview (export.PRESETS safe zones) */
+.pview { position: absolute; inset: 0; pointer-events: none; font-size: 10px; color: #fff; }
+.pview > div { position: absolute; background: rgba(0, 0, 0, 0.42); display: flex; }
+.pview-top { top: 0; left: 0; right: 0; align-items: center; justify-content: center; }
+.pview-right { right: 0; flex-direction: column; align-items: center; justify-content: flex-end; gap: 12%; padding-bottom: 6px; }
+.pview-right i { width: 62%; aspect-ratio: 1; border-radius: 50%; background: rgba(255, 255, 255, 0.55); }
+.pview-left { left: 0; }
+.pview-bottom { bottom: 0; left: 0; right: 0; flex-direction: column; justify-content: flex-start; gap: 3px; padding: 8px 10px; text-align: start; }
+.pview-bottom b { font-size: 11px; }
+.pview-bottom em { margin-top: auto; font-style: normal; opacity: 0.8; }
+.pview-top span, .pview-bottom em { text-shadow: 0 1px 2px #000; }
+.final-wait { display: grid; gap: 8px; }
+.final-play { display: grid; gap: 6px; justify-items: center; }
+.final-play video { width: min(100%, 300px); aspect-ratio: 9 / 16; background: #000; border-radius: 12px; }

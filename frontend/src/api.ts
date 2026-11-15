@@ -349,7 +349,13 @@ export interface ClipEdit {
   /** source-time ranges bleeped by hand / swears switched off in the review list */
   bleep?: [number, number][];
   unbleep?: [number, number][];
+  /** 1.2.45 bleep editor: [swear start, swear end, bleep start, bleep end] = your exact range for that swear */
+  bleep_set?: [number, number, number, number][];
+  /** this clip's bleep: classic tone, soft sound effect, your own sound or silence */
+  bleep_type?: BleepType;
 }
+
+export type BleepType = "classic" | "boop" | "custom" | "mute";
 
 /** One detected / "maybe" / manual swear of a clip (edit/swears.py), source times. */
 export interface SwearItem {
@@ -366,6 +372,8 @@ export interface SwearItem {
   votes?: string | null;
   heard?: string[] | null;
   aligned?: boolean;
+  /** 1.2.45: the source-time range the render bleeps for this swear (padding / deep check / your edges) */
+  range?: [number, number];
 }
 
 export interface SwearScanItem {
@@ -465,6 +473,8 @@ export interface FacecamAnalysis {
 }
 
 export interface PlanWord extends Word {
+  /** 1.2.45: the word as the burned-in captions show it (censored), when it differs */
+  shown?: string;
   removed?: boolean;
   bleep?: boolean;
   filler?: boolean;
@@ -503,6 +513,12 @@ export interface EditPlanView {
   bleep_mode: "bleep" | "mute" | "off";
   bleep_sound: BleepSound;
   bleeps: [number, number][];
+  /** 1.2.45: the same bleeps in source time (what the live preview bleeps), fade in seconds */
+  bleep_src?: [number, number][];
+  bleep_fade?: number;
+  censor_full?: boolean;
+  /** platform buttons / title areas, 1080x1920 canvas px: [top, right, bottom, left] */
+  safe_zones?: Record<"shorts" | "tiktok" | "reels", [number, number, number, number]>;
   swears: SwearItem[];
   /** speaker ids of the voice pass -> custom name ("" = default label) */
   speakers: Record<string, string>;
@@ -527,6 +543,18 @@ export interface EditPlanView {
   } | null;
   /** 1.2.22: swear_check_failed | swear_safety_net */
   warnings?: string[];
+}
+
+/** 1.2.45: the small render of the file that goes to the platforms */
+export interface FinalPreviewState {
+  ready: boolean;
+  at?: string;
+  fingerprint?: string;
+  duration?: number;
+  /** output-time bleeps of that render */
+  bleeps?: [number, number][];
+  bleep_src?: [number, number][];
+  bleep_mode?: string;
 }
 
 export type Mood = "hype" | "chill" | "sad" | "funny";
@@ -1656,6 +1684,10 @@ export const api = {
   // editing tools (1.2.4)
   plan: (id: string, cid: string, body: { options?: Partial<ClipOptions>; edit?: ClipEdit; music?: string | null } = {}) =>
     req<EditPlanView>("POST", `${P(id)}/candidates/${encodeURIComponent(cid)}/plan`, body),
+  finalPreview: (id: string, cid: string, body: { options?: Partial<ClipOptions>; hook?: string } = {}) =>
+    req<{ job: Job }>("POST", `${P(id)}/candidates/${encodeURIComponent(cid)}/final-preview`, body),
+  finalPreviewState: (id: string, cid: string) =>
+    req<FinalPreviewState>("GET", `${P(id)}/candidates/${encodeURIComponent(cid)}/final-preview`),
   addManualClip: (id: string, start: number, end: number) =>
     req<{ candidate: Candidate; job: Job | null }>("POST", `${P(id)}/candidates`, { start, end }),
   deleteManualClip: (id: string, cid: string) =>
@@ -1767,6 +1799,8 @@ export interface UpdateStatus {
 
 export const urls = {
   source: (id: string) => `${P(id)}/media/source`,
+  finalPreview: (id: string, cid: string, stamp: string) =>
+    `${P(id)}/candidates/${encodeURIComponent(cid)}/final-preview.mp4?v=${encodeURIComponent(stamp)}`,
   thumb: (id: string, v?: string | null) => `${P(id)}/thumb.jpg${v ? `?v=${encodeURIComponent(v)}` : ""}`,
   frame: (id: string, t: number, w = 1280) => `${P(id)}/frame.jpg?t=${t.toFixed(1)}&w=${w}`,
   clip: (id: string, cid: string, stamp: string) => `${P(id)}/clips/${cid}/video?v=${encodeURIComponent(stamp)}`,
