@@ -56,6 +56,7 @@ Each entry is in English, then Turkish; short summaries in the other UI language
 
 <!-- lang:zh -->
 - **已修复：** 如果 Windows 占用了项目文件夹本身（例如搜索索引器或杀毒软件），删除会因"正在使用"而中止。现在文件会逐个移入回收站，只留下一个空文件夹，恢复时会重新填回。
+- 即使没有打开视频播放器，删除项目也不会再卡在"正在使用"上；那个空文件夹不再算作项目。
 
 </details>
 
