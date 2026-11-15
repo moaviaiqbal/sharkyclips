@@ -272,10 +272,18 @@ class FakePlatforms:
                 if u.path.startswith("/ig-api-upload/"):
                     cid = u.path.split("/")[-1]
                     up = st["ig_uploads"].setdefault(cid, {"bytes": 0})
-                    up["bytes"] = len(raw)
                     up["file_size"] = self.headers.get("file_size")
                     up["auth"] = self.headers.get("Authorization")
                     st["upload_auth"].append((u.path, up["auth"]))
+                    up.setdefault("parts", []).append(len(raw))
+                    if st.get("ig_max_request") and len(raw) > st["ig_max_request"]:  # 1.2.44: what rupload did
+                        return self._json(400, {"debug_info": {"retriable": False, "type": "ProcessingFailedError",
+                                                               "message": "Request processing failed"}})
+                    off = int(self.headers.get("offset") or 0)
+                    up["bytes"] = off + len(raw)
+                    if up["file_size"] and up["bytes"] < int(up["file_size"]):
+                        return self._json(206, {"debug_info": {"retriable": True, "type": "PartialRequestError",
+                                                               "message": "Partial request (did not match length of file)"}})
                     return self._json(200, {"success": True})
                 if u.path.endswith("/media_publish"):
                     if st["ig_fail_publish"] > 0:

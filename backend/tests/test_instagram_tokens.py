@@ -111,6 +111,30 @@ def test_reels_upload_views_and_delete_on_graph_facebook(fake, tmp_path):
     assert not [c for c in fake.state["calls"] if c[1].startswith("/v21.0/")]
 
 
+def test_big_reels_go_up_in_parts(fake, tmp_path, monkeypatch):
+    """1.2.44: rupload answered one 18-19 MB request with 400 ProcessingFailedError (a 1 MB one
+    passed); the same bytes as parts (offset + file_size, 206 = part taken) go through."""
+    PF.ig_connect(FB_TOKEN)
+    monkeypatch.setattr(PF, "IG_CHUNK", 300_000)
+    fake.state["ig_max_request"] = 400_000  # a single request with the whole file would be refused
+    video = tmp_path / "big.mp4"
+    video.write_bytes(bytes(range(256)) * 4000)  # 1,024,000 bytes
+    res = PF.ig_post(video, "Big one #reels", poll=0.01)
+    assert res["status"] == "published"
+    up = fake.state["ig_uploads"]["C1"]
+    assert up["bytes"] == 1_024_000 and up["parts"] == [300_000, 300_000, 300_000, 124_000]
+
+
+def test_a_refused_upload_says_what_instagram_said(fake, tmp_path, monkeypatch):
+    PF.ig_connect(FB_TOKEN)
+    fake.state["ig_max_request"] = 10
+    video = tmp_path / "r.mp4"
+    video.write_bytes(b"\1" * 1000)
+    with pytest.raises(PF.PlatformError) as e:
+        PF.ig_post(video, "x", poll=0.01)
+    assert "ProcessingFailedError" in e.value.message and e.value.code == "400"
+
+
 def test_instagram_login_token_stays_on_graph_instagram(fake, tmp_path):
     PF.ig_connect(f" {IG_TOKEN}\n")
     assert PF.load_token("reels")["graph"] == "instagram"

@@ -1195,13 +1195,64 @@ def ig_container(text: str, ai_label: bool = False, thumb_ms: int | None = None)
     return str(cid)
 
 
-def ig_send(file: Path, container: str) -> None:
+IG_CHUNK = 4 * 1024 * 1024
+
+
+def ig_send(file: Path, container: str, chunk: int | None = None) -> None:
+    """The video bytes to rupload, in parts (1.2.44): one 18-19 MB request began to get
+    "400 ProcessingFailedError" on 2026-11-14/15 while a 1 MB one passed; the same file sent
+    as 4 MB parts (offset + file_size headers, 206 = part taken) goes through. A part that
+    fails with a retriable answer is sent again (twice)."""
     tok = _ig_token()
     size = file.stat().st_size
+    step = max(256 * 1024, int(chunk or IG_CHUNK))
+    url = _ig_upload_url(tok, container)
+    off = 0
     with open(file, "rb") as f:
-        r = _http().post(_ig_upload_url(tok, container), data=f, timeout=900, headers={
-            "Authorization": f"OAuth {tok['access_token']}", "offset": "0", "file_size": str(size)})
-    _ig_json(r, "upload")
+        while True:
+            f.seek(off)
+            part = f.read(step)
+            r = None
+            for _try in range(3):
+                r = _http().post(url, data=part, timeout=300, headers={
+                    "Authorization": f"OAuth {tok['access_token']}", "offset": str(off), "file_size": str(size)})
+                if r.status_code in (200, 206) or not _ig_retriable(r):
+                    break
+                time.sleep(2.0 * (_try + 1))
+            if r.status_code == 206:  # this part is in, more to come
+                off += len(part)
+                if off >= size:  # rupload still wants bytes we don't have: say what it said
+                    raise api_error("reels", "Instagram refused the upload: it didn't take the whole file.",
+                                    "SharkyClips tries again with a fresh upload.", "partial", 500)
+                continue
+            if r.status_code >= 400:
+                info = _ig_debug(r)
+                raise api_error("reels", f"Instagram refused the upload: {info or r.status_code}.", None,
+                                str(r.status_code), r.status_code)
+            _ig_json(r, "upload")
+            return
+
+
+def _ig_debug(r) -> str | None:
+    try:
+        d = r.json()
+    except ValueError:
+        return None
+    dbg = d.get("debug_info") if isinstance(d, dict) else None
+    if isinstance(dbg, dict) and dbg.get("message"):
+        return f"{dbg.get('type') or 'error'}: {dbg['message']}"
+    e = d.get("error") if isinstance(d, dict) else None
+    return (e.get("message") if isinstance(e, dict) else None) or None
+
+
+def _ig_retriable(r) -> bool:
+    if r.status_code >= 500 or r.status_code == 429:
+        return True
+    try:
+        dbg = (r.json() or {}).get("debug_info") or {}
+    except ValueError:
+        return False
+    return bool(dbg.get("retriable")) and dbg.get("type") != "PartialRequestError"
 
 
 def ig_container_status(container: str) -> str:

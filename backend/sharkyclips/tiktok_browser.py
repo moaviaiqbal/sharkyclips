@@ -76,6 +76,14 @@ SEL = {
     "disclose": '[data-e2e="disclose_content_container"]',
     "aigc": '[data-e2e="aigc_container"]',
     "post": '[data-e2e="post_video_button"]',
+    # 1.2.44 (seen on the real page): a draft left by an earlier, unfinished run ("Discard" /
+    # "Continue" bar on the upload page) and TikTok's one-time "turn on automatic content checks?"
+    # dialog that covers the page right after a video is chosen
+    "draft": '[data-e2e="local_draft_container"]',
+    "dialog": '.TUXModal-overlay [role="dialog"]',
+    "checks_prompt": '.TUXModal-overlay [role="dialog"]:has(.modal-form [class*="Checkbox"])',
+    "tour": ".react-joyride__tooltip",  # feature tour bubble ("New editing features ... Got it")
+    "tour_buttons": '[class*="tooltip__footer"] button',
 }
 
 UPLOADED = re.compile(r"(yüklendi|uploaded|hochgeladen|feltöltve|feltöltöttük|загружено|已上传|上传成功|تم التحميل|تم الرفع)", re.I)
@@ -554,6 +562,8 @@ ROWS_JS = r"""(titles) => {
   const norm = (s) => (s || '').normalize('NFKC').replace(/[\u200b\ufeff]/g, '').replace(/[^\p{L}\p{N}]+/gu, ' ').trim().toLowerCase();
   const leaves = Array.from(document.querySelectorAll('body *')).filter((el) => el.childElementCount === 0 && (el.textContent || '').trim().length >= 6);
   const timeRe = /\d{1,2}:\d{2}/;
+  // the post's address on tiktok.com (1.2.44: the real list links are relative, /@user/video/123)
+  const canon = (a) => { try { return 'https://www.tiktok.com' + new URL(a.href).pathname; } catch (e) { return a.href; } };
   const out = [];
   for (const title of titles) {
     const w = norm(title).slice(0, 32);
@@ -570,7 +580,7 @@ ROWS_JS = r"""(titles) => {
     for (let k = 0; k < 10 && row.parentElement; k++) {
       row = row.parentElement;
       const a = row.querySelector('a[href*="/video/"]');
-      if (a) { href = a.href; break; }
+      if (a) { href = canon(a); break; }
       if (timeRe.test(row.innerText || '') && (row.innerText || '').length > norm(title).length + 4) break;
       if ((row.innerText || '').length > 3000) break;
     }
@@ -580,10 +590,21 @@ ROWS_JS = r"""(titles) => {
         up = up.parentElement;
         if ((up.innerText || '').length > (row.innerText || '').length + 80) break;
         const a = up.querySelector('a[href*="/video/"]');
-        if (a) { href = a.href; row = up; break; }
+        if (a) { href = canon(a); row = up; break; }
       }
     }
-    out.push({title, found: true, text: (row.innerText || '').slice(0, 600), href});
+    // 1.2.44 (real page): the link is the caption itself; the planned time ("alarm" label) sits
+    // next to it in the post's cell: widen to the biggest box that still holds only this post
+    const links = (el) => el.querySelectorAll('a[href*="/video/"]').length;
+    for (let k = 0; k < 8 && row.parentElement && row.parentElement !== document.body; k++) {
+      const up = row.parentElement;
+      if (links(up) > (href ? 1 : 0) || (up.innerText || '').length > 3000) break;
+      row = up;
+    }
+    const alarm = !!row.querySelector('[data-icon="Alarm"], [data-tt*="PublishStageLabel"] [data-icon*="Alarm" i]');
+    const lab = row.querySelector('[data-tt*="PublishStageLabel"]');
+    const label = lab ? (lab.innerText || '').trim() : '';  // "16 Kas, 12:00 (GMT+1) Budapest": first, so it's kept
+    out.push({title, found: true, text: ((label ? label + '\n' : '') + (row.innerText || '')).slice(0, 600), href, alarm, label});
   }
   return out;
 }"""
@@ -595,6 +616,13 @@ TAG_TIME_JS = r"""(sel) => {
     it.setAttribute('data-sc-col', String(i)); it.setAttribute('data-sc-val', (it.textContent || '').trim()); }
   return cols.length;
 }"""
+
+
+DIALOGS_JS = r"""() => Array.from(document.querySelectorAll('.TUXModal-overlay, [role=dialog], [role=alertdialog], .react-joyride__tooltip, [class*="popover" i], [class*="Popover"]'))
+  .map((e) => { const r = e.getBoundingClientRect();
+    return `<!-- ${Math.round(r.x)},${Math.round(r.y)} ${Math.round(r.width)}x${Math.round(r.height)} -->\n` +
+      e.outerHTML.replace(/<svg[\s\S]*?<\/svg>/g, '<svg/>'); })
+  .join('\n\n').slice(0, 200000)"""
 
 
 def _guard(page) -> str:
@@ -614,6 +642,12 @@ def _shot(page, shots_dir: Path | None, tag: str, reason: str) -> str | None:
         shots_dir.mkdir(parents=True, exist_ok=True)
         dest = shots_dir / f"{tag}-{time.strftime('%Y%m%d-%H%M%S')}-{reason}.png"
         page.screenshot(path=str(dest), full_page=False)
+        try:  # 1.2.44: the dialogs on the page too, to see what covered it (no texts you typed: dialogs only)
+            dialogs = page.evaluate(DIALOGS_JS)
+            if dialogs:
+                dest.with_suffix(".html").write_text(dialogs, encoding="utf-8")
+        except Exception:  # noqa: BLE001
+            pass
         return str(dest)
     except Exception:  # noqa: BLE001
         return None
@@ -645,6 +679,80 @@ def _check(page, shots_dir, tag: str, step: str, submitted: bool = False) -> Non
     g = _guard(page)
     if g:
         raise _stop(page, shots_dir, tag, g, step, submitted)
+    _dismiss(page)
+
+
+def _dismiss(page) -> bool:
+    """Closes TikTok's one-time hints that cover the page (every click under them times out):
+    the "turn on automatic content checks?" dialog (its X: your TikTok settings stay as they are)
+    and the feature tour bubbles ("New editing features" -> "Got it"). Only these known ones:
+    anything else stays and stops the post (unknown screen)."""
+    closed = False
+    try:
+        dlg = page.locator(SEL["checks_prompt"]).first
+        if dlg.count() and dlg.is_visible():
+            x = dlg.locator('[class*="modal-close"]').first
+            if not x.count():
+                x = dlg.locator('button[data-type="neutral"], button[class*="secondary"]').first  # "Cancel"
+            x.click(timeout=5000)
+            dlg.wait_for(state="hidden", timeout=_scale_timeout(8000))
+            closed = True
+    except Exception:  # noqa: BLE001 - the page is navigating / the dialog went away by itself
+        pass
+    for _ in range(6):  # a tour can have a few steps
+        try:
+            tip = page.locator(SEL["tour"]).first
+            if not tip.count() or not tip.is_visible():
+                break
+            btn = tip.locator('[data-action="skip"]:visible, [data-action="close"]:visible').first
+            if not btn.count():
+                btns = tip.locator(f'{SEL["tour_buttons"]}')
+                btn = btns.nth(btns.count() - 1) if btns.count() else tip.locator("button:visible").last
+            btn.click(timeout=5000)
+            closed = True
+            page.wait_for_timeout(600)
+        except Exception:  # noqa: BLE001
+            break
+    return closed
+
+
+def _discard_draft(page, shots_dir, tag: str) -> bool:
+    """The upload page offers to continue a video an earlier run left unfinished. The profile is
+    SharkyClips' own, so that draft is always ours: discard it (and confirm), else the upload box
+    isn't there. A dialog that isn't the expected confirmation stops the post."""
+    bar = page.locator(SEL["draft"]).first
+    try:
+        if not bar.count() or not bar.is_visible():
+            return False
+    except Exception:  # noqa: BLE001
+        return False
+    buttons = bar.locator("button")
+    if buttons.count() < 2:
+        raise _stop(page, shots_dir, tag, "ui_changed", "draft", detail="draft bar without its two buttons")
+    buttons.first.click(timeout=5000)  # "Discard" (the second one is "Continue")
+    confirm = page.locator(f'{SEL["dialog"]} [class*="TUXButton--primary"]').first
+    try:
+        confirm.wait_for(state="visible", timeout=_scale_timeout(8000))
+    except Exception:  # noqa: BLE001
+        raise _stop(page, shots_dir, tag, "ui_changed", "draft", detail="no delete confirmation") from None
+    pause(0.4)
+    confirm.click(timeout=5000)
+    try:
+        bar.wait_for(state="hidden", timeout=_scale_timeout(10_000))
+    except Exception:  # noqa: BLE001
+        raise _stop(page, shots_dir, tag, "ui_changed", "draft", detail="the draft bar stayed") from None
+    return True
+
+
+def _click(page, loc, timeout: float = 8000) -> None:
+    """A click that closes the known dialog first when something covers the element."""
+    try:
+        loc.click(timeout=_scale_timeout(timeout))
+    except Exception:  # noqa: BLE001
+        if not _dismiss(page):
+            raise
+        pause(0.3)
+        loc.click(timeout=_scale_timeout(timeout))
 
 
 def _wait_for(page, selector: str, seconds: float, shots_dir, tag: str, step: str, state: str = "visible"):
@@ -839,7 +947,7 @@ def _editor_text(ed) -> str:
 
 def _type_caption(page, ed, body: str, tags: list[str]) -> None:
     mod = "Meta" if sys.platform == "darwin" else "Control"
-    ed.click()
+    _click(page, ed)
     pause(0.3)
     page.keyboard.press(f"{mod}+A")
     page.keyboard.press("Delete")
@@ -1185,7 +1293,7 @@ def _find_rows(page, titles: list[str], rounds: int = 4) -> list[dict]:
             rows = []
         for r in rows:
             if r.get("found"):
-                r["scheduled"] = bool(SCHEDULED_ROW.search(r.get("text") or ""))
+                r["scheduled"] = bool(r.get("alarm")) or bool(SCHEDULED_ROW.search(r.get("text") or ""))
                 found[r["title"]] = r
         if len(found) == len(titles):
             break
@@ -1208,91 +1316,114 @@ def post(file: Path, caption: str, when: datetime | None = None, ai_label: bool 
     not usable: nothing was posted, the caller posts at the planned time instead)."""
     body, tags = split_caption(caption)
     title = title or (body.split("\n")[0] if body else Path(file).stem)
-    step = on_step or (lambda _s, _f: None)
+    user_step = on_step or (lambda _s, _f: None)
+    cur = {"step": "open", "sent": False}
+
+    def step(name: str, frac: float) -> None:
+        cur["step"] = name
+        user_step(name, frac)
+
+    def submit() -> None:
+        cur["sent"] = True
+        if on_submit:
+            on_submit()
+
     with _lock:
         with _Session() as s:
-            page = s.page
-            step("opening", 0.02)
-            page.goto(upload_url(), wait_until="domcontentloaded")
-            pause()
-            _check(page, shots_dir, tag, "open")
-            if not s.session_cookie():
-                _save(logged_in=False, checked_at=time.time())
-                raise _stop(page, shots_dir, tag, "login", "open")
-            inp = page.locator(SEL["file"]).first
             try:
-                inp.wait_for(state="attached", timeout=_scale_timeout(30_000))
-            except Exception:  # noqa: BLE001
-                _check(page, shots_dir, tag, "open")
-                inp = page.locator(SEL["file_any"]).first
-                try:
-                    inp.wait_for(state="attached", timeout=_scale_timeout(5000))
-                except Exception:  # noqa: BLE001
-                    raise _stop(page, shots_dir, tag, "ui_changed", "open", detail="no file input") from None
-            step("uploading", 0.08)
-            inp.set_input_files(str(file))  # never the native file picker
-            pause()
-            _wait_upload(page, shots_dir, tag, step)
-            step("caption", 0.65)
-            pause()
-            typed = _set_caption(page, shots_dir, tag, body, tags)
-            pause()
-            step("settings", 0.75)
-            _set_visibility(page, shots_dir, tag)
-            pause()
-            expanded = _expand_more(page)
-            if ai_label and not expanded:
-                raise _stop(page, shots_dir, tag, "ui_changed", "ai_label", detail="more settings didn't open")
-            if expanded:
-                ai = _toggle_to(page, SEL["aigc"], bool(ai_label))
-                if (ai is None and ai_label) or (ai is not None and ai != bool(ai_label)):
-                    raise _stop(page, shots_dir, tag, "ui_changed", "ai_label", detail="AI switch didn't move")
-                pause(0.5)
-                _toggle_to(page, SEL["disclose"], False)  # branded content off
-                pause(0.5)
-                _toggle_to(page, SEL["perm"], True, _comment_box)  # comments on
-                pause(0.5)
-            scheduled_for = None
-            if when is not None:
-                step("schedule", 0.82)
-                scheduled_for = _set_schedule(page, shots_dir, tag, when)
-                pause()
-            else:
-                _radio(page, "post_now")
-            if _norm_text(_editor_text(page.locator(f'{SEL["caption"]}, {SEL["caption_any"]}').first)) != typed:
-                raise _stop(page, shots_dir, tag, "ui_changed", "caption", detail="caption changed before posting")
-            _check(page, shots_dir, tag, "post")
-            btn = page.locator(SEL["post"]).first
-            if not btn.count() or not btn.is_enabled():
-                raise _stop(page, shots_dir, tag, "ui_changed", "post", detail="post button missing / disabled")
-            step("posting", 0.9)
-            if on_submit:
-                on_submit()  # written down first: a crash after this point never posts twice
-            btn.click()
-            end = time.time() + _scale_timeout(120)
-            while time.time() < end and "/tiktokstudio/content" not in (page.url or ""):
-                g = _guard(page)
-                if g:
-                    raise _stop(page, shots_dir, tag, g, "after post", submitted=True)
-                page.wait_for_timeout(1000)
-            if "/tiktokstudio/content" not in (page.url or ""):
-                raise _stop(page, shots_dir, tag, "unknown", "after post", submitted=True,
-                            detail=f"stayed on {page.url[:80]}")
-            step("checking", 0.96)
-            try:
-                page.wait_for_load_state("networkidle", timeout=_scale_timeout(15_000))
-            except Exception:  # noqa: BLE001
-                pass
-            row = None
-            for _ in range(3):
-                row = _find_rows(page, [title], rounds=2)[0]
-                if row.get("found"):
-                    break
-                page.wait_for_timeout(3000)
-                page.reload(wait_until="domcontentloaded")
-            user = _read_username(page) or _load().get("username")
-            if user and user != _load().get("username"):
-                _save(username=user)
+                return _post_steps(s, file, body, tags, title, when, ai_label, shots_dir, tag, step, submit)
+            except (Blocked, ScheduleUnavailable):
+                raise
+            except Exception as exc:  # noqa: BLE001 - a click that timed out, a closed window: a stop
+                if type(exc).__name__ == "JobCancelled":  # your Cancel (multipost's job): not a stop
+                    raise
+                first = (str(exc).splitlines() or [""])[0][:160]
+                raise _stop(s.page, shots_dir, tag, "error", cur["step"], submitted=cur["sent"],
+                            detail=f"{type(exc).__name__}: {first}") from exc
+
+
+def _post_steps(s: "_Session", file: Path, body: str, tags: list[str], title: str, when: datetime | None,
+                ai_label: bool, shots_dir: Path | None, tag: str, step: Callable[[str, float], None],
+                submit: Callable[[], None]) -> dict:
+    page = s.page
+    step("opening", 0.02)
+    page.goto(upload_url(), wait_until="domcontentloaded")
+    pause()
+    _check(page, shots_dir, tag, "open")
+    if not s.session_cookie():
+        _save(logged_in=False, checked_at=time.time())
+        raise _stop(page, shots_dir, tag, "login", "open")
+    if _discard_draft(page, shots_dir, tag):
+        pause()
+    inp = page.locator(f'{SEL["file"]}, {SEL["file_any"]}').first  # the box sits outside the container at times
+    try:
+        inp.wait_for(state="attached", timeout=_scale_timeout(30_000))
+    except Exception:  # noqa: BLE001
+        _check(page, shots_dir, tag, "open")
+        raise _stop(page, shots_dir, tag, "ui_changed", "open", detail="no file input") from None
+    step("uploading", 0.08)
+    inp.set_input_files(str(file))  # never the native file picker
+    pause()
+    _wait_upload(page, shots_dir, tag, step)
+    step("caption", 0.65)
+    pause()
+    typed = _set_caption(page, shots_dir, tag, body, tags)
+    pause()
+    step("settings", 0.75)
+    _set_visibility(page, shots_dir, tag)
+    pause()
+    expanded = _expand_more(page)
+    if ai_label and not expanded:
+        raise _stop(page, shots_dir, tag, "ui_changed", "ai_label", detail="more settings didn't open")
+    if expanded:
+        ai = _toggle_to(page, SEL["aigc"], bool(ai_label))
+        if (ai is None and ai_label) or (ai is not None and ai != bool(ai_label)):
+            raise _stop(page, shots_dir, tag, "ui_changed", "ai_label", detail="AI switch didn't move")
+        pause(0.5)
+        _toggle_to(page, SEL["disclose"], False)  # branded content off
+        pause(0.5)
+        _toggle_to(page, SEL["perm"], True, _comment_box)  # comments on
+        pause(0.5)
+    scheduled_for = None
+    if when is not None:
+        step("schedule", 0.82)
+        scheduled_for = _set_schedule(page, shots_dir, tag, when)
+        pause()
+    else:
+        _radio(page, "post_now")
+    if _norm_text(_editor_text(page.locator(f'{SEL["caption"]}, {SEL["caption_any"]}').first)) != typed:
+        raise _stop(page, shots_dir, tag, "ui_changed", "caption", detail="caption changed before posting")
+    _check(page, shots_dir, tag, "post")
+    btn = page.locator(SEL["post"]).first
+    if not btn.count() or not btn.is_enabled():
+        raise _stop(page, shots_dir, tag, "ui_changed", "post", detail="post button missing / disabled")
+    step("posting", 0.9)
+    submit()  # written down first: a crash after this point never posts twice
+    btn.click()
+    end = time.time() + _scale_timeout(120)
+    while time.time() < end and "/tiktokstudio/content" not in (page.url or ""):
+        g = _guard(page)
+        if g:
+            raise _stop(page, shots_dir, tag, g, "after post", submitted=True)
+        page.wait_for_timeout(1000)
+    if "/tiktokstudio/content" not in (page.url or ""):
+        raise _stop(page, shots_dir, tag, "unknown", "after post", submitted=True,
+                    detail=f"stayed on {page.url[:80]}")
+    step("checking", 0.96)
+    try:
+        page.wait_for_load_state("networkidle", timeout=_scale_timeout(15_000))
+    except Exception:  # noqa: BLE001
+        pass
+    row = None
+    for _ in range(3):
+        row = _find_rows(page, [title], rounds=2)[0]
+        if row.get("found"):
+            break
+        page.wait_for_timeout(3000)
+        page.reload(wait_until="domcontentloaded")
+    user = _read_username(page) or _load().get("username")
+    if user and user != _load().get("username"):
+        _save(username=user)
     row = row or {"found": False}
     status_ = "scheduled" if when is not None else "published"
     url = row.get("href") if row.get("found") and row.get("href") and not row.get("scheduled") else None

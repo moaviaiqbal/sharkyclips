@@ -3,6 +3,11 @@
 
 Modes (FakeStudio.mode): normal | captcha (a CAPTCHA after the file is chosen) | uploadfail |
 uichanged (no caption editor) | captcha_content (CAPTCHA on the content list) | nologin.
+1.2.44, as seen on the real page: FakeStudio.draft shows the "unsaved video, continue editing?"
+bar (Discard -> a confirmation dialog; the file box then sits outside its container);
+FakeStudio.prompts (default on) covers the page after the upload with TikTok's "turn on
+automatic content checks?" dialog and then a feature-tour bubble ("Got it"). The content list
+is shaped like the real one: the caption is the link, a planned post has an alarm label.
 What was "posted" lands in FakeStudio.posts (caption text, schedule, date, time, visibility,
 switches) and shows on /tiktokstudio/content; FakeStudio.seed adds rows posted earlier.
 """
@@ -24,11 +29,15 @@ UPLOAD_PAGE = r"""<!doctype html><html lang="tr"><head><meta charset="utf-8"><ti
  #suggest{border:1px solid #333;padding:4px;width:200px} .tiktok-timepicker-option-item{display:block;padding:2px 6px;cursor:pointer}
  .col{display:inline-block;vertical-align:top;height:160px;overflow:auto;border:1px solid #ddd}
  .day{display:inline-block;width:28px;height:22px;text-align:center;cursor:pointer} .day.invalid{color:#bbb}
+ .TUXModal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1200;display:flex;align-items:center;justify-content:center}
+ .TUXModal{background:#fff;padding:20px;width:420px} .react-joyride__overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:1100}
+ .__floater{position:fixed;left:40%;top:30%;z-index:1101;background:#fff;padding:12px;width:260px}
  .arrow{display:inline-block;padding:4px 10px;cursor:pointer} #captcha-verify-container{position:fixed;left:20%;top:20%;width:320px;height:220px;background:#fff;border:2px solid #000;z-index:9}
 </style></head><body>
-<div data-e2e="draft_banner">Düzenlemekte olduğunuz bir video kaydedilmedi. <button>Sil</button> <button>Devam</button></div>
-<div data-e2e="select_video_container"><input type="file" accept="video/*" id="file" style="display:none">
+__DRAFT__
+<div data-e2e="select_video_container">__FILE_IN__
   <button data-e2e="select_video_button" onclick="document.getElementById('file').click()">Video seç</button></div>
+__FILE_OUT__
 <div id="area" class="hidden">
  <div data-e2e="upload_status_container" id="status"></div>
  __CAPTION__
@@ -57,6 +66,35 @@ UPLOAD_PAGE = r"""<!doctype html><html lang="tr"><head><meta charset="utf-8"><ti
 </div>
 <script>
 const MODE = "__MODE__";
+const PROMPTS = __PROMPTS__;
+window.__checksOn = false; window.__prompts = [];
+function modal(html) { const o = document.createElement('div'); o.className = 'TUXModal-overlay'; o.innerHTML = html; document.body.appendChild(o); return o; }
+function showChecks() {
+  const o = modal('<div class="TUXModal common-modal" role="dialog"><div class="common-modal-close"><div class="common-modal-close-icon">X</div></div>'
+    + '<div class="common-modal-body"><div class="modal-title">Otomatik içerik kontrolleri açılsın mı?</div><div class="modal-form">'
+    + '<label class="Checkbox__root" aria-checked="true"><input type="checkbox" class="Checkbox__input" checked> Müzik telif hakkı kontrolü</label>'
+    + '<label class="Checkbox__root" aria-checked="true"><input type="checkbox" class="Checkbox__input" checked> İçerik kontrolü (hafif)</label></div></div>'
+    + '<div class="common-modal-footer"><button type="button" data-type="neutral">İptal</button><button type="button" data-type="primary" id="checksOn">Aç</button></div></div>');
+  const close = () => { o.remove(); window.__prompts.push('checks'); showTour(); };
+  o.querySelector('.common-modal-close').onclick = close;
+  o.querySelector('[data-type=neutral]').onclick = close;
+  o.querySelector('#checksOn').onclick = () => { window.__checksOn = true; close(); };
+}
+function showTour() {
+  const ov = document.createElement('div'); ov.className = 'react-joyride__overlay'; document.body.appendChild(ov);
+  const f = document.createElement('div'); f.className = '__floater __floater__open';
+  f.innerHTML = '<div class="react-joyride__tooltip" role="alertdialog"><div class="tutorial-tooltip"><div class="tutorial-tooltip__title">Yeni düzenleme özellikleri eklendi</div>'
+    + '<div class="tutorial-tooltip__footer"><button type="button" data-type="primary">Anladım</button></div></div></div>';
+  document.body.appendChild(f);
+  f.querySelector('button').onclick = () => { ov.remove(); f.remove(); window.__prompts.push('tour'); };
+}
+const bar = document.querySelector('[data-e2e="local_draft_container"]');
+if (bar) bar.querySelector('button').onclick = () => {
+  const o = modal('<div class="TUXModal" role="dialog"><p>Bu gönderi silinsin mi?</p><button class="TUXButton TUXButton--secondary" id="keep">Şimdi değil</button>'
+    + '<button class="TUXButton TUXButton--primary" id="drop">Sil</button></div>');
+  o.querySelector('#keep').onclick = () => o.remove();
+  o.querySelector('#drop').onclick = () => { o.remove(); bar.remove(); fetch('/__draft', {method: 'POST', body: '{}'}); };
+};
 const $ = (id) => document.getElementById(id);
 const pad = (n) => String(n).padStart(2, '0');
 let shown = new Date();
@@ -77,6 +115,7 @@ $('file').addEventListener('change', () => {
     const cap = document.querySelector('.public-DraftEditor-content');
     if (cap) cap.textContent = f.name.replace(/\.[^.]+$/, '');
     $('post').disabled = false;
+    if (PROMPTS) setTimeout(showChecks, 30);
   }, 120);
 });
 const cap = document.querySelector('.public-DraftEditor-content');
@@ -127,11 +166,15 @@ $('post').addEventListener('click', async () => {
   const body = {caption: cap ? cap.innerText : '', schedule: document.querySelector('input[name=postSchedule]:checked').value,
     date: $('date').value, time: $('time').value, visibility: $('vis').textContent,
     aigc: $('aigc').getAttribute('aria-checked') === 'true', disclose: $('disc').getAttribute('aria-checked') === 'true',
-    comment: $('c_comment').checked, duet: $('c_duet').checked, picked: window.__picked || 0};
+    comment: $('c_comment').checked, duet: $('c_duet').checked, picked: window.__picked || 0,
+    checks_on: window.__checksOn, prompts: window.__prompts};
   await fetch('/__post', {method: 'POST', body: JSON.stringify(body)});
   location.href = '/tiktokstudio/content';
 });
 </script></body></html>"""
+
+DRAFT = """<div data-e2e="local_draft_container"><span>Düzenlemekte olduğunuz bir video kaydedilmedi. Düzenlemeye devam edilsin mi?</span>
+ <div class="local-draft-button-group"><button type="button" data-type="ghost">Sil</button><button type="button">Devam</button></div></div>"""
 
 CAPTION = """<div data-e2e="caption_container"><span>Açıklama</span>
  <div class="DraftEditor-root"><div class="public-DraftEditor-content" contenteditable="true" role="combobox" spellcheck="false"></div></div>
@@ -141,6 +184,9 @@ CAPTION = """<div data-e2e="caption_container"><span>Açıklama</span>
 class FakeStudio:
     def __init__(self):
         self.mode = "normal"
+        self.draft = False  # an unsaved video from an earlier run waits on the upload page
+        self.prompts = True  # the content-checks dialog + the feature tour after the upload
+        self.drafts_discarded = 0
         self.posts: list[dict] = []
         self.seed: list[dict] = []  # {"caption", "scheduled": "14 Kas, 18:00 (GMT+1) Budapest" | None, "id"}
         self.username = "fakeuser"
@@ -197,17 +243,27 @@ class FakeStudio:
                     if not self._logged():
                         return self._send(302, "", headers={"Location": "/login"})
                     if path == "/tiktokstudio/upload":
+                        file_in = '<input type="file" accept="video/*" id="file" style="display:none">'
                         page = UPLOAD_PAGE.replace("__MODE__", studio.mode).replace(
-                            "__CAPTION__", "" if studio.mode == "uichanged" else CAPTION)
+                            "__CAPTION__", "" if studio.mode == "uichanged" else CAPTION).replace(
+                            "__PROMPTS__", "true" if studio.prompts else "false").replace(
+                            "__DRAFT__", DRAFT if studio.draft else "").replace(
+                            "__FILE_IN__", "" if studio.draft else file_in).replace(
+                            "__FILE_OUT__", file_in if studio.draft else "")
                         return self._send(200, page)
                     if path == "/tiktokstudio/content":
                         rows = []
                         for r in studio.rows():
-                            first = html.escape(r["caption"].split("\n")[0])
-                            meta = html.escape(r["scheduled"]) if r.get("scheduled") else "Herkes · 12 görüntülenme · 13 Kas, 21:00"
-                            link = "" if r.get("scheduled") else f'<a href="https://www.tiktok.com/@{studio.username}/video/{r["id"]}">Aç</a>'
-                            rows.append(f'<div class="row" data-e2e="content_row"><div class="info"><span class="cap">{first}</span>'
-                                        f'<span class="meta">{meta}</span></div>{link}</div>')
+                            cap = html.escape(" ".join(r["caption"].split()))
+                            if r.get("scheduled"):  # the real list: an alarm label next to the caption
+                                meta = ('<span data-tt="components_PublishStageLabel_TUXText"><span role="img" data-icon="Alarm">'
+                                        f'</span><span>{html.escape(r["scheduled"])}</span></span>')
+                            else:
+                                meta = '<span class="date">13 Kas, 21:00</span>'
+                            rows.append(f'<div class="row"><div class="cover"><span>00:22</span></div><div data-tt="components_PostInfoCell_FlexColumn">'
+                                        f'<div><a href="/@{studio.username}/video/{r["id"]}" target="_blank">{cap}</a></div>{meta}</div>'
+                                        f'<div class="cells"><span>Herkes</span><span>12</span><span>0</span><span>0</span>'
+                                        f'<button><span data-icon="Edit"></span></button><button>...</button></div></div>')
                         extra = ('<div id="captcha-verify-container">Doğrula</div>'
                                  if studio.mode == "captcha_content" else "")
                         return self._send(200, "<!doctype html><html><body><h1>Gönderiler</h1>"
@@ -219,6 +275,10 @@ class FakeStudio:
                 body = self.rfile.read(n).decode("utf-8") if n else "{}"
                 if self.path == "/__post":
                     studio.posts.append(json.loads(body))
+                    return self._send(200, "{}", "application/json")
+                if self.path == "/__draft":
+                    studio.draft = False
+                    studio.drafts_discarded += 1
                     return self._send(200, "{}", "application/json")
                 return self._send(404, "not found")
 

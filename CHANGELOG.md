@@ -7,6 +7,99 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.44] - 2026-11-15
+### Fixed: automatic TikTok on the real TikTok Studio, and Instagram uploads that stopped
+- **Automatic TikTok passed its first real test.** A post planned two days ahead showed up in
+  TikTok Studio at the right date and time, visible to everyone, and five clips have gone out
+  that way since. Three things on the real page needed care:
+  - TikTok's one-time hints ("Turn on automatic content checks?" and the "New editing features"
+    tour) covered the page after the upload. SharkyClips now closes them: the content checks
+    dialog with its X, so your TikTok settings stay as they are.
+  - A video left half-finished by an earlier attempt ("continue editing?") is discarded first. The
+    TikTok profile belongs to SharkyClips, so that draft is always one of its own.
+  - Planned posts are now recognised in TikTok Studio's list by their alarm label, in any
+    language. Before, a planned post could be read as already published. The planned time is
+    kept with the post, and the links point to tiktok.com.
+- **A stuck step stops cleanly.** If anything on the page doesn't respond, the post stops with a
+  screenshot (plus the dialogs that were open), and the clip is ready for you to post by hand,
+  just like after a CAPTCHA.
+- **Instagram uploads work again.** Since 14 November Instagram refused bigger videos sent in one
+  piece ("refused the upload: 400"). SharkyClips now sends them in 4 MB parts, and a part that
+  fails is sent again. Error messages now include Instagram's own reason.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Düzeltildi: gerçek TikTok Studio'da otomatik TikTok ve duran Instagram yüklemeleri
+- **Otomatik TikTok ilk gerçek testi geçti.** İki gün sonrasına planlanan bir gönderi TikTok
+  Studio'da doğru gün ve saatte, herkese açık olarak göründü. O günden beri beş klip bu yolla
+  çıktı. Gerçek sayfada üç şeye dikkat etmek gerekiyordu:
+  - TikTok'un bir kerelik ipuçları ("Otomatik içerik kontrolleri açılsın mı?" ve "Yeni düzenleme
+    özellikleri" turu) yüklemeden sonra sayfayı kapatıyordu. SharkyClips artık bunları kapatır:
+    içerik kontrolü penceresini X ile kapatır, yani TikTok ayarların olduğu gibi kalır.
+  - Önceki bir denemeden yarım kalan video ("düzenlemeye devam edilsin mi?") önce silinir. TikTok
+    profili SharkyClips'e ait olduğu için o taslak her zaman onun kendi taslağıdır.
+  - Planlı gönderiler TikTok Studio listesinde alarm etiketinden tanınır, dil fark etmez. Önceden
+    planlı bir gönderi yayınlanmış sanılabiliyordu. Planlanan saat gönderiyle birlikte saklanır,
+    linkler tiktok.com'u gösterir.
+- **Takılan bir adım düzgün durur.** Sayfada bir şey yanıt vermezse gönderi ekran görüntüsüyle
+  (açık pencerelerle birlikte) durur ve klip elle paylaşman için hazır olur, tıpkı bir
+  CAPTCHA'dan sonraki gibi.
+- **Instagram yüklemeleri yeniden çalışıyor.** 14 Kasım'dan beri Instagram büyük videoları tek
+  parça halinde almıyordu ("yüklemeyi reddetti: 400"). SharkyClips artık 4 MB'lık parçalar halinde
+  gönderir, başarısız bir parçayı yeniden yollar. Hata mesajlarında Instagram'ın kendi açıklaması
+  da yazar.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Automatisches TikTok hat den ersten echten Test bestanden:** Ein zwei Tage im Voraus geplanter Post stand mit richtigem Datum und richtiger Uhrzeit in TikTok Studio.
+- TikToks einmalige Hinweise („Automatische Inhaltsprüfungen aktivieren?“, Tour „Neue Bearbeitungsfunktionen“) werden geschlossen, deine TikTok-Einstellungen bleiben unverändert. Ein halb fertiger Entwurf eines früheren Versuchs wird zuerst verworfen.
+- Geplante Posts werden in der Liste an ihrem Wecker-Symbol erkannt, in jeder Sprache. Hängt ein Schritt, stoppt der Post mit Screenshot und der Clip liegt zum Posten von Hand bereit.
+- **Instagram-Uploads funktionieren wieder:** Größere Videos gehen jetzt in 4-MB-Teilen hoch (seit dem 14. November lehnte Instagram sie am Stück mit „400“ ab).
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Az automatikus TikTok átment az első valódi teszten:** egy két nappal előre ütemezett poszt a megfelelő napon és időpontban jelent meg a TikTok Studióban.
+- A TikTok egyszeri tippjei („Bekapcsolod az automatikus tartalomellenőrzést?”, „Új szerkesztési funkciók” bemutató) bezáródnak, a TikTok-beállításaid nem változnak. Egy korábbi próbálkozásból félbemaradt piszkozat előbb törlődik.
+- Az ütemezett posztokat a listában az ébresztő ikonjuk alapján ismeri fel, bármilyen nyelven. Ha egy lépés elakad, a poszt képernyőképpel leáll, és a klip kézi posztolásra kész.
+- **Az Instagram-feltöltések újra működnek:** a nagyobb videók most 4 MB-os részekben mennek fel (november 14. óta az Instagram egyben „400”-zal elutasította őket).
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Автоматический TikTok прошёл первую настоящую проверку:** пост, запланированный на два дня вперёд, появился в TikTok Studio с правильными датой и временем.
+- Одноразовые подсказки TikTok («Включить автоматическую проверку контента?», тур «Новые функции редактирования») закрываются, настройки TikTok не меняются. Недоделанный черновик прошлой попытки сначала удаляется.
+- Запланированные посты распознаются в списке по значку будильника на любом языке. Если шаг завис, публикация останавливается со скриншотом, а клип готов к ручной публикации.
+- **Загрузка в Instagram снова работает:** большие видео теперь отправляются частями по 4 МБ (с 14 ноября Instagram отклонял их целиком с ошибкой «400»).
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **اجتاز TikTok التلقائي أول اختبار حقيقي:** ظهر منشور مجدول قبل يومين في TikTok Studio بالتاريخ والوقت الصحيحين.
+- تُغلق تلميحات TikTok التي تظهر مرة واحدة («تشغيل فحوصات المحتوى التلقائية؟» وجولة «ميزات تحرير جديدة») وتبقى إعدادات TikTok كما هي. وتُحذف أولًا مسودة غير مكتملة من محاولة سابقة.
+- تُعرف المنشورات المجدولة في القائمة من رمز المنبّه بأي لغة. وإذا تعطلت خطوة يتوقف النشر مع لقطة شاشة ويصبح المقطع جاهزًا للنشر يدويًا.
+- **عاد رفع المقاطع إلى Instagram للعمل:** تُرسل المقاطع الكبيرة الآن على أجزاء بحجم 4 ميغابايت (منذ 14 نوفمبر كان Instagram يرفضها دفعة واحدة برمز «400»).
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **自动 TikTok 通过了第一次真实测试:** 提前两天排期的帖子以正确的日期和时间出现在 TikTok Studio 中，此后已有五个片段通过这种方式发布。
+- TikTok 的一次性提示（"开启自动内容检查？"和"新编辑功能"导览）会被关闭，你的 TikTok 设置保持不变。之前尝试遗留的未完成草稿会先被删除。
+- 列表中的排期帖子按闹钟标记识别，任何语言都可以。如果某一步卡住，发布会停止并保存截图，片段可以手动发布。
+- **Instagram 上传恢复正常:** 较大的视频现在按 4 MB 分段上传（自 11 月 14 日起，Instagram 拒绝整体上传，提示"400"），失败的分段会自动重发。
+
+</details>
+
 ## [1.2.43] - 2026-11-14
 ### Fixed: the TikTok login said "too many attempts" every time
 - **The login now opens your own Google Chrome.** Settings → Accounts → TikTok → **Log in to

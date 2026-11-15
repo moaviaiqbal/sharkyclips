@@ -53,11 +53,13 @@ def studio():
 @pytest.fixture
 def fresh(studio):
     studio.mode = "normal"
+    studio.draft, studio.prompts, studio.drafts_discarded = False, True, 0
     studio.posts.clear()
     studio.seed.clear()
     TB._save(logged_in=True, blocked=None, username="fakeuser")
     yield studio
     studio.mode = "normal"
+    studio.draft, studio.prompts = False, True
     TB._save(logged_in=True, blocked=None)
 
 
@@ -256,15 +258,45 @@ def test_the_login_command_has_no_automation_attached(own_root, monkeypatch):
     assert TB._load()["channel"] == "chrome"  # the automation later opens the same Chrome
 
 
+def test_tiktoks_hints_are_closed_and_your_settings_stay(fresh, video):
+    """1.2.44 (real page): the "turn on automatic content checks?" dialog and the feature tour cover
+    the page after the upload; they are closed (X / Got it), the checks are NOT switched on."""
+    res = TB.post(video, CAPTION, title="Akali'yle kaçırılan combo suçlu kanka mıydı?")
+    assert res["status"] == "published"
+    p = fresh.posts[-1]
+    assert p["prompts"] == ["checks", "tour"] and p["checks_on"] is False
+
+
+def test_an_unfinished_draft_is_discarded_first(fresh, video):
+    fresh.draft = True  # an earlier run stopped after the upload: TikTok offers to continue it
+    res = TB.post(video, CAPTION, title="Akali'yle kaçırılan combo suçlu kanka mıydı?")
+    assert res["status"] == "published" and fresh.drafts_discarded == 1
+    assert len(fresh.posts) == 1
+
+
+def test_a_stuck_step_stops_with_a_screenshot_instead_of_crashing(fresh, video, tmp_path, monkeypatch):
+    def stuck(*_a, **_k):
+        raise TimeoutError("Locator.click: Timeout 8000ms exceeded.")
+
+    monkeypatch.setattr(TB, "_set_visibility", stuck)
+    with pytest.raises(TB.Blocked) as e:
+        TB.post(video, CAPTION, shots_dir=tmp_path, tag="c02")
+    assert e.value.reason == "error" and e.value.step == "settings" and not e.value.submitted
+    assert e.value.shot and Path(e.value.shot).is_file() and "Timeout" in (e.value.hint or "")
+    assert fresh.posts == []
+
+
 def test_find_posts_reads_the_content_list(fresh):
     fresh.seed[:] = [{"caption": "Bu kadar şansa mı güvendi? 😱\nalt satır", "scheduled": None, "id": "7311"},
                      {"caption": "50 PİNG'li saldırı, Miss Fortune'un sonu! 💀", "scheduled": "14 Kas, 18:00 (GMT+1) Budapest",
-                      "id": "7312"}]
+                      "id": "7312"},
+                     {"caption": "Demir mi bu el? Abi inanmıyor kanka! 💀", "scheduled": "16 Nov, 12:00", "id": "7313"}]
     rows = TB.find_posts(["Bu kadar şansa mı güvendi? 😱", "50 PİNG'li saldırı, Miss Fortune'un sonu! 💀",
-                          "Hiç paylaşılmamış bir başlık"])
+                          "Hiç paylaşılmamış bir başlık", "Demir mi bu el? Abi inanmıyor kanka! 💀"])
     assert rows[0]["found"] and not rows[0]["scheduled"] and rows[0]["href"].endswith("/video/7311")
-    assert rows[1]["found"] and rows[1]["scheduled"]
+    assert rows[1]["found"] and rows[1]["scheduled"] and "(GMT+1)" in rows[1]["text"]  # the label is in the row
     assert not rows[2]["found"]
+    assert rows[3]["found"] and rows[3]["scheduled"] and rows[3]["alarm"]  # the alarm label, whatever the language
 
 
 def test_check_reads_the_username(fresh):
