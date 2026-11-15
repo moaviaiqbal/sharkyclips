@@ -422,3 +422,29 @@ def test_keep_waits_for_an_unfinished_youtube_upload(tr):
     r = _client().post(f"/api/projects/{project.id}/delete", json={"pending": "keep"})
     assert r.status_code == 400 and "YouTube" in r.text
     assert project.dir.is_dir() and (project.dir / "source.mp4").exists()
+
+
+def test_a_held_project_folder_still_goes_to_the_trash(tr, monkeypatch):
+    """The folder itself is held open (indexer / virus scanner) but its files aren't: they move one
+    by one, an empty folder stays (no project any more), Restore fills it again."""
+    from sharkyclips.project import list_projects
+
+    project = _project("pub-trash-held", n=2)
+    _files(project, "c01")
+    real = T._move
+
+    def held(src, dest, seconds=8.0):
+        if src == project.dir:
+            raise SharkyClipsError(f"\"{src.name}\" is in use.", None)
+        return real(src, dest, seconds)
+
+    monkeypatch.setattr(T, "_move", held)
+    monkeypatch.setattr(type(project.dir), "rmdir", lambda self: (_ for _ in ()).throw(PermissionError("held")))
+    item = T.delete_project(project.id)
+    assert project.dir.is_dir() and not any(project.dir.iterdir())
+    assert project.id not in [p.id for p in list_projects()]
+    assert (T.root() / item["id"] / project.id / "meta.json").is_file()
+    assert (T.root() / item["id"] / project.id / "source.mp4").is_file()
+    T.restore(item["id"])
+    assert (project.dir / "meta.json").is_file() and (project.dir / "clips" / "c01.mp4").is_file()
+    assert project.id in [p.id for p in list_projects()]

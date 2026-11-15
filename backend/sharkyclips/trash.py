@@ -131,6 +131,48 @@ def _move(src: Path, dest: Path, seconds: float = 8.0) -> None:
             raise
 
 
+def _move_dir(src: Path, dest: Path) -> None:
+    """A whole project folder. 1.2.47: when the folder itself is held open (an indexer, a virus
+    scanner, a window on it) but its contents aren't, they move one by one (meta.json last) and
+    the empty folder stays behind: without meta.json it is no project any more. All or nothing."""
+    try:
+        _move(src, dest, seconds=4)
+        return
+    except SharkyClipsError:
+        if not src.is_dir():
+            raise
+    dest.mkdir(parents=True, exist_ok=True)
+    moved: list[str] = []
+    try:
+        for e in sorted(src.iterdir(), key=lambda e: e.name == "meta.json"):
+            _move(e, dest / e.name)
+            moved.append(e.name)
+    except BaseException:
+        for n in reversed(moved):
+            try:
+                _move(dest / n, src / n)
+            except (OSError, SharkyClipsError):
+                pass
+        raise
+    try:
+        src.rmdir()
+    except OSError:
+        pass  # still held: an empty folder, removed when it can be
+
+
+def _place_back(src: Path, dest: Path) -> None:
+    """Restore a project folder to dest; an empty folder left there by _move_dir is reused."""
+    if dest.is_dir() and not any(dest.iterdir()):
+        for e in sorted(src.iterdir(), key=lambda e: e.name == "meta.json"):
+            _move(e, dest / e.name)
+        shutil.rmtree(src, ignore_errors=True)
+        return
+    if dest.exists():
+        raise SharkyClipsError("A project with the same name is back in the workspace.",
+                               "Delete or rename that one first, then restore this one.")
+    _move(src, dest)
+
+
 def keep_days() -> int:
     """How long the trash keeps things (setting "trash_keep_days"; 0 = deleted for good at once)."""
     try:
@@ -514,7 +556,7 @@ def delete_project(project_id: str, with_original: bool = False, with_posts: boo
                "expires_at": _iso(_now() + timedelta(days=keep_days())), "bytes": nbytes, "plans": plans,
                "original": original, "posts": posts, "files": [{"from": str(project.dir), "to": project.id}]}
         try:
-            _move(project.dir, home / project.id)
+            _move_dir(project.dir, home / project.id)
         except BaseException:
             shutil.rmtree(home, ignore_errors=True)
             _put_plans_back(project, plans)
@@ -669,7 +711,7 @@ def _join_rest(project: Project, cancel: bool = False) -> dict:
                 return {"id": None, "kind": "project", "project_id": project.id, "bytes": n, "purged": True}
             return delete_project(project.id)
         home = root() / rec["id"]
-        _move(project.dir, home / "rest" / project.id)
+        _move_dir(project.dir, home / "rest" / project.id)
         rec.update(rest_moved=True, bytes=int(rec.get("bytes") or 0) + size_of(home / "rest"),
                    rest_at=_iso(_now()), rest_cancelled=bool(cancel))
         return _finish(rec)
@@ -791,10 +833,7 @@ def restore(tid: str) -> dict:
             _restore_partial(rec, home)
         elif rec["kind"] == "project":
             dest = config.workspace_dir() / rec["project_id"]
-            if dest.exists():
-                raise SharkyClipsError("A project with the same name is back in the workspace.",
-                                       "Delete or rename that one first, then restore this one.")
-            _move(home / rec["project_id"], dest)
+            _place_back(home / rec["project_id"], dest)
             orig = rec.get("original") or {}
             if orig.get("moved"):
                 target = Path(orig["path"])
@@ -820,10 +859,7 @@ def _restore_partial(rec: dict, home: Path) -> None:
 
     dest = config.workspace_dir() / rec["project_id"]
     if rec.get("rest_moved"):
-        if dest.exists():
-            raise SharkyClipsError("A project with the same name is back in the workspace.",
-                                   "Delete or rename that one first, then restore this one.")
-        _move(home / "rest" / rec["project_id"], dest)
+        _place_back(home / "rest" / rec["project_id"], dest)
     if not dest.is_dir():
         raise SharkyClipsError("The rest of this project is gone.", "Delete this item for good.")
     for m in rec.get("files") or []:

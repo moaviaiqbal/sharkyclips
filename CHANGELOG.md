@@ -7,6 +7,58 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.48] - 2026-11-15
+### Fixed: "is in use" when deleting a project
+- Sometimes Windows keeps a project's folder itself open (the search indexer or the virus scanner,
+  for example) while nothing inside it is in use. Deleting the project then stopped with "is in
+  use", even with no video player open. Now its files go to the trash one by one and only an empty
+  folder stays behind. That folder is no project any more, and Restore fills it again.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Düzeltildi: proje silerken "kullanımda" hatası
+- Windows bazen bir projenin klasörünün kendisini açık tutuyor (örneğin arama dizinleyicisi ya da
+  virüs tarayıcısı), içindeki hiçbir dosya kullanımda olmasa bile. Proje silme o zaman, açık bir
+  video oynatıcı olmasa da "kullanımda" diyerek duruyordu. Artık dosyaları tek tek çöp kutusuna
+  gidiyor, geride yalnızca boş bir klasör kalıyor. O klasör artık proje sayılmıyor; Geri yükle onu
+  yeniden dolduruyor.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Behoben:** Hält Windows den Projektordner selbst offen (z. B. Suchindex oder Virenscanner), brach das Löschen mit „wird verwendet“ ab. Jetzt wandern die Dateien einzeln in den Papierkorb; nur ein leerer Ordner bleibt, und Wiederherstellen füllt ihn wieder.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Javítva:** ha a Windows magát a projektmappát tartja nyitva (pl. keresési indexelő vagy víruskereső), a törlés „használatban van” hibával leállt. Most a fájlok egyenként kerülnek a lomtárba, csak egy üres mappa marad, és a visszaállítás újra feltölti.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Исправлено:** если Windows держит открытой саму папку проекта (например, индексатор поиска или антивирус), удаление останавливалось с ошибкой «используется». Теперь файлы переносятся в корзину по одному, остаётся лишь пустая папка, а восстановление снова её заполняет.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **إصلاح:** إذا أبقى Windows مجلد المشروع نفسه مفتوحًا (مثل مفهرس البحث أو مكافح الفيروسات)، كان الحذف يتوقف برسالة «قيد الاستخدام». الآن تنتقل الملفات إلى السلة واحدًا تلو الآخر ويبقى مجلد فارغ فقط، والاستعادة تملؤه من جديد.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **已修复：** 如果 Windows 占用了项目文件夹本身（例如搜索索引器或杀毒软件），删除会因"正在使用"而中止。现在文件会逐个移入回收站，只留下一个空文件夹，恢复时会重新填回。
+
+</details>
+
 ## [1.2.47] - 2026-11-15
 ### Deleting a project no longer drops its planned posts
 - When you delete a project that still has planned posts, SharkyClips now checks where they wait.
