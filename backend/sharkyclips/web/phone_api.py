@@ -216,6 +216,8 @@ def approve_queue() -> list[dict]:
     now = P.now_utc()
     out = []
     for project in A.list_projects():
+        if project.posts_only:
+            continue
         data = E.load(project)
         if not data["easy"]:
             continue

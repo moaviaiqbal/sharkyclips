@@ -1,4 +1,4 @@
-// 1.2.41 "Çöp kutusu": deleted clips and projects for 30 days (restore / delete for good / empty),
+// 1.2.41 "Çöp kutusu": deleted clips and projects for 30 days (1.2.47: the keep-days setting) (restore / delete for good / empty),
 // plus disk usage per project and the "Temizlik" helper (rejected clips, old previews, caches).
 import { useCallback, useEffect, useState } from "react";
 import { fmtBytes } from "../format";
@@ -7,7 +7,7 @@ import { href } from "../router";
 import { useToast } from "../toast";
 import { trashApi, type DiskUsage, type ProjectUsage, type TrashItem, type TrashSummary } from "../trash";
 import { Icon } from "../components/Icons";
-import { Modal } from "../components/ui";
+import { EmptyDialog } from "../components/Trash";
 
 type Clean = "rejected" | "previews" | "caches";
 
@@ -76,50 +76,6 @@ function ItemRow({ it, onChange }: { it: TrashItem; onChange: (s: TrashSummary) 
         )}
       </div>
     </li>
-  );
-}
-
-function EmptyDialog({ s, onClose, onDone }: { s: TrashSummary; onClose: () => void; onDone: (s: TrashSummary) => void }) {
-  const { t, num } = useI18n();
-  const toast = useToast();
-  const [busy, setBusy] = useState(false);
-  const go = async () => {
-    setBusy(true);
-    try {
-      const r = await trashApi.empty(s.count);
-      onDone(r.trash);
-      toast({ kind: r.left ? "info" : "ok", text: t("trash.emptied", { n: num(r.deleted), size: fmtBytes(r.bytes) }) });
-      onClose();
-    } catch (e: any) {
-      toast({ kind: "err", text: e.message, hint: e.hint });
-      setBusy(false);
-    }
-  };
-  return (
-    <Modal
-      top
-      title={
-        <span className="mp-title">
-          <Icon name="alert" /> {t("trash.empty_title")}
-        </span>
-      }
-      onClose={onClose}
-      footer={
-        <>
-          <button className="btn btn-ghost" onClick={onClose}>
-            {t("common.cancel")}
-          </button>
-          <button className="btn btn-danger" disabled={busy} onClick={go} data-testid="trash-empty-confirm">
-            {busy ? <span className="spinner" /> : <Icon name="trash" />} {t("trash.empty_go", { n: num(s.count), size: fmtBytes(s.bytes) })}
-          </button>
-        </>
-      }
-    >
-      <p>
-        <b>{t("trash.empty_body", { n: num(s.count), size: fmtBytes(s.bytes) })}</b>
-      </p>
-      <p className="field-hint">{t("trash.empty_hint")}</p>
-    </Modal>
   );
 }
 

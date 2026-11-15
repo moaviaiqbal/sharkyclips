@@ -12,6 +12,7 @@ import { UI_LANGUAGES, useI18n } from "../i18n";
 import { chooseLanguage, useMeta } from "../meta";
 import { useTheme } from "../theme";
 import { useUiMode } from "../uimode";
+import { TrashCard } from "../components/Trash";
 
 /** Easy mode settings: only what a beginner needs. Everything else lives in Pro mode. */
 export default function EasySettings() {
@@ -175,6 +176,8 @@ export default function EasySettings() {
           />
         </div>
       </section>
+
+      <TrashCard easy />
 
       <section className="card ez-set-card" aria-labelledby="ez-set-phone">
         <h2 id="ez-set-phone">{t("easy.set_phone")}</h2>

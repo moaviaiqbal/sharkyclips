@@ -20,6 +20,13 @@ def api_trash() -> dict:
     return T.summary()
 
 
+@router.put("/api/trash/settings")
+def api_trash_settings(body: dict | None = Body(default=None)) -> dict:
+    """1.2.47: {"keep_days": 0..365} (0 = what you delete is deleted for good at once)."""
+    T.set_keep_days((body or {}).get("keep_days"))
+    return T.summary()
+
+
 @router.post("/api/trash/{tid}/restore")
 def api_restore(tid: str) -> dict:
     return {**T.restore(tid), "trash": T.summary()}
@@ -48,7 +55,7 @@ def api_delete_info(project_id: str, clips: str | None = None) -> dict:
     cids = [c for c in (clips or "").split(",") if c] or None
     orig = T._original(project)
     info = {"project_id": project.id, "title": project.load_meta().get("title") or project.id,
-            "posts": T.posts_of(project, cids), "keep_days": T.KEEP_DAYS}
+            "posts": T.posts_of(project, cids), "keep_days": T.keep_days(), **T.pending_summary(project, cids)}
     if cids is None:
         info["bytes"] = T.size_of(project.dir)
         info["original"] = ({"path": str(orig), "bytes": T.size_of(orig),
@@ -62,7 +69,32 @@ def api_delete_info(project_id: str, clips: str | None = None) -> dict:
 
 @router.post("/api/projects/{project_id}/delete")
 def api_delete_project(project_id: str, body: dict | None = Body(default=None)) -> dict:
-    item = T.delete_project(project_id, with_original=_flag(body, "original"), with_posts=_flag(body, "posts"))
+    """body: original / posts (ticks), pending: "keep" | "cancel" (1.2.47: planned posts that
+    aren't on the platform yet). Keeping them needs an export first when a post has no
+    up-to-date render: then a job does it all and {"job": ...} comes back instead of the item."""
+    pending = (body or {}).get("pending") or "cancel"
+    if pending not in ("keep", "cancel"):
+        raise SharkyClipsError(f"Unknown choice for the planned posts: {pending}.")
+    original, posts = _flag(body, "original"), _flag(body, "posts")
+    project = get_project(project_id)
+    if pending == "keep" and not project.posts_only:
+        info = T.pending_summary(project)
+        if info["pending_local"] and not info["keep_possible"]:
+            raise SharkyClipsError("A YouTube upload of this project isn't finished yet.",
+                                   "Try again once the Library shows it planned on YouTube, or cancel the posts.")
+        if info["keep_needs_export"]:
+            from . import app as A
+
+            def run(job):
+                A.jobs.update(job, stage="exporting", progress=None)
+                return {"item": T.delete_project(project.id, original, posts, "keep", job)}
+
+            job = A.jobs.submit("trash_keep", "gpu", None,
+                                {"target": project.id, "title": project.load_meta().get("title") or project.id,
+                                 "posts": info["pending_local"]},
+                                run, key=f"trash_keep:{project.id}")
+            return {"item": None, "job": job.to_dict(), "trash": T.summary()}
+    item = T.delete_project(project_id, with_original=original, with_posts=posts, pending=pending)
     return {"item": item, "trash": T.summary()}
 
 

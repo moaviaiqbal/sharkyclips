@@ -134,6 +134,15 @@ class Project:
                 return p
         return None
 
+    @property
+    def posts_only(self) -> bool:
+        """1.2.47: the rest of a deleted project kept for its planned posts (trash.keep_posts):
+        hidden from the project lists, only the publish loop and the Library use it."""
+        try:
+            return bool(self.load_meta().get("posts_only"))
+        except Exception:  # noqa: BLE001
+            return False
+
     def load_meta(self) -> dict[str, Any]:
         if not self.meta_path.is_file():
             return {}

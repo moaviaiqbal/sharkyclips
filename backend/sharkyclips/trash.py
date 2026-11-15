@@ -19,6 +19,21 @@ where. For 30 days everything comes back with Restore (or the undo toast); after
 Posts on YouTube / Instagram / TikTok are never touched unless "also delete the posts" is ticked
 (that can't be undone). TikTok has no delete in its API: those links are returned for doing it
 by hand. Jobs of the deleted things are cancelled first (a running render would hold files).
+
+1.2.47:
+  keep days   setting "trash_keep_days" (default 30, 0 = deleted for good at once). The expiry is
+              deleted_at + the setting, so a change applies to what is in the trash already.
+  pending     planned posts that are NOT on the platform yet (Instagram has no scheduling in its
+              API: SharkyClips uploads them at their time from the project's files; a YouTube clip
+              still being prepared / uploaded). Posts already waiting on the platform (YouTube
+              publishAt, TikTok Studio's own schedule, planned by hand in the browser) are not
+              touched by a delete at all: they go out by themselves.
+  keep posts  deleting a project with pending posts asks: cancel them, or keep them. Kept, the
+              project shrinks to a "posts only" rest (meta "posts_only"): its JSON files and the exact
+              video of each pending post (pinned in the post's record, "file_fixed"). Everything else
+              (stream video, audio, caches, the other clips) goes to the trash. The rest is hidden
+              from the project lists, the publish loop posts from it, and after its last post it
+              joins its trash item by itself (finish_rests). Restore puts the whole project back.
 """
 
 from __future__ import annotations
@@ -37,7 +52,8 @@ from . import config
 from .errors import SharkyClipsError
 from .project import Project, get_project, list_projects, read_json_shared, write_json_atomic
 
-KEEP_DAYS = 30
+KEEP_DAYS = 30  # the default of the setting "trash_keep_days"
+MAX_KEEP_DAYS = 365
 DIR = "_trash"
 CACHE_DIRS = ("frames", "track", "loop")  # regenerable on demand, cheap to make again
 OLD_PREVIEW_DIRS = ("previews",)  # ClipForge-era preview renders nothing reads any more
@@ -115,6 +131,31 @@ def _move(src: Path, dest: Path, seconds: float = 8.0) -> None:
             raise
 
 
+def keep_days() -> int:
+    """How long the trash keeps things (setting "trash_keep_days"; 0 = deleted for good at once)."""
+    try:
+        n = int(config.get("trash_keep_days"))
+    except (TypeError, ValueError):
+        n = KEEP_DAYS
+    return max(0, min(MAX_KEEP_DAYS, n))
+
+
+def set_keep_days(n) -> int:
+    try:
+        n = int(n)
+    except (TypeError, ValueError):
+        raise SharkyClipsError("The number of days must be a whole number.") from None
+    if not 0 <= n <= MAX_KEEP_DAYS:
+        raise SharkyClipsError(f"Pick 0 to {MAX_KEEP_DAYS} days.", "0 deletes for good at once (no undo).")
+    config.update(trash_keep_days=n)
+    return n
+
+
+def _expires(rec: dict) -> datetime:
+    deleted = _parse(rec.get("deleted_at")) or _now()
+    return deleted + timedelta(days=keep_days())
+
+
 def _new_id() -> str:
     return _now().strftime("%Y%m%d-%H%M%S-") + secrets.token_hex(3)
 
@@ -155,9 +196,10 @@ def items() -> list[dict]:
 
 def view(rec: dict, now: datetime | None = None) -> dict:
     now = now or _now()
-    exp = _parse(rec.get("expires_at")) or now
+    exp = _expires(rec)
     keep = {k: rec.get(k) for k in ("id", "kind", "project_id", "project_title", "clip_ids", "titles", "deleted_at",
-                                    "expires_at", "bytes", "original", "posts")}
+                                    "bytes", "original", "posts", "purged", "kept_posts")}
+    keep["expires_at"] = _iso(exp)
     keep["days_left"] = max(0, int((exp - now).total_seconds() // 86400) + (1 if (exp - now).total_seconds() % 86400 else 0))
     keep["restorable"] = rec.get("kind") != "cleanup" or bool(rec.get("files"))
     return keep
@@ -166,7 +208,7 @@ def view(rec: dict, now: datetime | None = None) -> dict:
 def summary() -> dict:
     rows = items()
     return {"items": [view(r) for r in rows], "count": len(rows), "bytes": sum(int(r.get("bytes") or 0) for r in rows),
-            "keep_days": KEEP_DAYS}
+            "keep_days": keep_days()}
 
 
 # ===================================================================== jobs + plans
@@ -216,7 +258,7 @@ def _take_plans(project: Project, cids: list[str]) -> dict:
         recs = {}
     for cid in cids:
         for p, r in ((recs.get(cid) or {}).items()):
-            if (r or {}).get("status") in ("scheduled", "preparing", "ready") and r.get("via") != "chrome":
+            if (r or {}).get("status") in ("scheduled", "preparing", "ready") and not _on_platform(r):
                 out["social"].setdefault(cid, {})[p] = dict(r)
                 PF.record(project, cid, p, status="idle", publish_at=None)
     try:
@@ -288,7 +330,7 @@ def posts_of(project: Project, cids: list[str] | None = None) -> list[dict]:
         for p, r in (plats or {}).items():
             if (r or {}).get("status") not in ("published", "processing", "scheduled") or r.get("deleted"):
                 continue
-            if r.get("status") == "scheduled" and not r.get("via"):
+            if r.get("status") == "scheduled" and not _on_platform(r):
                 continue  # planned by SharkyClips itself: not out there yet (taken off the plan)
             out.append({"platform": p, "clip_id": cid, "id": r.get("media_id") or r.get("post_id"), "url": r.get("url"),
                         "title": None, "can_delete": p == "reels" and bool(r.get("media_id"))})
@@ -321,6 +363,103 @@ def _delete_posts(project: Project, cids: list[str] | None) -> dict:
     return {"deleted": done, "by_hand": by_hand, "failed": failed}
 
 
+# ===================================================================== 1.2.47: pending posts
+
+LIVE = ("scheduled", "preparing", "uploading", "processing")
+
+
+def _on_platform(r: dict) -> bool:
+    """A planned post that waits on the platform itself (TikTok Studio's schedule, or planned by
+    hand in the browser): it goes out by itself, whatever happens to the project here."""
+    return (r or {}).get("status") == "scheduled" and bool(r.get("remote") or r.get("via") == "chrome")
+
+
+def _title(cand: dict) -> str:
+    return ((cand.get("publish") or {}).get("titles") or [None])[0] or (cand.get("text") or "")[:80] or cand["id"]
+
+
+def pending_posts(project: Project, cids: list[str] | None = None) -> list[dict]:
+    """Every planned post of these clips that hasn't gone out yet:
+    [{platform, clip_id, title, publish_at, on_platform, file, needs_export, no_file}].
+    on_platform: it waits on YouTube / TikTok Studio already (a delete doesn't touch it). The rest
+    is uploaded by SharkyClips later, from this project's files (file: the video it would send,
+    needs_export: none is ready, no_file: only the last step is left, e.g. an Instagram upload
+    that is processing)."""
+    from . import platforms as PF, publishing as P
+
+    now = _now()
+    cands = {c["id"]: c for c in _candidates(project)}
+    want = list(cands) if cids is None else [c for c in cids if c in cands]
+    out = []
+    for cid in want:
+        item = P.get(P.key_of(project.id, cid))
+        if not item or item.get("cancelled"):
+            continue
+        at = P.parse(item.get("publish_at"))
+        row = {"platform": "youtube", "clip_id": cid, "title": _title(cands[cid]), "publish_at": _iso(at) if at else None,
+               "file": None, "needs_export": False, "no_file": False}
+        if item.get("video_id"):
+            if at is not None and at > now:
+                out.append({**row, "on_platform": True})
+        else:
+            out.append({**row, "on_platform": False})
+    try:
+        recs = PF.records(project)
+    except Exception:  # noqa: BLE001
+        recs = {}
+    for cid in want:
+        for plat, r in (recs.get(cid) or {}).items():
+            r = r or {}
+            st = r.get("status")
+            if r.get("mode") == "semi" or r.get("deleted"):
+                continue  # by hand: its file is in Downloads already
+            retry = st == "failed" and r.get("next_try_at") and int(r.get("attempts") or 0) < _max_tries()
+            if st not in LIVE and not retry:
+                continue
+            row = {"platform": plat, "clip_id": cid, "title": _title(cands[cid]), "publish_at": r.get("publish_at"),
+                   "on_platform": _on_platform(r) or (st == "processing" and plat == "tiktok"),
+                   "file": None, "needs_export": False, "no_file": st == "processing"}
+            if not row["on_platform"] and not row["no_file"]:
+                row["file"], row["needs_export"] = _post_file(project, cid, r)
+            out.append(row)
+    return out
+
+
+def _max_tries() -> int:
+    try:
+        from .web.multipost import MAX_TRIES
+
+        return MAX_TRIES
+    except Exception:  # noqa: BLE001
+        return 6
+
+
+def _post_file(project: Project, cid: str, rec: dict) -> tuple[str | None, bool]:
+    """(the video this post would send, an export is needed first)."""
+    f = rec.get("file")
+    if f and Path(f).is_file() and (rec.get("file_fixed") or rec.get("container_id") or rec.get("publish_id")
+                                    or rec.get("submitted_at")):
+        return f, False
+    try:
+        from .web import multipost as M
+
+        src = M._source_info(project, cid)
+    except Exception:  # noqa: BLE001
+        return None, True
+    return (src["file"], False) if src.get("kind") == "clip" and src.get("file") else (None, True)
+
+
+def pending_summary(project: Project, cids: list[str] | None = None) -> dict:
+    rows = pending_posts(project, cids)
+    local = [r for r in rows if not r["on_platform"]]
+    youtube_wait = [r for r in local if r["platform"] == "youtube"]
+    files = {r["file"] for r in local if r["file"]}
+    return {"pending": rows, "pending_local": len(local), "pending_on_platform": len(rows) - len(local),
+            "keep_possible": bool(local) and not youtube_wait and cids is None,
+            "keep_needs_export": sum(1 for r in local if r["needs_export"]),
+            "keep_bytes": sum(size_of(Path(f)) for f in files)}
+
+
 # ===================================================================== delete
 
 
@@ -334,9 +473,29 @@ def _original(project: Project) -> Path | None:
     return p if p.is_file() else None
 
 
-def delete_project(project_id: str, with_original: bool = False, with_posts: bool = False) -> dict:
+def _finish(rec: dict) -> dict:
+    """Saves a trash item; with 0 keep days it is deleted for good right away."""
+    _save(rec)
+    if keep_days() == 0:
+        try:
+            purge(rec["id"])
+            rec["purged"] = True
+        except SharkyClipsError:
+            pass  # a file in use: the hourly purge takes it
+    return view(rec)
+
+
+def delete_project(project_id: str, with_original: bool = False, with_posts: bool = False,
+                   pending: str = "cancel", job=None) -> dict:
+    """pending: what happens to planned posts that aren't on the platform yet: "cancel" (taken
+    off the plan, back on Restore) or "keep" (see keep_posts)."""
     project = get_project(project_id)
+    if pending == "keep":
+        return keep_posts(project, with_original, with_posts, job)
     with _lock:
+        if project.load_meta().get("posts_only"):  # the rest of an earlier "keep the posts": all of it now
+            _take_plans(project, [c["id"] for c in _candidates(project)])
+            return _join_rest(project, cancel=True)
         _cancel_jobs(project.id)
         posts = _delete_posts(project, None) if with_posts else None
         plans = _take_plans(project, [c["id"] for c in (_candidates(project))])
@@ -352,7 +511,7 @@ def delete_project(project_id: str, with_original: bool = False, with_posts: boo
                         "outside_workspace": not _inside(orig, config.workspace_dir())}
         rec = {"id": tid, "kind": "project", "project_id": project.id, "project_title": meta.get("title") or project.id,
                "clip_ids": [], "titles": [], "deleted_at": _iso(_now()),
-               "expires_at": _iso(_now() + timedelta(days=KEEP_DAYS)), "bytes": nbytes, "plans": plans,
+               "expires_at": _iso(_now() + timedelta(days=keep_days())), "bytes": nbytes, "plans": plans,
                "original": original, "posts": posts, "files": [{"from": str(project.dir), "to": project.id}]}
         try:
             _move(project.dir, home / project.id)
@@ -367,8 +526,175 @@ def delete_project(project_id: str, with_original: bool = False, with_posts: boo
                 rec["bytes"] += original["bytes"]
             except (OSError, SharkyClipsError) as exc:
                 original["error"] = str(getattr(exc, "message", exc))
-        _save(rec)
-        return view(rec)
+        return _finish(rec)
+
+
+def _move_rest(base: Path, keep: set[Path], dest: Path) -> list[dict]:
+    """Moves everything of a project folder into dest except its top-level JSON files and the
+    `keep` files (and the folders on their way). All or nothing."""
+    keep = {k.resolve() for k in keep}
+    keep_dirs = {a for k in keep for a in k.parents}
+    moved: list[dict] = []
+
+    def walk(d: Path) -> None:
+        for e in sorted(d.iterdir()):
+            rel = e.relative_to(base)
+            r = e.resolve()
+            if r in keep or (d == base and e.is_file() and e.suffix.lower() == ".json"):
+                continue
+            if e.is_dir() and r in keep_dirs:
+                walk(e)
+                continue
+            _move(e, dest / rel)
+            moved.append({"from": str(rel), "to": str(Path("files") / rel)})
+
+    try:
+        walk(base)
+    except BaseException:
+        for m in reversed(moved):
+            try:
+                _move(dest.parent / m["to"], base / m["from"])
+            except (OSError, SharkyClipsError):
+                pass
+        raise
+    return moved
+
+
+def _cancel_jobs_but_posts(project_id: str) -> int:
+    """Like _cancel_jobs, but an upload running right now goes on (it is one of the kept posts)."""
+    try:
+        from .web import app as A
+        from .web.jobs import ACTIVE
+    except Exception:  # noqa: BLE001 - no web app (CLI)
+        return 0
+    n = 0
+    for j in list(A.jobs.for_project(project_id)):
+        if j.status in ACTIVE and j.kind != "post":
+            A.jobs.cancel(j.id)
+            n += 1
+    if n:
+        time.sleep(0.3)
+    return n
+
+
+def keep_posts(project: Project, with_original: bool = False, with_posts: bool = False, job=None) -> dict:
+    """Delete a project but keep its planned posts that aren't on the platform yet (Instagram:
+    SharkyClips uploads them at their time). The video of each one is pinned to its post (an
+    export is made first when no up-to-date render exists: slow, run it in a job), then all the
+    rest goes to the trash. The "posts only" rest is hidden and goes by itself after its last post."""
+    from . import platforms as PF
+
+    def existing() -> dict | None:
+        po = project.load_meta().get("posts_only")
+        if not po:
+            return None
+        try:
+            return view(load(po.get("trash_id") or "-"))
+        except SharkyClipsError:
+            return None
+
+    if (done := existing()) is not None:
+        return done
+    info = pending_summary(project)
+    local = [r for r in info["pending"] if not r["on_platform"]]
+    if not local:
+        return delete_project(project.id, with_original, with_posts, "cancel")
+    if not info["keep_possible"]:
+        raise SharkyClipsError("A YouTube upload of this project isn't finished yet.",
+                               "Try again once the Library shows it planned on YouTube, or cancel the posts.")
+    _cancel_jobs_but_posts(project.id)
+    from .web import multipost as M
+
+    keep: set[Path] = set()
+    for r in local:  # outside the trash lock: an export takes minutes
+        if r["no_file"]:
+            continue
+        rec = (PF.records(project).get(r["clip_id"]) or {}).get(r["platform"]) or {}
+        f = M._file_for(project, r["clip_id"], r["platform"], rec, job)  # may export (needs the stream video)
+        PF.record(project, r["clip_id"], r["platform"], file=str(f), file_fixed=True)
+        keep.add(Path(f))
+    with _lock:
+        if (done := existing()) is not None:
+            return done
+        meta = project.load_meta()
+        posts = _delete_posts(project, None) if with_posts else None
+        original = None
+        orig = _original(project)
+        if orig is not None and not _inside(orig, project.dir):
+            original = {"path": str(orig), "moved": False, "bytes": orig.stat().st_size,
+                        "outside_workspace": not _inside(orig, config.workspace_dir())}
+        tid = _new_id()
+        home = root() / tid
+        home.mkdir(parents=True)
+        try:
+            moved = _move_rest(project.dir, keep, home / "files")
+        except BaseException:
+            shutil.rmtree(home, ignore_errors=True)
+            raise
+        kept = [{k: r[k] for k in ("platform", "clip_id", "title", "publish_at")} for r in local]
+        rec = {"id": tid, "kind": "project", "partial": True, "project_id": project.id,
+               "project_title": meta.get("title") or project.id, "clip_ids": [], "titles": [],
+               "deleted_at": _iso(_now()), "expires_at": _iso(_now() + timedelta(days=keep_days())),
+               "bytes": sum(size_of(home / m["to"]) for m in moved), "plans": {}, "original": original,
+               "posts": posts, "files": moved, "kept_posts": kept, "kept_bytes": size_of(project.dir)}
+        if with_original and original is not None:
+            try:
+                _move(Path(original["path"]), home / "original" / Path(original["path"]).name, seconds=4)
+                original.update(moved=True, to=f"original/{Path(original['path']).name}")
+                rec["bytes"] += original["bytes"]
+            except (OSError, SharkyClipsError) as exc:
+                original["error"] = str(getattr(exc, "message", exc))
+        meta["posts_only"] = {"since": rec["deleted_at"], "trash_id": tid,
+                              "posts": [f"{r['clip_id']}:{r['platform']}" for r in local]}
+        project.save_meta(meta)
+        return _finish(rec)
+
+
+def _join_rest(project: Project, cancel: bool = False) -> dict:
+    """The "posts only" rest of a project goes after its trash item (Restore brings all back)."""
+    with _lock:
+        meta = project.load_meta()
+        po = meta.get("posts_only") or {}
+        _cancel_jobs(project.id)
+        try:
+            rec = load(po.get("trash_id") or "-")
+        except SharkyClipsError:
+            rec = None
+        if rec is None:  # that item is deleted for good already: this rest is all that's left
+            meta.pop("posts_only", None)
+            project.save_meta(meta)
+            if keep_days() == 0:
+                n = size_of(project.dir)
+                shutil.rmtree(project.dir, ignore_errors=True)
+                return {"id": None, "kind": "project", "project_id": project.id, "bytes": n, "purged": True}
+            return delete_project(project.id)
+        home = root() / rec["id"]
+        _move(project.dir, home / "rest" / project.id)
+        rec.update(rest_moved=True, bytes=int(rec.get("bytes") or 0) + size_of(home / "rest"),
+                   rest_at=_iso(_now()), rest_cancelled=bool(cancel))
+        return _finish(rec)
+
+
+def finish_rests() -> int:
+    """From the publish loop: a "posts only" rest whose last post went out (or was cancelled /
+    failed for good) joins its trash item."""
+    from .web import multipost as M
+
+    n = 0
+    for project in list_projects():
+        try:
+            if not project.load_meta().get("posts_only"):
+                continue
+            if any(not r["on_platform"] for r in pending_posts(project)):
+                continue
+            cids = [c["id"] for c in _candidates(project)]
+            if any(M.active_job(project.id, cid, p) is not None for cid in cids for p in ("tiktok", "reels")):
+                continue
+            _join_rest(project)
+            n += 1
+        except Exception:  # noqa: BLE001 - next minute
+            continue
+    return n
 
 
 def _candidates(project: Project) -> list[dict]:
@@ -448,11 +774,10 @@ def delete_clips(project_id: str, cids: list[str], with_posts: bool = False, kin
                   or c for c in want]
         rec = {"id": tid, "kind": kind, "project_id": project.id,
                "project_title": project.load_meta().get("title") or project.id, "clip_ids": want, "titles": titles,
-               "deleted_at": _iso(_now()), "expires_at": _iso(_now() + timedelta(days=KEEP_DAYS)),
+               "deleted_at": _iso(_now()), "expires_at": _iso(_now() + timedelta(days=keep_days())),
                "bytes": sum(size_of(home / m["to"]) for m in moved), "files": moved, "data": data, "plans": plans,
                "posts": posts, "original": None}
-        _save(rec)
-        return view(rec)
+        return _finish(rec)
 
 
 # ===================================================================== restore
@@ -462,7 +787,9 @@ def restore(tid: str) -> dict:
     with _lock:
         rec = load(tid)
         home = root() / _safe(tid)
-        if rec["kind"] == "project":
+        if rec["kind"] == "project" and rec.get("partial"):
+            _restore_partial(rec, home)
+        elif rec["kind"] == "project":
             dest = config.workspace_dir() / rec["project_id"]
             if dest.exists():
                 raise SharkyClipsError("A project with the same name is back in the workspace.",
@@ -484,6 +811,42 @@ def restore(tid: str) -> dict:
         shutil.rmtree(home, ignore_errors=True)
         return {"restored": rec["id"], "kind": rec["kind"], "project_id": rec["project_id"],
                 "clip_ids": rec.get("clip_ids") or []}
+
+
+def _restore_partial(rec: dict, home: Path) -> None:
+    """A "keep the posts" delete: the rest (still in the workspace, or joined the item later)
+    gets its files back and is a normal project again."""
+    from . import platforms as PF
+
+    dest = config.workspace_dir() / rec["project_id"]
+    if rec.get("rest_moved"):
+        if dest.exists():
+            raise SharkyClipsError("A project with the same name is back in the workspace.",
+                                   "Delete or rename that one first, then restore this one.")
+        _move(home / "rest" / rec["project_id"], dest)
+    if not dest.is_dir():
+        raise SharkyClipsError("The rest of this project is gone.", "Delete this item for good.")
+    for m in rec.get("files") or []:
+        src, to = home / m["to"], dest / m["from"]
+        if src.exists() and not to.exists():
+            _move(src, to)
+    orig = rec.get("original") or {}
+    if orig.get("moved") and not Path(orig["path"]).exists():
+        try:
+            _move(home / orig["to"], Path(orig["path"]), seconds=4)
+        except (OSError, SharkyClipsError):
+            pass
+    project = Project(rec["project_id"], dest)
+    meta = project.load_meta()
+    meta.pop("posts_only", None)
+    project.save_meta(meta)
+    try:  # posts not sent yet follow your edits again (not the pinned file)
+        for cid, plats in PF.records(project).items():
+            for plat, r in (plats or {}).items():
+                if (r or {}).get("file_fixed") and r.get("status") == "scheduled" and not r.get("container_id"):
+                    PF.record(project, cid, plat, file_fixed=None, file=None)
+    except Exception:  # noqa: BLE001
+        pass
 
 
 def _restore_clips(project: Project, rec: dict, home: Path) -> None:
@@ -552,8 +915,7 @@ def purge_expired(now: datetime | None = None) -> int:
     now = now or _now()
     n = 0
     for r in items():
-        exp = _parse(r.get("expires_at"))
-        if exp is not None and exp <= now:
+        if _expires(r) <= now:
             try:
                 purge(r["id"])
                 n += 1
@@ -563,7 +925,8 @@ def purge_expired(now: datetime | None = None) -> int:
 
 
 def purge_soon(every: float = 3600.0) -> int:
-    """From the publish loop: items older than 30 days go (once an hour is plenty)."""
+    """From the publish loop: items older than the keep days go (once an hour is plenty; with
+    0 keep days everything goes at once anyway)."""
     if time.time() - _purge_at["t"] < every:
         return 0
     _purge_at["t"] = time.time()
@@ -599,6 +962,8 @@ def usage(project: Project) -> dict:
 def all_usage() -> dict:
     rows = []
     for p in list_projects():
+        if p.posts_only:
+            continue
         try:
             u = usage(p)
         except Exception:  # noqa: BLE001
@@ -661,9 +1026,8 @@ def cleanup(project_id: str, what: list[str]) -> dict:
                 done_json = {}
             rec = {"id": tid, "kind": "cleanup", "project_id": project.id,
                    "project_title": project.load_meta().get("title") or project.id, "clip_ids": [], "titles": what,
-                   "deleted_at": _iso(_now()), "expires_at": _iso(_now() + timedelta(days=KEEP_DAYS)),
+                   "deleted_at": _iso(_now()), "expires_at": _iso(_now() + timedelta(days=keep_days())),
                    "bytes": sum(size_of(home / m["to"]) for m in done), "files": done,
                    "data": {"clips_json": done_json, "candidates": []}, "plans": {}, "posts": None, "original": None}
-            _save(rec)
-            trashed = view(rec)
+            trashed = _finish(rec)
     return {"freed_now": freed_now, "trashed": trashed, "usage": usage(project)}

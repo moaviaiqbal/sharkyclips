@@ -16,6 +16,21 @@ export interface TrashItem {
   restorable: boolean;
   original: { path: string; moved: boolean; bytes: number; outside_workspace: boolean; error?: string } | null;
   posts: { deleted: Post[]; by_hand: Post[]; failed: (Post & { error: string })[] } | null;
+  /** 1.2.47: 0 keep days: deleted for good at once (no undo) */
+  purged?: boolean;
+  /** 1.2.47: planned posts kept in a "posts only" rest of the project */
+  kept_posts?: { platform: string; clip_id: string; title: string; publish_at: string | null }[] | null;
+}
+
+/** 1.2.47: a planned post that hasn't gone out yet */
+export interface PendingPost {
+  platform: "youtube" | "tiktok" | "reels";
+  clip_id: string;
+  title: string;
+  publish_at: string | null;
+  /** waits on YouTube / TikTok Studio already: a delete doesn't touch it */
+  on_platform: boolean;
+  needs_export: boolean;
 }
 
 export interface Post {
@@ -41,6 +56,12 @@ export interface DeleteInfo {
   keep_days: number;
   posts: Post[];
   original: { path: string; bytes: number; outside_workspace: boolean } | null;
+  pending: PendingPost[];
+  pending_local: number;
+  pending_on_platform: number;
+  keep_possible: boolean;
+  keep_needs_export: number;
+  keep_bytes: number;
 }
 
 export interface Cleanable {
@@ -81,8 +102,9 @@ export const trashApi = {
   empty: (count: number) => req<{ deleted: number; bytes: number; left: number; trash: TrashSummary }>("POST", "/api/trash/empty", { count }),
   info: (pid: string, clips?: string[]) =>
     req<DeleteInfo>("GET", `/api/projects/${P(pid)}/delete-info${clips?.length ? `?clips=${clips.map(P).join(",")}` : ""}`),
-  deleteProject: (pid: string, o: { original: boolean; posts: boolean }) =>
-    req<{ item: TrashItem; trash: TrashSummary }>("POST", `/api/projects/${P(pid)}/delete`, o),
+  deleteProject: (pid: string, o: { original: boolean; posts: boolean; pending: "keep" | "cancel" }) =>
+    req<{ item: TrashItem | null; job?: { id: string } | null; trash: TrashSummary }>("POST", `/api/projects/${P(pid)}/delete`, o),
+  setKeepDays: (keep_days: number) => req<TrashSummary>("PUT", "/api/trash/settings", { keep_days }),
   deleteClips: (pid: string, clip_ids: string[], posts: boolean) =>
     req<{ item: TrashItem; trash: TrashSummary }>("POST", `/api/projects/${P(pid)}/clips/delete`, { clip_ids, posts }),
   disk: () => req<DiskUsage>("GET", "/api/disk"),

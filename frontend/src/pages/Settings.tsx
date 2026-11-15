@@ -18,6 +18,7 @@ import { useToast } from "../toast";
 import { CoverAiCard, MyVoiceCard } from "../components/ExtrasSettings";
 import { AccountsSection } from "../components/Accounts";
 import { AboutCard } from "../components/Licenses";
+import { TrashCard } from "../components/Trash";
 
 function SpeedCompare({ info, fast }: { info: LlmInfo; fast: boolean }) {
   const { t, num } = useI18n();
@@ -508,6 +509,7 @@ export default function Settings() {
           </section>
 
           <PerformanceCard settings={settings} save={save} />
+          <TrashCard />
           <section className="card setting" id="ai">
             <div>
               <h2>{t("settings.ai")}</h2>

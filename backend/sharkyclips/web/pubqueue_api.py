@@ -363,7 +363,8 @@ def overview() -> dict:
     s = PQ.settings()
     status = _status_map()
     rows = []
-    projects = sorted(list_projects(), key=lambda p: p.load_meta().get("updated_at") or "", reverse=True)[:MAX_PROJECTS]
+    projects = sorted((p for p in list_projects() if not p.posts_only), key=lambda p: p.load_meta().get("updated_at") or "",
+                      reverse=True)[:MAX_PROJECTS]
     for project in projects:
         try:
             cands = _candidates(project)

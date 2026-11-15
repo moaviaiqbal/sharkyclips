@@ -713,7 +713,7 @@ def _social_start(project: Project, cand: dict, platform: str, when: datetime | 
               error=None, attempts=0, next_try_at=None, late=False, cover_ms=v["cover_ms"],
               intent=f"{int(time.time() * 1000)}", consent_at=time.time() if platform == "tiktok" else None,
               status="scheduled" if when else "preparing", publish_at=_iso(when) if when else None,
-              file=None if rec.get("status") != "failed" else rec.get("file"))
+              file=None if rec.get("status") != "failed" and not rec.get("file_fixed") else rec.get("file"))
     if when:
         return {"status": "scheduled", "publish_at": _iso(when)}
     submit(project.id, cid, platform)
@@ -759,8 +759,11 @@ def _file_for(project: Project, cid: str, platform: str, rec: dict, job: Job | N
     """The video this post sends: the one an earlier step of this post used, else the rendered
     clip, else a fresh export with the platform preset (made here, in the job)."""
     if rec.get("file") and Path(rec["file"]).is_file() and (rec.get("publish_id") or rec.get("container_id")
-                                                             or rec.get("submitted_at") or rec.get("remote")):
-        return Path(rec["file"])  # resuming: exactly the bytes TikTok / Instagram already got
+                                                             or rec.get("submitted_at") or rec.get("remote")
+                                                             or rec.get("file_fixed")):
+        # resuming: exactly the bytes TikTok / Instagram already got; 1.2.47 file_fixed: the project
+        # was deleted with "keep the posts", this is the video kept for this post
+        return Path(rec["file"])
     A = _app()
     src = _source_info(project, cid)
     while src["kind"] == "rendering":
@@ -1397,8 +1400,10 @@ def tick(now: datetime | None = None) -> list[str]:
             acts.append("chrome:linked")
         from .. import trash
 
-        if trash.purge_soon():  # 1.2.41: trash items older than 30 days
+        if trash.purge_soon():  # 1.2.41: trash items older than the keep days
             acts.append("trash:purged")
+        if trash.finish_rests():  # 1.2.47: "posts only" rests whose last post went out
+            acts.append("trash:rest")
     except Exception:  # noqa: BLE001
         pass
     if time.time() - _stats_at["t"] > STATS_EVERY_S:

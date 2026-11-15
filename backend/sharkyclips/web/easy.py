@@ -759,6 +759,8 @@ def api_projects() -> list[dict]:
     A = _app()
     out = []
     for p in A.list_projects():
+        if p.posts_only:
+            continue
         meta = p.load_meta()
         data = E.load(p)
         hl = _hl(p)

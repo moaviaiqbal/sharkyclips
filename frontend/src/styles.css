@@ -4551,6 +4551,22 @@ a.edit-note:hover { text-decoration: underline; }
 .trash-path { overflow-wrap: anywhere; font-family: var(--font-mono, monospace); }
 .trash-posts { margin: 4px 0 0; padding-inline-start: 18px; font-size: 12.5px; }
 .trash-posts a { overflow-wrap: anywhere; }
+/* 1.2.47: planned posts that aren't on the platform yet; the trash card in Settings */
+.trash-pending { display: grid; gap: 8px; padding: 10px 12px; border: 1px solid color-mix(in srgb, var(--warn) 55%, var(--border));
+  border-radius: var(--r-md); background: var(--warn-soft); min-width: 0; }
+.trash-pending > p:first-child { display: flex; gap: 6px; align-items: flex-start; color: var(--warn); }
+.trash-pending > p:first-child b { color: var(--text); }
+.trash-pending .trash-posts li { overflow-wrap: anywhere; }
+.trash-pending-opts { display: grid; gap: 6px; }
+.trash-pending-opts .trash-opt { background: var(--surface); }
+.trash-opt.disabled { opacity: 0.6; }
+.trash-zero { color: var(--danger); }
+.trash-card { display: grid; gap: 14px; align-content: start; min-width: 0; }
+.trash-card-use { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.trash-card-size { font-size: 22px; font-weight: 700; }
+.trash-card-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.trash-card-days { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.trash-card-days .input { width: 96px; }
 .trash-page .page-head { flex-wrap: wrap; gap: 12px; }
 .trash-section { margin-top: 24px; }
 .trash-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }

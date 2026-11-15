@@ -102,6 +102,8 @@ DEFAULTS: dict[str, Any] = {
     "phone_lan": False,
     # 1.2.42: automatic TikTok through TikTok Studio in SharkyClips' own browser profile
     "tiktok_auto_daily": 3,  # at most this many automatic TikTok posts a day
+    # 1.2.47: days a deleted project / clip stays in the trash (0 = deleted for good at once)
+    "trash_keep_days": 30,
     "tiktok_browser": "auto",  # auto (Chrome, then Edge, then Playwright's Chromium) | chrome | msedge | chromium  # the phone approval page on the Wi-Fi (needs an access PIN)
     "replay_smooth": "auto",  # instant replay frames: auto | motion | blend
     # Easy mode clip length target per mode, set from the channel's own views (lengthfit.py):

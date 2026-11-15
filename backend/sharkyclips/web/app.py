@@ -381,7 +381,8 @@ def submit_benchmark() -> Job:
 
         project = next((p for p in sorted(list_projects(), key=lambda p: p.load_meta().get("updated_at") or "",
                                           reverse=True)
-                        if (p.dir / "highlights.json").is_file() and p.transcript_path.is_file()), None)
+                        if (p.dir / "highlights.json").is_file() and p.transcript_path.is_file() and not p.posts_only),
+                       None)
         if project is None:
             raise SharkyClipsError("Import a video and find its highlights first; the speed test uses its best clip.")
 
@@ -1351,7 +1352,7 @@ def _accepted_overview(project: Project) -> dict | None:
 @app.get("/api/queue/accepted")
 def api_queue_accepted() -> list[dict]:
     """Per project: accepted clips and how many still need rendering ("Render all accepted")."""
-    out = [o for p in list_projects() if (o := _accepted_overview(p)) and o["accepted"]]
+    out = [o for p in list_projects() if not p.posts_only and (o := _accepted_overview(p)) and o["accepted"]]
     return out
 
 
@@ -1468,7 +1469,7 @@ def _summary(project: Project) -> dict:
 
 @app.get("/api/projects")
 def api_projects() -> list[dict]:
-    out = [_summary(p) for p in list_projects()]
+    out = [_summary(p) for p in list_projects() if not p.posts_only]
     out.sort(key=lambda p: p.get("created_at") or "", reverse=True)
     return out
 

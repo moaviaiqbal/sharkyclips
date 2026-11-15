@@ -7,6 +7,88 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.47] - 2026-11-15
+### Deleting a project no longer drops its planned posts
+- When you delete a project that still has planned posts, SharkyClips now checks where they wait.
+  Posts already on the platform (planned on YouTube, or in TikTok Studio's own schedule) aren't
+  touched: the project is just deleted, and they go out by themselves.
+- Instagram can't schedule through its API, so SharkyClips uploads those Reels at their time from
+  the project's files. For these, the delete window now warns you ("This project has 3 planned
+  posts that aren't on the platform yet") and asks:
+  - **Keep the posts** (recommended): only the videos of those posts stay. The project leaves your
+    list, the stream video and everything else are deleted, and after the last post the rest goes
+    by itself. If a post has no up-to-date video yet, it is made first.
+  - **Cancel the posts**: they come off the plan, as before.
+- Earlier, deleting a project also took posts planned in TikTok Studio off the Library, although
+  they still went out.
+
+### Trash settings
+- Settings has a new **Trash** card: how much space the trash takes, an **Empty trash** button,
+  and how many days deleted things are kept (30 by default). **0** deletes for good at once, with
+  no undo.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Proje silmek artık planlı gönderileri düşürmüyor
+- Hâlâ planlı gönderisi olan bir projeyi sildiğinde SharkyClips önce onların nerede beklediğine
+  bakıyor. Platforma zaten yüklenmiş olanlara (YouTube'da planlı ya da TikTok Studio'nun kendi
+  takviminde) dokunulmuyor: proje doğrudan siliniyor, gönderiler saatinde kendiliğinden çıkıyor.
+- Instagram API'si zamanlama yapamıyor; bu yüzden SharkyClips o Reels'leri saatinde projenin
+  dosyalarından yüklüyor. Bunlar için silme penceresi artık seni uyarıyor ("Bu projenin henüz
+  platforma yüklenmemiş 3 planlı gönderisi var") ve soruyor:
+  - **Gönderileri koru** (önerilen): yalnızca o gönderilerin videoları kalır. Proje listenden
+    kalkar, yayın videosu ve geri kalan her şey silinir, son gönderiden sonra kalanı da
+    kendiliğinden gider. Bir gönderinin güncel videosu yoksa önce o hazırlanır.
+  - **Gönderileri iptal et**: eskisi gibi plandan çıkarılırlar.
+- Önceden proje silmek, TikTok Studio'da planlı gönderileri de Kütüphane'den düşürüyordu; oysa
+  onlar yine de yayınlanıyordu.
+
+### Çöp kutusu ayarları
+- Ayarlar'da yeni bir **Çöp kutusu** kartı var: çöpün ne kadar yer kapladığı, **Çöpü boşalt**
+  butonu ve silinenlerin kaç gün saklanacağı (varsayılan 30). **0** hemen kalıcı olarak siler,
+  geri alınamaz.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Neu:** Beim Löschen eines Projekts mit geplanten Beiträgen prüft SharkyClips, wo sie warten. Beiträge, die schon auf der Plattform sind (YouTube, TikTok Studio), bleiben unberührt. Für Instagram-Reels, die SharkyClips selbst hochlädt, warnt das Fenster und fragt: Beiträge behalten (nur ihre Videos bleiben, der Rest wird gelöscht und geht nach dem letzten Beitrag von selbst) oder abbrechen.
+- **Neu:** Karte „Papierkorb“ in den Einstellungen mit belegtem Platz, „Papierkorb leeren“ und der Aufbewahrungsdauer (Standard 30 Tage, 0 = sofort endgültig löschen).
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Új:** ha tervezett bejegyzésekkel rendelkező projektet törölsz, a SharkyClips megnézi, hol várnak. A már platformon lévőket (YouTube, TikTok Studio) nem érinti. Az Instagram Reelsekre, amelyeket a SharkyClips maga tölt fel, figyelmeztet és megkérdezi: megtartod a bejegyzéseket (csak a videóik maradnak, a többi törlődik, az utolsó bejegyzés után a maradék is megy) vagy lemondod őket.
+- **Új:** „Lomtár” kártya a Beállításokban: foglalt hely, „Lomtár ürítése” és a megőrzési idő (alapból 30 nap, 0 = azonnali végleges törlés).
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Новое:** при удалении проекта с запланированными публикациями SharkyClips проверяет, где они ждут. Уже загруженные на платформу (YouTube, TikTok Studio) не затрагиваются. Для Reels в Instagram, которые SharkyClips загружает сам, окно предупреждает и спрашивает: сохранить публикации (останутся только их видео, остальное удалится, а после последней публикации уйдёт и остаток) или отменить их.
+- **Новое:** карточка «Корзина» в настройках: занятое место, «Очистить корзину» и срок хранения (по умолчанию 30 дней, 0 = удалять навсегда сразу).
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **جديد:** عند حذف مشروع له منشورات مجدولة، يتحقق SharkyClips من مكان انتظارها. المنشورات الموجودة على المنصة (YouTube وTikTok Studio) لا تُمس. أما مقاطع Reels على Instagram التي يرفعها SharkyClips بنفسه، فتنبهك النافذة وتسألك: إبقاء المنشورات (تبقى فيديوهاتها فقط ويُحذف الباقي، ثم يُحذف ما تبقى بعد آخر منشور) أو إلغاؤها.
+- **جديد:** بطاقة «سلة المحذوفات» في الإعدادات: المساحة المستخدمة وزر «إفراغ السلة» ومدة الاحتفاظ (30 يومًا افتراضيًا، 0 = حذف نهائي فوري).
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **新增：** 删除带有计划帖子的项目时，SharkyClips 会先检查它们在哪里等待。已在平台上的帖子（YouTube、TikTok Studio）不受影响。对于 SharkyClips 自己上传的 Instagram Reels，窗口会提醒并询问：保留帖子（只保留它们的视频，其余删除，最后一条发布后剩余部分自动删除）或取消。
+- **新增：** 设置中的"回收站"卡片：占用空间、"清空回收站"按钮和保留天数（默认 30 天，0 = 立即永久删除）。
+
+</details>
+
 ## [1.2.46] - 2026-11-15
 ### Fixed: Instagram posts that failed with "Request processing failed"
 - Instagram sometimes refuses a video while it receives it ("ProcessingFailedError"), and takes
