@@ -132,7 +132,8 @@ def test_a_refused_upload_says_what_instagram_said(fake, tmp_path, monkeypatch):
     video.write_bytes(b"\1" * 1000)
     with pytest.raises(PF.PlatformError) as e:
         PF.ig_post(video, "x", poll=0.01)
-    assert "ProcessingFailedError" in e.value.message and e.value.code == "400"
+    assert "ProcessingFailedError" in e.value.message  # what Instagram said
+    assert e.value.code == PF.IG_PROCESSING_FAILED and e.value.kind == "transient"  # 1.2.46: tried again
 
 
 def test_instagram_login_token_stays_on_graph_instagram(fake, tmp_path):

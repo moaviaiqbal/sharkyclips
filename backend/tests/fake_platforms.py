@@ -280,6 +280,10 @@ class FakePlatforms:
                         return self._json(400, {"debug_info": {"retriable": False, "type": "ProcessingFailedError",
                                                                "message": "Request processing failed"}})
                     off = int(self.headers.get("offset") or 0)
+                    if st.get("ig_fail_processing", 0) > 0 and off + len(raw) >= int(up["file_size"] or 0):
+                        st["ig_fail_processing"] -= 1  # 1.2.45: rupload fails a whole file now and then
+                        return self._json(400, {"debug_info": {"retriable": False, "type": "ProcessingFailedError",
+                                                               "message": "Request processing failed"}})
                     up["bytes"] = off + len(raw)
                     if up["file_size"] and up["bytes"] < int(up["file_size"]):
                         return self._json(206, {"debug_info": {"retriable": True, "type": "PartialRequestError",

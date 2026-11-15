@@ -1196,6 +1196,7 @@ def ig_container(text: str, ai_label: bool = False, thumb_ms: int | None = None)
 
 
 IG_CHUNK = 4 * 1024 * 1024
+IG_PROCESSING_FAILED = "processing_failed"
 
 
 def ig_send(file: Path, container: str, chunk: int | None = None) -> None:
@@ -1227,6 +1228,12 @@ def ig_send(file: Path, container: str, chunk: int | None = None) -> None:
                 continue
             if r.status_code >= 400:
                 info = _ig_debug(r)
+                if "ProcessingFailedError" in (info or ""):
+                    # 1.2.45: rupload fails the SAME file now and then (seen 2026-11-15: one try 400,
+                    # the next FINISHED): a transient error -> a fresh container, tried again
+                    raise PlatformError(f"Instagram refused the upload: {info}.",
+                                        "SharkyClips tries again with a fresh upload.", "reels",
+                                        IG_PROCESSING_FAILED, "transient", 60.0)
                 raise api_error("reels", f"Instagram refused the upload: {info or r.status_code}.", None,
                                 str(r.status_code), r.status_code)
             _ig_json(r, "upload")

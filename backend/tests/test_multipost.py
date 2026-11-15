@@ -596,3 +596,27 @@ def test_a_clip_rendered_before_a_bleep_edit_is_never_posted(cfg):  # noqa: F811
     assert MP._source_info(project, "c01")["kind"] == "export"
     state.save_review(project, {"edits": {}})
     assert MP._source_info(project, "c01")["kind"] == "clip"
+
+
+def test_instagram_processing_failure_gets_a_fresh_upload(social):
+    """1.2.45: rupload answers "400 ProcessingFailedError" for a file it takes on the next try: one
+    such answer -> a fresh container right away; two -> a transient failure the engine retries."""
+    from sharkyclips.web import multipost as MP
+
+    project = _project("pub-mp-igfail")
+    _rendered(project, "c01")
+    social.state["ig_fail_processing"] = 1
+    MP.start(project, "c01", {"platforms": ["reels"], "when": "now"})
+    _wait(_idle, 60)
+    r = _rec(project, "c01", "reels")
+    assert r["status"] == "published" and r["container_id"] == "C2", r  # the first container was dropped
+    _rendered(project, "c02")
+    social.state["ig_fail_processing"] = 2
+    MP.start(project, "c02", {"platforms": ["reels"], "when": "now"})
+    _wait(_idle, 60)
+    r = _rec(project, "c02", "reels")
+    assert r["status"] == "failed" and r["error"]["kind"] == "transient" and r["next_try_at"], r
+    assert not r.get("container_id")  # the retry starts with a fresh upload
+    PF.record(project, "c02", "reels", next_try_at=time.time() - 1)
+    _tick()
+    assert _rec(project, "c02", "reels")["status"] == "published"

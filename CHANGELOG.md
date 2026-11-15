@@ -7,6 +7,58 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.46] - 2026-11-15
+### Fixed: Instagram posts that failed with "Request processing failed"
+- Instagram sometimes refuses a video while it receives it ("ProcessingFailedError"), and takes
+  the very same file a minute later. SharkyClips used to give up on the first refusal, so a
+  planned Reel didn't go out. Now it starts a fresh upload right away. If Instagram refuses again,
+  the post is tried again by itself a little later, each time with a fresh upload.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Düzeltildi: "Request processing failed" ile düşen Instagram paylaşımları
+- Instagram bazen bir videoyu alırken reddediyor ("ProcessingFailedError"), aynı dosyayı bir
+  dakika sonra kabul ediyor. SharkyClips ilk retta vazgeçiyordu, bu yüzden planlı bir Reel
+  çıkmıyordu. Artık hemen sıfırdan yeni bir yükleme başlatıyor. Instagram yine reddederse paylaşım
+  biraz sonra kendiliğinden tekrar deneniyor, her seferinde yeni bir yüklemeyle.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Behoben:** Instagram lehnt ein Video manchmal beim Empfang ab („ProcessingFailedError“) und nimmt dieselbe Datei kurz danach an. SharkyClips gab beim ersten Mal auf, sodass ein geplantes Reel nicht erschien. Jetzt startet sofort ein neuer Upload, und bei erneuter Ablehnung wird der Post später automatisch noch einmal versucht, jedes Mal mit einem neuen Upload.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Javítva:** az Instagram néha visszautasít egy videót fogadás közben („ProcessingFailedError”), majd ugyanazt a fájlt kicsit később elfogadja. A SharkyClips az első elutasításnál feladta, így egy ütemezett Reel nem jelent meg. Most azonnal új feltöltés indul, újabb elutasításnál pedig a poszt később magától újra próbálkozik, mindig új feltöltéssel.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Исправлено:** Instagram иногда отклоняет видео при приёме («ProcessingFailedError») и через минуту принимает тот же файл. SharkyClips сдавался после первого отказа, и запланированный Reel не выходил. Теперь сразу начинается новая загрузка, а при повторном отказе публикация автоматически повторяется позже, каждый раз с новой загрузкой.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **إصلاح:** يرفض Instagram أحيانًا الفيديو أثناء استلامه («ProcessingFailedError») ثم يقبل الملف نفسه بعد دقيقة. كان SharkyClips يتوقف عند أول رفض فلا يُنشر الـReel المجدول. الآن يبدأ رفعًا جديدًا فورًا، وإذا رُفض مرة أخرى يُعاد المحاولة تلقائيًا بعد قليل، وفي كل مرة برفع جديد.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **已修复：** Instagram 有时会在接收视频时拒绝（"ProcessingFailedError"），一分钟后又接受同一个文件。以前 SharkyClips 第一次被拒就放弃，导致排期的 Reel 没有发出。现在会立即重新上传；如果再次被拒，稍后会自动重试，每次都重新上传。
+- 这样排期的 Reels 不会因为 Instagram 的一次临时错误而错过。
+
+</details>
+
 ## [1.2.45] - 2026-11-15
 ### The preview bleeps exactly like the file that goes out
 - **You hear the bleeps in the preview.** On the project page the 9:16 preview now bleeps (or

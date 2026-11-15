@@ -1018,7 +1018,21 @@ def _run_reels(project: Project, cid: str, file: Path, rec: dict, job: Job | Non
                         bytes_sent=False, publish_sent=False)
     if not rec.get("bytes_sent") and st != "FINISHED":
         _progress(job, 0, 1)(0.05)
-        PF.ig_send(file, container)
+        for attempt in (1, 2):
+            try:
+                PF.ig_send(file, container)
+                break
+            except PF.PlatformError as exc:
+                if exc.code != PF.IG_PROCESSING_FAILED:
+                    raise
+                # 1.2.45: that container is spoilt; the retry (now, then the engine's later ones) starts fresh
+                rec = PF.record(project, cid, "reels", container_id=None, bytes_sent=False, publish_sent=False)
+                if attempt == 2:
+                    raise
+                _check_cancel(job)
+                container = PF.ig_container(rec.get("caption") or "", bool(rec.get("ai_label")), rec.get("cover_ms"))
+                rec = PF.record(project, cid, "reels", container_id=container, container_at=time.time(),
+                                init_at=time.time(), bytes_sent=False, publish_sent=False)
         rec = PF.record(project, cid, "reels", bytes_sent=True)
     if job is not None:
         A.jobs.update(job, stage="processing", progress=0.85)
