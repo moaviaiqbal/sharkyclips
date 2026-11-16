@@ -128,6 +128,7 @@ export function PlatformsCard() {
               <span>{t("platform.auto_post")}</span>
               <Toggle
                 checked={s.mode === "api"}
+                disabled={p === "reels" && !!s.meta_off}
                 onChange={(v) => run(() => platformsApi.setMode(p, v ? "api" : "semi"))}
                 label={t("platform.auto_post")}
               />

@@ -30,6 +30,69 @@ function fileName(path: string | null): string {
   return (path ?? "").split(/[\\/]/).pop() ?? "";
 }
 
+type Part = "title" | "description" | "hashtags" | "caption";
+const PARTS: [Part, string][] = [
+  ["title", "igm.copy_title"],
+  ["description", "igm.copy_desc"],
+  ["hashtags", "igm.copy_tags"],
+  ["caption", "igm.copy_all"],
+];
+
+/** 1.2.50 Instagram Manual mode: no upload page, no automation. The folder opens (send the
+ * video to the phone), each part of the caption copies with one click, you post in the app. */
+function ManualReels({ s, busy, next, onShared }: { s: HandoffPlatform; busy: boolean; next: Step | null; onShared: () => void }) {
+  const { t } = useI18n();
+  const toast = useToast();
+  const [done, setDone] = useState<Partial<Record<Part, boolean>>>({});
+  const parts = s.parts!;
+  const copy = async (k: Part) => {
+    if (await copyText(parts[k])) {
+      setDone((d) => ({ ...d, [k]: true }));
+      toast({ kind: "ok", text: t("common.copied") });
+    } else toast({ kind: "err", text: t("mp.ho_nocopy") });
+  };
+  return (
+    <div className="ho-ready igm-ready">
+      {s.remind_at && <p className="field-hint">{t("igm.remind_at", { when: new Date(s.remind_at).toLocaleString() })}</p>}
+      <p className="field-hint">{t("igm.intro")}</p>
+      {s.file && (
+        <>
+          <button type="button" className="btn btn-primary ez-big ho-go pf-accent-reels" onClick={() => platformsApi.reveal(s.file!).catch(() => {})}>
+            <Icon name="phone" /> {t("igm.open_folder")}
+          </button>
+          <p className="field-hint">
+            {t("igm.folder_hint")} <span className="ho-file" dir="auto">{fileName(s.file)}</span>
+          </p>
+        </>
+      )}
+      <div className="igm-copy" role="group" aria-label={t("igm.copy_group")}>
+        {PARTS.filter(([k]) => parts[k]).map(([k, label]) => (
+          <button key={k} type="button" className={`btn${done[k] ? " igm-done" : ""}`} onClick={() => copy(k)}>
+            <Icon name={done[k] ? "check" : k === "hashtags" ? "hash" : "copy"} size={14} /> {t(label)}
+          </button>
+        ))}
+      </div>
+      <ol className="ho-steps">
+        <li>{t("igm.step_send")}</li>
+        <li>{t("igm.step_app")}</li>
+        <li>{t("igm.step_paste")}</li>
+      </ol>
+      {s.ai_label && (
+        <p className="ez-hint ai-remind" role="note">
+          <Icon name="alert" size={14} /> {t("platform.ai_remind.reels")}
+        </p>
+      )}
+      <button type="button" className="btn btn-primary ez-big" disabled={busy} onClick={onShared}>
+        {busy ? <span className="spinner" /> : <Icon name="check" />} {next ? t("mp.ho_next", { name: TARGET_NAME[next] }) : t("mp.ho_done_btn")}
+      </button>
+      <details className="ho-caption">
+        <summary>{t("mp.ho_caption")}</summary>
+        <textarea className="input" dir="auto" rows={5} readOnly value={s.caption} onFocus={(e) => e.currentTarget.select()} />
+      </details>
+    </div>
+  );
+}
+
 const PASTE_KEYS = typeof navigator !== "undefined" && /Mac|iPhone|iPad/.test(navigator.platform) ? "⌘V" : "Ctrl+V";
 
 function HandoffDialog({ req, onClose }: { req: HandoffRequest; onClose: () => void }) {
@@ -140,6 +203,8 @@ function HandoffDialog({ req, onClose }: { req: HandoffRequest; onClose: () => v
         </div>
       );
     }
+    if (p === "reels" && s.parts && s.manual_mode)
+      return <ManualReels s={s} busy={busy} next={next} onShared={() => sharedIt(p)} />;
     const c = copied[p];
     return (
       <div className="ho-ready">

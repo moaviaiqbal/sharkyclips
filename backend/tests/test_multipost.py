@@ -19,6 +19,8 @@ from sharkyclips.errors import SharkyClipsError
 from sharkyclips.project import Project, write_json_atomic
 from test_publishing import _clean_projects, _idle, _project, _ready, _wait, cfg, yt  # noqa: F401 - fixtures
 
+pytestmark = pytest.mark.usefixtures("meta_on")  # 1.2.50: the Instagram API engine (off in the product)
+
 
 def _client():
     from fastapi.testclient import TestClient

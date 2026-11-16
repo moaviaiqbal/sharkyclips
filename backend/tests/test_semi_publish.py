@@ -12,6 +12,8 @@ from sharkyclips.errors import SharkyClipsError
 from test_multipost import _client, _rec, _rendered
 from test_publishing import _clean_projects, _idle, _project, _wait, cfg  # noqa: F401 - fixtures
 
+pytestmark = pytest.mark.usefixtures("meta_on")  # 1.2.50: the Instagram API engine (off in the product)
+
 
 @pytest.fixture
 def semi(monkeypatch, tmp_path, cfg):  # noqa: F811

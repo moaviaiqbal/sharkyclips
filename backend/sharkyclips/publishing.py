@@ -45,7 +45,8 @@ MIN_GAP_MIN = 45  # two releases on the same day are at least this far apart
 LEAD_MIN = 15  # a release needs this much time ahead (upload + YouTube processing)
 LEARN_MIN_VIDEOS = 10  # calibration entries with a publish time before the times are learned
 LEARN_MIN_PER_HOUR = 2
-BACKOFF_S = [60, 300, 900, 3600, 3 * 3600]  # then: needs attention
+BACKOFF_S = [300]  # 1.2.50: one automatic retry (platforms.AUTO_RETRY_MAX), then: needs attention
+DAILY_MAX = 3  # 1.2.50: platforms.DAILY_POST_MAX - never more uploads a day, whatever the setting
 PER_UPLOAD_UNITS = 1600 + 50 + 50
 FIXES = ("retry", "reconnect", "edit", "rerender", "reschedule", "wait")
 
@@ -149,7 +150,7 @@ def unschedule(item: dict) -> dict:
 
 def daily_limit() -> int:
     try:
-        return max(1, min(50, int(config.get("publish_daily_limit") or DEFAULT_LIMIT)))
+        return max(1, min(DAILY_MAX, int(config.get("publish_daily_limit") or DEFAULT_LIMIT)))
     except (TypeError, ValueError):
         return DEFAULT_LIMIT
 

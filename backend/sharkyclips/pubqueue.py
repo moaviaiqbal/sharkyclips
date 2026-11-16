@@ -20,6 +20,10 @@ SharkyClips only gets everything ready; Claude in Chrome (or you) does the uploa
 defaults: no account, no brand tag, this computer's time zone), not code.
 
 <root> is ~/SharkyClips (setting "root", env SHARKYCLIPS_QUEUE_HOME for tests and portable use).
+
+1.2.50: no browser automation on Meta. The uploader's briefs (CHROME.md, the check brief) leave
+Instagram / Meta Business Suite out entirely: Instagram posts are posted by hand from the
+Instagram app (SharkyClips' Manual mode), and marked by hand here.
 """
 
 from __future__ import annotations
@@ -675,17 +679,23 @@ def write_queue(folder: Path, clips: list[dict], s: dict) -> Path:
     return folder / "queue.json"
 
 
+META_RULE = ("**Never open Instagram, Facebook or Meta Business Suite, and never sign in to them.** "
+             "Skip every `instagram` entry: the user posts those by hand from the Instagram app.\n")
+
+
 def chrome_brief(folder: Path, data: dict) -> str:
     """The uploader's instructions (Claude in Chrome): what to post where and what to answer."""
     tz = _tz_words()
+    _META_RULE = META_RULE  # noqa: N806 - the brief's wording
     return f"""# SharkyClips publish queue: {data['batch']}
 
 Folder: `{folder}`
 Every clip is a 9:16 MP4 under 10 MB. Times carry their UTC offset ({tz}).
 
-For each clip in `queue.json`, and each platform whose `status` is `pending`:
-1. Open the platform's upload page in Chrome (YouTube Studio / TikTok Studio / Instagram, signed in
-   as `platforms.instagram.account` for Instagram when it is set).
+{_META_RULE}
+For each clip in `queue.json`, and each platform whose `status` is `pending` (YouTube and
+TikTok only):
+1. Open the platform's upload page in Chrome (YouTube Studio / TikTok Studio).
 2. Upload the clip's `file`. Title = `title`, description = `description` followed by the
    `hashtags`; YouTube tags = `tags`.
 3. Schedule it for `scheduled_at` ({tz}). If the platform can't schedule, post it at that
@@ -697,7 +707,7 @@ SharkyClips → Publish queue → "Import status":
 
 ```json
 {{"batch": "{data['batch']}", "results": [
-  {{"id": "<clip id>", "platform": "youtube|tiktok|instagram", "status": "scheduled|failed",
+  {{"id": "<clip id>", "platform": "youtube|tiktok", "status": "scheduled|failed",
     "url": "<link or null>", "scheduled_at": "<ISO time if it changed, else null>", "note": "<optional>"}}
 ]}}
 ```
@@ -930,8 +940,9 @@ These posts were planned, but SharkyClips never got a report. Please look them u
 changing anything:
 
 - TikTok: TikTok Studio -> Posts (also the "Scheduled" tab)
-- Instagram: Meta Business Suite -> Content / Planner (the account in brackets), or the profile
 - YouTube: YouTube Studio -> Content
+
+{meta_rule}
 
 {lines}
 
@@ -940,7 +951,7 @@ Publish queue -> "Import status":
 
 ```json
 {{"results": [
-  {{"id": "<id>", "platform": "youtube|tiktok|instagram", "batch": "<batch or null>",
+  {{"id": "<id>", "platform": "youtube|tiktok", "batch": "<batch or null>",
     "status": "published|scheduled|pending|failed", "url": "<link or null>",
     "scheduled_at": "<the time it is planned for, if it is scheduled, else null>",
     "note": "<what you saw, e.g. not found>"}}
@@ -954,8 +965,9 @@ there (never uploaded).
 
 def verify_brief(now: datetime | None = None) -> dict:
     """For Claude in Chrome: look up what really happened to the overdue posts (TikTok Studio,
-    Instagram / Meta Business Suite, YouTube Studio) and answer in the import format."""
-    rows = overdue(now)
+    YouTube Studio) and answer in the import format. 1.2.50: never Instagram / Meta Business
+    Suite: those are checked by hand."""
+    rows = [e for e in overdue(now) if e.get("platform") != "instagram"]
     if not rows:
         raise SharkyClipsError("Nothing to check: no post is overdue.")
     lines = []
@@ -964,7 +976,7 @@ def verify_brief(now: datetime | None = None) -> dict:
         title = str(e.get("title") or "").strip()
         lines.append(f"- `{e['id']}` (batch `{e.get('batch')}`) on **{NAMES.get(e['platform'], e['platform'])}**{acc}, "
                      f"planned for {e['scheduled_at']}: \"{title}\"")
-    return {"text": VERIFY.format(lines="\n".join(lines)), "count": len(rows), "rows": rows}
+    return {"text": VERIFY.format(lines="\n".join(lines), meta_rule=META_RULE), "count": len(rows), "rows": rows}
 
 
 def batches(limit: int = 20) -> list[dict]:

@@ -136,6 +136,9 @@ export function PostBadge({ s, pid, cid, onChanged }: { s: PostState; pid: strin
     case "cancelled":
       text = t("mp.st_cancelled");
       break;
+    case "paused":
+      text = s.publish_at ? t("mp.st_paused_at", { when: relWhen(s.publish_at, lang) }) : t("mp.st_paused");
+      break;
     default:
       text = t("mp.st_idle");
   }
@@ -153,7 +156,7 @@ export function PostBadge({ s, pid, cid, onChanged }: { s: PostState; pid: strin
   const inner = (
     <>
       <PlatformIcon p={p} size={15} />
-      {busyState(s.status) ? <span className="spinner spinner-xs" aria-hidden="true" /> : s.status === "published" ? <Icon name="check" size={12} /> : s.status === "failed" ? <Icon name="alert" size={12} /> : s.status === "scheduled" ? <Icon name="clock" size={12} /> : null}
+      {busyState(s.status) ? <span className="spinner spinner-xs" aria-hidden="true" /> : s.status === "published" ? <Icon name="check" size={12} /> : s.status === "failed" ? <Icon name="alert" size={12} /> : s.status === "scheduled" ? <Icon name="clock" size={12} /> : s.status === "paused" ? <Icon name="pause" size={12} /> : null}
       <span className="mp-badge-text">{text}</span>
     </>
   );
@@ -177,6 +180,12 @@ export function PostBadge({ s, pid, cid, onChanged }: { s: PostState; pid: strin
       {(s.status === "failed" || s.status === "cancelled") && (
         <button type="button" className="mp-badge-act" disabled={busy} onClick={retry} aria-label={t("mp.retry_on", { name })}>
           {busy ? <span className="spinner spinner-xs" /> : <Icon name="refresh" size={12} />}
+        </button>
+      )}
+      {s.status === "paused" && (
+        <button type="button" className="mp-badge-act" disabled={busy} onClick={retry}
+          aria-label={t("igm.prepare_on", { name })} title={t("igm.prepare_on", { name })}>
+          {busy ? <span className="spinner spinner-xs" /> : <Icon name="upload" size={12} />}
         </button>
       )}
     </span>

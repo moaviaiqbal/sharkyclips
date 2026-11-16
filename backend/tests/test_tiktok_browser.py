@@ -409,7 +409,7 @@ def test_captcha_falls_back_to_by_hand_and_tells_you(lane, monkeypatch):
     assert PF.mode("tiktok") == "browser"
 
 
-def test_reconcile_fixes_overdue_queue_entries(lane, monkeypatch):
+def test_reconcile_fixes_overdue_queue_entries(lane, monkeypatch, meta_on):
     from sharkyclips import pubqueue as PQ
     from sharkyclips.web import pubqueue_api as QA
 

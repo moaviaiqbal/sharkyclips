@@ -5,7 +5,7 @@ export type Target = "youtube" | "tiktok" | "reels";
 export const TARGETS: Target[] = ["youtube", "tiktok", "reels"];
 export const TARGET_NAME: Record<Target, string> = { youtube: "YouTube", tiktok: "TikTok", reels: "Instagram" };
 
-export type PostStatus = "idle" | "scheduled" | "preparing" | "uploading" | "processing" | "ready" | "published" | "failed" | "cancelled";
+export type PostStatus = "idle" | "scheduled" | "preparing" | "uploading" | "processing" | "ready" | "published" | "failed" | "cancelled" | "paused";
 
 /** 1.2.39: semi (default for TikTok / Instagram) = SharkyClips makes the file + copies the caption,
  *  you paste and share; api = posted by itself (automatic posting on + a working token). */
@@ -81,6 +81,8 @@ export type Pill = "ok" | "attention" | "signed_out";
 export interface Account {
   platform: Target;
   connected: boolean;
+  /** 1.2.50: Instagram automation is off (Manual mode only) */
+  meta_off?: boolean;
   handle: string | null;
   name: string | null;
   avatar: boolean;
@@ -176,10 +178,41 @@ export interface PublishView {
 
 export interface HandoffPlatform extends PostState {
   file: string | null;
+  folder?: string | null;
   caption: string;
   upload_page: string;
   ai_label: boolean;
+  /** 1.2.50 Instagram Manual mode: the caption cut into what the Instagram app asks for */
+  parts?: { title: string; description: string; hashtags: string; caption: string };
+  manual_mode?: boolean;
 }
+
+/** 1.2.50: Instagram posts waiting for you (Manual mode) and the paused automatic ones. */
+export interface IgManualRow {
+  project_id: string;
+  clip_id: string;
+  project_title: string;
+  title: string;
+  status: "paused" | "ready" | "preparing";
+  when: string | null;
+  file: string | null;
+  folder: string | null;
+}
+export interface IgManual {
+  due: IgManualRow[];
+  upcoming: IgManualRow[];
+  paused: IgManualRow[];
+  preparing: IgManualRow[];
+  meta_off: boolean;
+}
+
+const IG = (pid: string, cid: string) => `/api/instagram/manual/${encodeURIComponent(pid)}/${encodeURIComponent(cid)}`;
+export const igManualApi = {
+  list: () => req<IgManual>("GET", "/api/instagram/manual"),
+  prepare: (pid: string, cid: string) => req<ClipPosts>("POST", `${IG(pid, cid)}/prepare`),
+  prepareAll: () => req<{ prepared: number; failed: (IgManualRow & { error: string })[] }>("POST", "/api/instagram/manual/prepare-all"),
+  snooze: (pid: string, cid: string, minutes = 60) => req<ClipPosts>("POST", `${IG(pid, cid)}/snooze`, { minutes }),
+};
 
 export interface Handoff {
   project_id: string;

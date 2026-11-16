@@ -26,6 +26,14 @@ Planned posts: YouTube gets publishAt; TikTok / Instagram are posted by this app
 planner, so the PC needn't be on then; other times are posted by the publish loop at that time.
 At most `tiktok_auto_daily` posts a day (a full day moves to the next one). A stop (CAPTCHA,
 verification, login wall, unknown screen) falls back to "by hand" for that clip.
+
+1.2.50: Meta restricted the account for automation, so Instagram is Manual mode only
+(platforms.META_AUTOMATION off): the file is made and kept in Downloads/SharkyClips, and at the
+planned time SharkyClips reminds you (Windows notice + the in-app bar) with the title, the
+description and the hashtags ready to copy and the folder one click away; you post from the
+Instagram app. Earlier automatic Instagram posts are "paused" (never sent by themselves; "Prepare
+by hand" turns one into a Manual-mode reminder). TikTok / YouTube: at most PF.DAILY_POST_MAX
+automatic posts a day and PF.AUTO_RETRY_MAX automatic retry after a failure.
 """
 
 from __future__ import annotations
@@ -58,7 +66,7 @@ LIMITS = {
 LEAD_S = 120  # a planned TikTok / Instagram time must be at least this far ahead
 POLL_S = 3.0
 PROCESS_WAIT_S = 600  # wait this long inside the job; after that the publish loop checks back
-MAX_TRIES = 6
+MAX_TRIES = 1 + PF.AUTO_RETRY_MAX  # 1.2.50: the first try + one automatic retry (was 6)
 STATS_EVERY_S = 6 * 3600
 TIKTOK_PRIVACY = ("PUBLIC_TO_EVERYONE", "MUTUAL_FOLLOW_FRIENDS", "FOLLOWER_OF_CREATOR", "SELF_ONLY")
 TIKTOK_DEFAULTS = {"privacy": None, "allow_comment": False, "allow_duet": False, "allow_stitch": False,
@@ -381,7 +389,7 @@ def quotas(fetch: bool = True) -> dict:
     return {"youtube": {"used": q["used"], "total": q["limit"], "uploads_left": q["uploads_left"],
                         "resets_at": q["resets_at"]},
             "tiktok": {"used": _tiktok_day_count(_now()), "total": TB.daily_cap(), "approx": False, "auto": True}
-            if browser else {"used": tt, "total": PF.TIKTOK_DAILY_CAP, "approx": True},
+            if browser else {"used": tt, "total": PF.DAILY_POST_MAX, "approx": True},
             "reels": ig and {"used": ig["used"], "total": ig["total"]} or {"used": _posts_last_day("reels"),
                                                                            "total": 50, "approx": True}}
 
@@ -701,11 +709,15 @@ def _social_start(project: Project, cand: dict, platform: str, when: datetime | 
         PF.record(project, cid, platform, mode="semi", caption=caption, ai_voice=ai if ai["dub"] else None,
                   error=None, attempts=0, next_try_at=None, late=False, status="preparing",
                   publish_at=None, remind_at=_iso(when) if when else None, file=None, folder=None,
-                  shared_at=None, manual=None, url=None)
+                  shared_at=None, manual=None, url=None, notified_at=None if when else time.time())
         submit(project.id, cid, platform)
         return {"status": "preparing", "mode": "semi", "upload_page": PF.UPLOAD_PAGE[platform]}
     if v["modes"][platform] == "browser":
         return _browser_start(project, cand, when, v, caption)
+    if platform == "reels" and not PF.META_AUTOMATION:  # 1.2.50: never through Meta's API
+        raise SharkyClipsError("Automatic Instagram posting is switched off.", "Instagram is in Manual mode.")
+    if platform == "tiktok":  # 1.2.50: at most PF.DAILY_POST_MAX TikTok posts a day (a full day moves on)
+        when = browser_slot(when, (project.id, cid))
     settings = dict(v["tiktok"]["settings"]) if platform == "tiktok" and v.get("tiktok") else None
     if platform == "tiktok" and settings is not None and not v["tiktok"]["audited"]:
         settings["privacy"] = "SELF_ONLY"
@@ -798,6 +810,8 @@ def run_post(project_id: str, cid: str, platform: str, job: Job | None = None) -
     rec = _rec(project, cid, platform)
     if rec.get("status") == "published":
         return {"status": "published", "url": rec.get("url")}
+    if platform == "reels" and rec.get("mode") != "semi" and not PF.META_AUTOMATION:
+        return pause_meta(project, cid, rec)  # 1.2.50: an automatic Instagram post never goes out
     try:
         if rec.get("mode") == "browser" and (rec.get("remote") or rec.get("submitted_at")):
             return _browser_verify(project, cid, rec)  # sent before: look it up, never post twice
@@ -889,10 +903,15 @@ def handoff(project: Project, cid: str, platforms: list[str] | None = None) -> d
     out = {}
     for p in [x for x in (platforms or list(SOCIAL)) if x in SOCIAL]:
         rec = _rec(project, cid, p)
+        caption = rec.get("caption") if rec.get("mode") == "semi" and rec.get("caption") else d[p]["caption"]
         out[p] = {**_social_state(project, cid, p),
                   "file": rec.get("file") if rec.get("status") in ("ready", "published") else None,
-                  "caption": d[p]["caption"], "upload_page": PF.UPLOAD_PAGE[p],
+                  "folder": rec.get("folder") if rec.get("status") in ("ready", "published") else None,
+                  "caption": caption, "upload_page": PF.UPLOAD_PAGE[p],
                   "ai_label": bool(ai["dub"]) and bool(ai["label"])}
+        if p == "reels":  # 1.2.50 Manual mode: title, description and hashtags to copy one by one
+            out[p]["parts"] = caption_parts(caption)
+            out[p]["manual_mode"] = not PF.META_AUTOMATION
     return {"project_id": project.id, "clip_id": cid, "platforms": out}
 
 
@@ -1115,7 +1134,8 @@ def browser_slot(when: datetime | None, skip: tuple[str, str] | None = None) -> 
         at = base + timedelta(days=i)
         if _tiktok_day_count(at, skip) < cap:
             return when if i == 0 else at
-    raise SharkyClipsError("Every day of the next two months is full on TikTok.", "Raise the daily limit in Settings > Accounts.")
+    raise SharkyClipsError("Every day of the next two months is full on TikTok.",
+                           f"At most {cap} TikTok posts a day: pick fewer clips or post some by hand.")
 
 
 def _clip_title(project: Project, cid: str, rec: dict | None = None) -> str:
@@ -1328,6 +1348,8 @@ def retry(project: Project, cid: str, platform: str) -> dict:
         return {"status": "uploading"}
     if not rec:
         raise SharkyClipsError("Nothing to try again here.", "Press Publish.")
+    if platform == "reels" and rec.get("mode") != "semi" and not PF.META_AUTOMATION:
+        return prepare_manual(project, cid)  # 1.2.50: by hand from the Instagram app
     if rec.get("mode") == "browser":  # your Retry: post again (also after "not found")
         PF.record(project, cid, platform, submitted_at=None, remote=False, verify_tries=0, cleared=True)
     PF.record(project, cid, platform, status="preparing", error=None, next_try_at=None)
@@ -1347,6 +1369,159 @@ def unplan(project: Project, cid: str, platform: str) -> dict:
     return clip_states(project, cid)
 
 
+# ===================================================================== 1.2.50: Instagram Manual mode
+
+PAUSABLE = ("scheduled", "preparing", "uploading", "processing")
+MANUAL_NOTE = {
+    "en": ("Time to post on Instagram", "\"{title}\" is ready: copy the caption and post it from the Instagram app."),
+    "tr": ("Instagram'da paylaşma zamanı", "\"{title}\" hazır: açıklamayı kopyala ve Instagram uygulamasından paylaş."),
+    "de": ("Zeit für Instagram", "\"{title}\" ist bereit: Text kopieren und in der Instagram-App posten."),
+    "hu": ("Ideje posztolni az Instagramra", "\"{title}\" kész: másold ki a szöveget, és posztold az Instagram appból."),
+    "ru": ("Пора публиковать в Instagram", "«{title}» готов: скопируйте подпись и опубликуйте из приложения Instagram."),
+    "ar": ("حان وقت النشر على Instagram", "\"{title}\" جاهز: انسخ الوصف وانشره من تطبيق Instagram."),
+    "zh": ("该发 Instagram 了", "“{title}”已准备好：复制文案，在 Instagram 应用中发布。"),
+}
+
+
+def _pausable(r: dict) -> bool:
+    st = r.get("status")
+    if r.get("media_id"):
+        return False
+    return st in PAUSABLE or (st == "failed" and bool(r.get("next_try_at")))
+
+
+def pause_meta(project: Project, cid: str, rec: dict | None = None) -> dict:
+    """An automatic Instagram post that hasn't gone out: paused (kept, never sent by itself)."""
+    rec = rec if rec is not None else _rec(project, cid, "reels")
+    PF.record(project, cid, "reels", status="paused", paused_from=rec.get("status"), paused_mode=rec.get("mode"),
+              paused_at=time.time(), next_try_at=None)
+    return {"status": "paused", "publish_at": rec.get("publish_at")}
+
+
+def caption_parts(caption: str) -> dict:
+    """The caption cut into what Instagram's app asks for: the title line, the description and
+    the hashtags (and the whole caption)."""
+    blocks = [b.strip() for b in (caption or "").split("\n\n") if b.strip()]
+    tags = [b for b in blocks if b.startswith("#")]
+    body = [b for b in blocks if not b.startswith("#")]
+    return {"title": body[0] if body else "", "description": "\n\n".join(body[1:]),
+            "hashtags": " ".join(tags), "caption": caption or ""}
+
+
+def _manual_title(project: Project, cid: str, rec: dict) -> str:
+    return caption_parts(rec.get("caption") or "")["title"].split("\n")[0].strip() or cid
+
+
+def manual_notify(project: Project, cid: str, rec: dict) -> None:
+    lang = str(config.get("ui_language") or "en")
+    head, body = MANUAL_NOTE.get(lang, MANUAL_NOTE["en"])
+    try:
+        E.push_notice("instagram_manual", head, body.format(title=_manual_title(project, cid, rec)[:70]), None)
+    except Exception:  # noqa: BLE001 - a reminder never breaks the loop
+        pass
+    _manual_cache["at"] = 0.0
+
+
+def manual_tick(project: Project, cid: str, r: dict, now: datetime) -> bool:
+    """A Manual-mode Instagram post whose time has come: one reminder (True when sent)."""
+    if r.get("status") != "ready" or r.get("notified_at") or r.get("shared_at"):
+        return False
+    at = P.parse(r.get("remind_at"))
+    if at is not None and at > now:
+        return False
+    PF.record(project, cid, "reels", notified_at=time.time())
+    manual_notify(project, cid, r)
+    return True
+
+
+def prepare_manual(project: Project, cid: str) -> dict:
+    """A paused (or failed) automatic Instagram post -> Manual mode: the file goes to
+    Downloads/SharkyClips, and at its planned time (now, if that passed) SharkyClips reminds you."""
+    rec = _rec(project, cid, "reels")
+    if not rec:
+        raise SharkyClipsError("Nothing planned for Instagram here.", "Press Publish.")
+    if rec.get("status") == "published" or rec.get("media_id"):
+        raise SharkyClipsError("This clip is already on Instagram.")
+    if rec.get("mode") == "semi" and rec.get("status") in ("preparing", "ready"):
+        return clip_states(project, cid)
+    if active_job(project.id, cid, "reels") is not None:
+        return clip_states(project, cid)
+    at = P.parse(rec.get("publish_at"))
+    future = at is not None and at > _now()
+    caption = rec.get("caption")
+    if not caption:
+        A = _app()
+        caption = drafts(project, state.effective_cand(A._cand(project, cid), state.load_review(project)))["reels"]["caption"]
+    PF.record(project, cid, "reels", mode="semi", caption=caption, status="preparing", error=None, attempts=0,
+              next_try_at=None, late=False, remind_at=_iso(at) if future else None, folder=None, shared_at=None,
+              manual=None, url=None, notified_at=None if future else time.time(), was_paused=rec.get("status") == "paused",
+              container_id=None, bytes_sent=False, publish_sent=False)
+    submit(project.id, cid, "reels")
+    _manual_cache["at"] = 0.0
+    return clip_states(project, cid)
+
+
+def snooze_manual(project: Project, cid: str, minutes: int = 60) -> dict:
+    rec = _rec(project, cid, "reels")
+    if rec.get("mode") != "semi" or rec.get("status") != "ready":
+        raise SharkyClipsError("This post isn't waiting for you.")
+    PF.record(project, cid, "reels", remind_at=_iso(_now() + timedelta(minutes=max(5, min(int(minutes), 24 * 60)))),
+              notified_at=None)
+    _manual_cache["at"] = 0.0
+    return clip_states(project, cid)
+
+
+_manual_cache: dict = {"at": 0.0, "data": None}
+
+
+def manual_list() -> dict:
+    """Every Instagram post that waits for you: due (its time came), upcoming (Manual mode,
+    later), paused (automatic posts stopped in 1.2.50)."""
+    A = _app()
+    now = _now()
+    out: dict = {"due": [], "upcoming": [], "paused": [], "preparing": []}
+    for project in A.list_projects():
+        try:
+            recs = PF.records(project)
+        except Exception:  # noqa: BLE001
+            continue
+        ptitle = None
+        for cid, plats in recs.items():
+            r = (plats or {}).get("reels") or {}
+            st = r.get("status")
+            if st not in ("paused", "ready", "preparing") or (st != "paused" and r.get("mode") != "semi"):
+                continue
+            if ptitle is None:
+                ptitle = project.load_meta().get("title") or project.id
+            when = r.get("publish_at") if st == "paused" else r.get("remind_at")
+            row = {"project_id": project.id, "clip_id": cid, "project_title": ptitle,
+                   "title": _manual_title(project, cid, r), "status": st, "when": when,
+                   "file": r.get("file") if st == "ready" else None, "folder": r.get("folder") if st == "ready" else None}
+            at = P.parse(when)
+            if st == "paused":
+                out["paused"].append(row)
+            elif st == "preparing":
+                out["preparing"].append(row)
+            elif at is None or at <= now or r.get("notified_at"):  # its time came (or you were reminded)
+                out["due"].append(row)
+            else:
+                out["upcoming"].append(row)
+    for k in out:
+        out[k].sort(key=lambda x: x.get("when") or "")
+    return out
+
+
+def manual_summary() -> dict:
+    """For the app shell (polled): counts only, cached 20 s."""
+    c = _manual_cache
+    if c["data"] is None or time.time() - c["at"] > 20:
+        d = manual_list()
+        c["data"] = {"due": len(d["due"]), "paused": len(d["paused"]), "upcoming": len(d["upcoming"]),
+                     "next": (d["upcoming"][0]["when"] if d["upcoming"] else None)}
+        c["at"] = time.time()
+    return c["data"]
+
+
 # ===================================================================== the publish loop's part
 
 
@@ -1364,6 +1539,14 @@ def tick(now: datetime | None = None) -> list[str]:
             for p in SOCIAL:
                 r = (plats or {}).get(p) or {}
                 st = r.get("status")
+                if p == "reels" and st and not PF.META_AUTOMATION:  # 1.2.50: Meta is hands-off
+                    if r.get("mode") == "semi":
+                        if manual_tick(project, cid, r, now):
+                            acts.append(f"remind:reels:{project.id}:{cid}")
+                    elif _pausable(r) and active_job(project.id, cid, p) is None:
+                        pause_meta(project, cid, r)
+                        acts.append(f"paused:reels:{project.id}:{cid}")
+                    continue
                 if not st or r.get("mode") == "semi" or active_job(project.id, cid, p) is not None:
                     continue
                 go = None
@@ -1408,7 +1591,7 @@ def tick(now: datetime | None = None) -> list[str]:
         pass
     if time.time() - _stats_at["t"] > STATS_EVERY_S:
         _stats_at["t"] = time.time()
-        if PF.connected("tiktok") or PF.connected("reels"):
+        if PF.connected("tiktok") or (PF.connected("reels") and PF.META_AUTOMATION):
             submit_stats()
             acts.append("stats:social")
     return acts
@@ -1443,7 +1626,7 @@ def sync_stats() -> dict:
                 if r.get("status") != "published":
                     continue
                 try:
-                    if p == "reels" and r.get("media_id") and PF.connected("reels"):
+                    if p == "reels" and r.get("media_id") and PF.connected("reels") and PF.META_AUTOMATION:
                         s = PF.ig_stats(r["media_id"])
                         PF.record(project, cid, p, views=s.get("views"), likes=s.get("likes"), stats_at=time.time(),
                                   url=r.get("url") or s.get("url"))
@@ -1587,6 +1770,33 @@ def api_shared(project_id: str, cid: str, platform: str, body: dict | None = Bod
     project = _project(project_id)
     shared(project, cid, platform, str((body or {}).get("url") or "") or None)
     return handoff(project, cid)
+
+
+@router.get("/api/instagram/manual")
+def api_ig_manual() -> dict:
+    return {**manual_list(), "meta_off": not PF.META_AUTOMATION}
+
+
+@router.post("/api/instagram/manual/{project_id}/{cid}/prepare")
+def api_ig_manual_prepare(project_id: str, cid: str) -> dict:
+    return prepare_manual(_project(project_id), cid)
+
+
+@router.post("/api/instagram/manual/prepare-all")
+def api_ig_manual_prepare_all() -> dict:
+    done, failed = [], []
+    for row in manual_list()["paused"]:
+        try:
+            prepare_manual(_project(row["project_id"]), row["clip_id"])
+            done.append(row)
+        except SharkyClipsError as exc:
+            failed.append({**row, "error": exc.message})
+    return {"prepared": len(done), "failed": failed}
+
+
+@router.post("/api/instagram/manual/{project_id}/{cid}/snooze")
+def api_ig_manual_snooze(project_id: str, cid: str, body: dict | None = Body(default=None)) -> dict:
+    return snooze_manual(_project(project_id), cid, int((body or {}).get("minutes") or 60))
 
 
 @router.post("/api/publish/{project_id}/{cid}/unplan/{platform}")

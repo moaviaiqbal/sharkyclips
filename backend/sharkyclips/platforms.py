@@ -44,6 +44,17 @@ TIKTOK_SCOPES = "user.info.basic,video.publish,video.list"  # video.list: views 
 CHUNK = 10 * 1024 * 1024
 ProgressFn = Callable[[float], None]
 
+# 1.2.50: Meta restricted the user's business account for "automation that breaks the rules"
+# (Account Integrity, 2026-11-16). Every automatic call to Meta (Graph API posting, status
+# polls, stats, token refresh, connecting, the Instagram look-ups of the publish queue) is OFF:
+# Instagram is posted by hand from the Instagram app ("Manual mode": a reminder at the planned
+# time, the video + caption ready to copy). Only a code change turns this back on (tests do).
+META_AUTOMATION = False
+# 1.2.50: the same care everywhere else: at most this many automatic posts a day per platform,
+# and a failed automatic post is tried again by itself at most this many times.
+DAILY_POST_MAX = 3
+AUTO_RETRY_MAX = 1
+
 
 def _endpoint(env: str, default: str) -> str:
     url = os.environ.get(env)
@@ -163,6 +174,8 @@ def mode(name: str) -> str:
     else 'semi' (1.2.39: the default for TikTok and Instagram, also for the one Publish button)."""
     if name == "youtube":
         return "api"
+    if name == "reels" and not META_AUTOMATION:
+        return "semi"  # 1.2.50: Manual mode, always
     want = (config.get("platform_modes") or {}).get(name)
     if name == "tiktok" and want == "browser":  # 1.2.42: TikTok Studio in SharkyClips' own browser
         from . import tiktok_browser
@@ -185,6 +198,7 @@ def status(name: str) -> dict:
     if name == "reels":
         out["privacy_note"] = "app_review" if not app.get("audited") else None
         out["expires_at"] = tok.get("expires_at")
+        out["meta_off"] = not META_AUTOMATION
     return out
 
 
@@ -196,6 +210,10 @@ def set_mode(name: str, value: str) -> dict:
 
         if not tiktok_browser.logged_in():
             raise SharkyClipsError("Log in to TikTok first.", "Settings > Accounts > TikTok > Log in to TikTok.")
+    if name == "reels" and value == "api" and not META_AUTOMATION:
+        raise SharkyClipsError("Automatic Instagram posting is switched off.",
+                               "Meta restricted the account for automation: Instagram stays in Manual mode "
+                               "(SharkyClips reminds you, you post from the Instagram app).")
     if value == "api" and not connected(name):
         raise SharkyClipsError("Connect the account first.", "Follow the guided setup, or keep the semi-automatic mode.")
     modes = dict(config.get("platform_modes") or {})
@@ -575,6 +593,7 @@ def ig_connect(token: str, account: str | None = None) -> dict:
     """Check a pasted Instagram access token and keep it: an Instagram Login token (IGAA...) or a
     Facebook-side one (EAA..., e.g. a business portfolio's system user). `account` (optional): the
     Instagram account it must post to (user id or @username)."""
+    meta_guard()
     token = clean_token(token)
     if len(token) < 20:
         raise SharkyClipsError("Paste the long access token of your Instagram app.",
@@ -658,6 +677,7 @@ def _fb_ig_accounts(token: str) -> list[dict]:
 def _fb_connect(token: str, account: str | None = None) -> dict:
     """A Facebook-side token (EAA...): find its Instagram account, check it may post there, keep it.
     System-user tokens never expire (nothing to refresh); a revoked one shows up as signed out."""
+    meta_guard()
     try:
         _fb_get("me", token, "connection", fields="id,name")
     except PlatformError as exc:
@@ -736,7 +756,15 @@ def _ig_json(r, what: str) -> dict:
     return d
 
 
+def meta_guard() -> None:
+    """Refuses every call to Meta while META_AUTOMATION is off (1.2.50)."""
+    if not META_AUTOMATION:
+        raise PlatformError("Instagram automation is off: SharkyClips no longer talks to Meta by itself.",
+                            "Post it yourself from the Instagram app (Manual mode).", "reels", "meta_off", "fatal")
+
+
 def _ig_token() -> dict:
+    meta_guard()
     tok = load_token("reels")
     if not tok or not tok.get("access_token"):
         raise SharkyClipsError("Instagram isn't connected.", "Connect it in Settings → Accounts.")
@@ -758,6 +786,7 @@ IG_REFRESH_AFTER = 7 * 86400
 
 
 def refresh_ig() -> None:
+    meta_guard()
     tok = load_token("reels") or {}
     if tok.get("graph") == "facebook":
         return  # nothing to refresh: a system-user token doesn't expire
@@ -938,7 +967,7 @@ def keep_fresh() -> list[str]:
             acts.append("refresh:tiktok")
         except SharkyClipsError:
             acts.append("refresh_failed:tiktok")
-    tok = load_token("reels") or {}
+    tok = (load_token("reels") or {}) if META_AUTOMATION else {}
     if tok.get("access_token") and tok.get("graph") != "facebook" and \
             now - float(tok.get("saved_at") or 0) > IG_REFRESH_AFTER and \
             (problem("reels") or {}).get("kind") != "signed_out":
@@ -976,7 +1005,8 @@ def account(name: str) -> dict:
                                ("signed_out" if b["pill"] == "signed_out" else None),
                                "message": blk.get("message")})
     if name == "reels":
-        out["stats"] = "insights" in str(tok.get("scope") or "insights")
+        out["stats"] = "insights" in str(tok.get("scope") or "insights") and META_AUTOMATION
+        out["meta_off"] = not META_AUTOMATION
         out["redirect"] = app.get("redirect")
     return out
 
@@ -1118,6 +1148,7 @@ def ig_start(app_id: str, app_secret: str, port: int, redirect: str | None = Non
     """Save your Meta app (Instagram app ID + secret) and return the Instagram sign-in URL.
     Meta wants an https redirect address: the sign-in ends on https://localhost/..., which the
     browser can't open (SharkyClips runs plain http), so the user pastes that address back."""
+    meta_guard()
     app_id, app_secret = app_id.strip(), app_secret.strip()
     saved = load_app("reels") or {}
     if not app_id and not app_secret and saved.get("app_id"):  # Reconnect: the saved app
@@ -1141,6 +1172,8 @@ def ig_finish(code: str, state: str | None = None) -> dict:
     """code -> short-lived token -> 60-day token -> profile. `code` may be the whole address the
     browser ended on (the https://localhost page that doesn't load)."""
     from urllib.parse import parse_qs
+
+    meta_guard()
 
     code = (code or "").strip()
     if "code=" in code:
@@ -1214,7 +1247,7 @@ def ig_send(file: Path, container: str, chunk: int | None = None) -> None:
             f.seek(off)
             part = f.read(step)
             r = None
-            for _try in range(3):
+            for _try in range(1 + AUTO_RETRY_MAX):
                 r = _http().post(url, data=part, timeout=300, headers={
                     "Authorization": f"OAuth {tok['access_token']}", "offset": str(off), "file_size": str(size)})
                 if r.status_code in (200, 206) or not _ig_retriable(r):
@@ -1289,6 +1322,8 @@ def ig_recent(limit: int = 12) -> list[dict]:
 
 
 def ig_permalink(media: str) -> str | None:
+    if not META_AUTOMATION:
+        return None
     tok = _ig_token()
     try:
         r = _http().get(f"{_ig_graph(tok)}/{media}", timeout=30,
@@ -1343,6 +1378,8 @@ def ig_stats(media: str) -> dict:
 
 def ig_delete(media: str) -> bool:
     """Delete a post. Meta only allows this for some apps: False means delete it in the Instagram app."""
+    if not META_AUTOMATION:  # 1.2.50: delete it in the Instagram app
+        return False
     tok = _ig_token()
     try:
         r = _http().delete(f"{_ig_graph(tok)}/{media}", timeout=30, params={"access_token": tok["access_token"]})

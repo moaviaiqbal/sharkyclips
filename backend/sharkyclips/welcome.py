@@ -155,7 +155,18 @@ def app_state() -> dict:
     return {"version": __version__, "onboarding": onboarding_needed(cfg), "whats_new": whats_new(cfg),
             "dev": dev if dev and not dev["stale"] else None, "dev_stale": dev if dev and dev["stale"] else None,
             "content_types": cfg.get("content_types") or [cfg.get("default_mode") or "gaming"],
-            "youtube_signed_out": _yt_signed_out()}
+            "youtube_signed_out": _yt_signed_out(), "instagram_manual": _ig_manual()}
+
+
+def _ig_manual() -> dict | None:
+    """1.2.50: Instagram posts waiting for you (Manual mode reminders, paused automatic posts)."""
+    try:
+        from .web import multipost
+
+        d = multipost.manual_summary()
+        return d if d["due"] or d["paused"] else None
+    except Exception:  # noqa: BLE001 - never break the app shell
+        return None
 
 
 def _yt_signed_out() -> dict | None:

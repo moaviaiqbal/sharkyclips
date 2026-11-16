@@ -139,7 +139,7 @@ def test_full_day_moves_to_the_next_free_slot_and_strict_refuses(cfg):
     assert moved3 and abs((t3 - _local(1, "12:00")).total_seconds()) >= 45 * 60
 
 
-def test_limit_never_above_what_the_quota_can_upload(cfg):
+def test_limit_never_above_what_the_quota_can_upload(cfg, old_limits):
     config.update(publish_daily_limit=20, youtube_daily_quota=10_000)
     assert P.quota_capacity() == 5 and P.effective_limit() == 5
     assert len(P.best_times()["times"]) == 5
@@ -635,7 +635,7 @@ def test_cover_images_and_first_frame_burn(tmp_path):
 # ===================================================================== settings + endpoint mapping
 
 
-def test_settings_api_and_meta_validation(cfg):
+def test_settings_api_and_meta_validation(cfg, old_limits):
 
     with _client() as c:
         s = c.put("/api/library/settings", json={"daily_limit": 4, "times": ["9:00", "21:30", "bad"], "learn_times": False}).json()

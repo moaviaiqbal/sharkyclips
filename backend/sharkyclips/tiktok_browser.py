@@ -167,11 +167,15 @@ def daily_cap() -> int:
         n = int(config.get("tiktok_auto_daily") or DEFAULT_DAILY)
     except (TypeError, ValueError):
         n = DEFAULT_DAILY
-    return max(1, min(15, n))
+    from .platforms import DAILY_POST_MAX
+
+    return max(1, min(DAILY_POST_MAX, n))  # 1.2.50: never above 3 a day
 
 
 def set_daily_cap(n: int) -> int:
-    config.update(tiktok_auto_daily=max(1, min(15, int(n))))
+    from .platforms import DAILY_POST_MAX
+
+    config.update(tiktok_auto_daily=max(1, min(DAILY_POST_MAX, int(n))))
     return daily_cap()
 
 

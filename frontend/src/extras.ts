@@ -89,6 +89,8 @@ export interface PlatformStatus {
   platform: Platform;
   mode: "semi" | "api" | "browser";
   connected: boolean;
+  /** 1.2.50: Instagram automation is off (Manual mode only) */
+  meta_off?: boolean;
   account: string | null;
   audited?: boolean;
   has_app?: boolean;

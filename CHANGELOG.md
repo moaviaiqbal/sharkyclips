@@ -7,6 +7,74 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.50] - 2026-11-16
+### Changed: Instagram is posted by hand now (Manual mode)
+- Meta restricted a connected business account for automation. To keep your Instagram accounts
+  safe, SharkyClips no longer talks to Instagram / Meta by itself: no automatic posting, no
+  automatic checks, no browser automation (the Claude in Chrome briefs skip Instagram and Meta
+  Business Suite too).
+- **Manual mode** is now how Instagram works: at the planned time SharkyClips reminds you (a
+  Windows notification and a bar on every screen). The guide opens the folder with the video
+  (send it to your phone) and copies the title, the description and the hashtags with one click
+  each. You post from the Instagram app, then tap "I shared it".
+- Instagram posts that were planned to go out automatically are **paused**: nothing was deleted
+  and nothing is sent. The bar lists them with their times; "Prepare by hand" turns one (or all)
+  into a Manual-mode reminder.
+- Extra care on TikTok and YouTube: at most 3 automatic posts a day per platform, and a failed
+  automatic post is tried again by itself only once.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Değişti: Instagram artık elle paylaşılıyor (Manuel mod)
+- Meta, bağlı bir işletme hesabını otomasyon gerekçesiyle kısıtladı. Instagram hesaplarını riske
+  atmamak için SharkyClips artık Instagram'a / Meta'ya kendi başına bağlanmıyor: otomatik
+  paylaşım yok, otomatik kontrol yok, tarayıcı otomasyonu yok (Claude in Chrome yönergeleri de
+  Instagram'ı ve Meta Business Suite'i atlıyor).
+- Instagram artık **Manuel mod** ile çalışıyor: planlanan saatte SharkyClips sana hatırlatır
+  (Windows bildirimi ve her ekranda bir çubuk). Rehber videonun olduğu klasörü açar (telefona
+  gönder), başlığı, açıklamayı ve hashtag'leri tek tıkla ayrı ayrı kopyalar. Paylaşımı Instagram
+  uygulamasından sen yaparsın, sonra "Paylaştım"a dokunursun.
+- Otomatik gönderilmek üzere planlanmış Instagram gönderileri **duraklatıldı**: hiçbiri silinmedi,
+  hiçbiri gönderilmiyor. Çubuk onları saatleriyle listeler; "Elle hazırla" birini (ya da hepsini)
+  Manuel mod hatırlatmasına çevirir.
+- TikTok ve YouTube için ek önlem: platform başına günde en fazla 3 otomatik paylaşım ve hata
+  olunca kendiliğinden yalnızca 1 kez yeniden deneme.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Geändert:** Instagram wird jetzt von Hand gepostet (manueller Modus). Meta hat ein Konto wegen Automatisierung eingeschränkt, daher spricht SharkyClips nicht mehr selbst mit Instagram / Meta. Zur geplanten Zeit kommt eine Erinnerung (Windows-Benachrichtigung + Leiste), Titel, Beschreibung und Hashtags lassen sich mit einem Klick kopieren, der Ordner öffnet sich. Geplante automatische Instagram-Posts sind pausiert (nichts gelöscht). TikTok / YouTube: höchstens 3 automatische Posts pro Tag, nur ein automatischer neuer Versuch.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Változás:** az Instagramra most kézzel posztolsz (kézi mód). A Meta automatizálás miatt korlátozott egy fiókot, ezért a SharkyClips már nem kapcsolódik magától az Instagramhoz / Metához. A tervezett időpontban emlékeztet (Windows-értesítés + sáv), a cím, a leírás és a hashtagek egy kattintással másolhatók, a mappa megnyílik. A tervezett automatikus Instagram-posztok szüneteltetve (semmi sem törlődött). TikTok / YouTube: naponta legfeljebb 3 automatikus poszt, csak egy automatikus újrapróbálás.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Изменено:** в Instagram теперь публикуете вы (ручной режим). Meta ограничила аккаунт за автоматизацию, поэтому SharkyClips больше не обращается к Instagram / Meta сам. В назначенное время приходит напоминание (уведомление Windows + панель), заголовок, описание и хештеги копируются одним щелчком, папка открывается. Запланированные автопубликации Instagram приостановлены (ничего не удалено). TikTok / YouTube: не более 3 автопубликаций в день и только одна автоматическая повторная попытка.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **تغيير:** النشر على Instagram يدوي الآن (الوضع اليدوي). قيّدت Meta حسابًا بسبب الأتمتة، لذا لم يعد SharkyClips يتصل بـ Instagram / Meta تلقائيًا. في الموعد المخطط يصلك تذكير (إشعار Windows وشريط)، ويُنسخ العنوان والوصف والوسوم بنقرة، ويُفتح المجلد. المنشورات التلقائية المخططة متوقفة مؤقتًا (لم يُحذف شيء). TikTok / YouTube: 3 منشورات تلقائية يوميًا كحد أقصى ومحاولة تلقائية واحدة فقط عند الخطأ.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **变更：** Instagram 现在改为手动发布（手动模式）。Meta 因自动化限制了一个账号，所以 SharkyClips 不再自行连接 Instagram / Meta。到计划时间会提醒你（Windows 通知 + 每个页面顶部的提示条），标题、描述和话题标签都能一键分别复制，并会打开视频所在文件夹。原计划自动发布的 Instagram 帖子已暂停（没有删除任何内容）。TikTok / YouTube：每个平台每天最多自动发布 3 条，出错后只自动重试 1 次。
+
+</details>
 ## [1.2.49] - 2026-11-15
 ### Fixed: SharkyClips didn't open after an update
 - With a speech-recognition (Whisper) model on the graphics card, SharkyClips could get stuck

@@ -76,3 +76,29 @@ def _no_leaked_pause():
             governor._gov._go.set()
         governor._gov = gov
     governor.set_current_job(None)
+
+
+
+@pytest.fixture
+def old_limits(monkeypatch):
+    """1.2.50 capped automatic posting (3 a day per platform, one automatic retry). Tests of the
+    retry / limit machinery itself run with the old, wider numbers."""
+    from sharkyclips import platforms as PF, publishing as P
+    from sharkyclips.web import multipost as M
+
+    monkeypatch.setattr(M, "MAX_TRIES", 6)
+    monkeypatch.setattr(PF, "DAILY_POST_MAX", 15)
+    monkeypatch.setattr(PF, "AUTO_RETRY_MAX", 2)
+    monkeypatch.setattr(P, "BACKOFF_S", [60, 300, 900, 3600, 3 * 3600])
+    monkeypatch.setattr(P, "DAILY_MAX", 50)
+    yield
+
+
+@pytest.fixture
+def meta_on(monkeypatch, old_limits):
+    """1.2.50: Meta automation is off in the product (platforms.META_AUTOMATION). The tests of the
+    Instagram API engine turn it on, so that code stays tested should it ever come back."""
+    from sharkyclips import platforms as PF
+
+    monkeypatch.setattr(PF, "META_AUTOMATION", True)
+    yield

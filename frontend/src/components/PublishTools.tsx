@@ -861,11 +861,11 @@ export function PublishingCard() {
             className="input"
             type="number"
             min={1}
-            max={50}
+            max={3}
             defaultValue={s.daily_limit}
             key={s.daily_limit}
             onBlur={(e) => {
-              const n = Math.max(1, Math.min(50, Number(e.target.value) || 3));
+              const n = Math.max(1, Math.min(3, Number(e.target.value) || 3));
               if (n !== s.daily_limit) save({ daily_limit: n });
             }}
           />

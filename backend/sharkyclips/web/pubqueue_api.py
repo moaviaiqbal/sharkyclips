@@ -202,7 +202,9 @@ def reconcile(use_browser: bool = True, now=None) -> dict:
     ig = [e for e in entries if e["platform"] == "instagram"]
     if ig:
         acc = PF.account("reels")
-        if not acc.get("connected"):
+        if not PF.META_AUTOMATION:  # 1.2.50: no look-ups at Meta; Instagram is checked by hand
+            out["skipped"].append({"platform": "instagram", "reason": "meta_off", "n": len(ig)})
+        elif not acc.get("connected"):
             out["skipped"].append({"platform": "instagram", "reason": "not_connected", "n": len(ig)})
         else:
             try:

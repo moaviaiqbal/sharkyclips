@@ -2839,6 +2839,45 @@ h3.section-title {
 .dev-banner b { font-weight: 600; }
 .dev-banner-task, .dev-banner-time { color: var(--muted); }
 .stale-bar { flex-wrap: wrap; }
+
+/* 1.2.50: Instagram Manual mode (bar on every screen, list, guide) */
+.igm-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 16px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  background: var(--surface-2, var(--warn-soft));
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  text-align: center;
+}
+.igm-bar-due { background: var(--warn-soft); border-bottom-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.igm-bar svg { color: var(--warn); flex: none; }
+.igm-bar .btn { flex: none; }
+.igm-bar-text { min-width: 0; overflow-wrap: anywhere; }
+.igm-sec { margin-top: 14px; }
+.igm-sec h3 { font-size: 13px; margin: 0 0 6px; }
+.igm-list { list-style: none; margin: 0 0 8px; padding: 0; display: grid; gap: 6px; }
+.igm-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+.igm-row-main { display: grid; gap: 2px; min-width: 0; flex: 1 1 220px; }
+.igm-row-main b, .igm-row-main span { overflow-wrap: anywhere; }
+.igm-row-act { display: flex; flex-wrap: wrap; gap: 6px; flex: none; }
+.igm-copy { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+.igm-copy .btn { flex: 1 1 140px; }
+.igm-done svg { color: var(--ok, var(--accent)); }
 .stale-bar .btn { flex: none; }
 
 /* Footer: version + What's new */

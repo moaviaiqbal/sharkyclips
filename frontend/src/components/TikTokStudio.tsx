@@ -138,10 +138,10 @@ export function TikTokStudioBox({ a, onChange }: { a: Account; onChange: () => v
             className="input"
             type="number"
             min={1}
-            max={15}
+            max={3}
             value={b.daily_cap}
             onChange={(e) => {
-              const n = Math.max(1, Math.min(15, Number(e.target.value) || 1));
+              const n = Math.max(1, Math.min(3, Number(e.target.value) || 1));
               setB({ ...b, daily_cap: n });
               accountsApi.tbSettings({ daily_cap: n }).catch(() => {});
             }}
@@ -160,7 +160,8 @@ export function AutoSwitch({ a, onChange }: { a: Account; onChange: () => void }
   const toast = useToast();
   const p = a.platform as "tiktok" | "reels";
   const viaBrowser = p === "tiktok" && (a.via === "browser" || !a.connected);
-  const canAuto = p === "tiktok" ? Boolean(a.browser?.logged_in) || (a.connected && a.via !== "browser") : a.connected;
+  const metaOff = p === "reels" && Boolean(a.meta_off); // 1.2.50: Instagram is Manual mode only
+  const canAuto = metaOff ? false : p === "tiktok" ? Boolean(a.browser?.logged_in) || (a.connected && a.via !== "browser") : a.connected;
   const auto = isAuto(a.mode);
   const set = async (on: boolean) => {
     try {
@@ -184,7 +185,7 @@ export function AutoSwitch({ a, onChange }: { a: Account; onChange: () => void }
         {auto
           ? t(p === "tiktok" && a.mode === "browser" ? "tts.auto_browser" : "platform.mode_api", { name: TARGET_NAME[p] })
           : t("platform.mode_semi", { name: TARGET_NAME[p] })}
-        {!canAuto && !auto && <> {t(p === "tiktok" ? "tts.auto_needs_login" : "tts.auto_needs_connect")}</>}
+        {metaOff ? <> {t("igm.auto_off")}</> : !canAuto && !auto && <> {t(p === "tiktok" ? "tts.auto_needs_login" : "tts.auto_needs_connect")}</>}
       </p>
     </div>
   );

@@ -1508,6 +1508,8 @@ export interface AppState {
   content_types: string[];
   /** Google ended the YouTube sign-in: reconnect banner on every screen */
   youtube_signed_out: YoutubeSignedOut | null;
+  /** 1.2.50: Instagram posts waiting for you (Manual mode) / paused automatic ones */
+  instagram_manual?: { due: number; paused: number; upcoming: number; next: string | null } | null;
 }
 
 export interface ChangelogEntry {

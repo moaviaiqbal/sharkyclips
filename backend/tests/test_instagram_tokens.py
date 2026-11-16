@@ -13,6 +13,8 @@ from fake_platforms import FB_IG_ID, FB_TOKEN, IG_TOKEN, FakePlatforms
 from sharkyclips import config, platforms as PF
 from sharkyclips.errors import SharkyClipsError
 
+pytestmark = pytest.mark.usefixtures("meta_on")  # 1.2.50: the Instagram API engine (off in the product)
+
 
 @pytest.fixture
 def fake(monkeypatch, tmp_path):

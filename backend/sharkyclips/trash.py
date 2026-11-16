@@ -300,7 +300,7 @@ def _take_plans(project: Project, cids: list[str]) -> dict:
         recs = {}
     for cid in cids:
         for p, r in ((recs.get(cid) or {}).items()):
-            if (r or {}).get("status") in ("scheduled", "preparing", "ready") and not _on_platform(r):
+            if (r or {}).get("status") in ("scheduled", "preparing", "ready", "paused") and not _on_platform(r):
                 out["social"].setdefault(cid, {})[p] = dict(r)
                 PF.record(project, cid, p, status="idle", publish_at=None)
     try:
@@ -407,7 +407,7 @@ def _delete_posts(project: Project, cids: list[str] | None) -> dict:
 
 # ===================================================================== 1.2.47: pending posts
 
-LIVE = ("scheduled", "preparing", "uploading", "processing")
+LIVE = ("scheduled", "preparing", "uploading", "processing", "paused")  # 1.2.50 paused: kept for Manual mode
 
 
 def _on_platform(r: dict) -> bool:
@@ -453,7 +453,7 @@ def pending_posts(project: Project, cids: list[str] | None = None) -> list[dict]
         for plat, r in (recs.get(cid) or {}).items():
             r = r or {}
             st = r.get("status")
-            if r.get("mode") == "semi" or r.get("deleted"):
+            if (r.get("mode") == "semi" and st != "preparing") or r.get("deleted"):
                 continue  # by hand: its file is in Downloads already
             retry = st == "failed" and r.get("next_try_at") and int(r.get("attempts") or 0) < _max_tries()
             if st not in LIVE and not retry:

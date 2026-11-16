@@ -86,7 +86,10 @@ def test_overdue_mark_replan_and_the_check_brief(pq):
                                                        ("p_c02", "tiktok"), ("p_c02", "instagram")}
     assert all(e["overdue"] for e in od)
     brief = PQ.verify_brief(later)
-    assert brief["count"] == 4 and "TikTok Studio" in brief["text"] and "p_c02" in brief["text"]
+    # 1.2.50: the check brief leaves Instagram out (no browser automation on Meta)
+    assert brief["count"] == 2 and "TikTok Studio" in brief["text"] and "p_c02" in brief["text"]
+    assert {r["platform"] for r in brief["rows"]} == {"tiktok"}
+    assert "Never open Instagram, Facebook or Meta Business Suite" in brief["text"]
     assert '"status": "published|scheduled|pending|failed"' in brief["text"]
 
     # Claude in Chrome looked: one is live, one isn't there, one is planned for later

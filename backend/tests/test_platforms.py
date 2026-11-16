@@ -18,6 +18,8 @@ from sharkyclips import config, platforms as PF
 from sharkyclips.errors import SharkyClipsError
 from sharkyclips.project import Project, write_json_atomic
 
+pytestmark = pytest.mark.usefixtures("meta_on")  # 1.2.50: the Instagram API engine (off in the product)
+
 
 @pytest.fixture(autouse=True)
 def _no_leftover_projects():

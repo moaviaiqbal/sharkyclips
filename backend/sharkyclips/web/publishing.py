@@ -936,7 +936,7 @@ def api_library_settings() -> dict:
 def api_library_settings_put(body: dict) -> dict:
     changes: dict = {}
     if "daily_limit" in body:
-        changes["publish_daily_limit"] = max(1, min(50, int(body["daily_limit"])))
+        changes["publish_daily_limit"] = max(1, min(P.DAILY_MAX, int(body["daily_limit"])))
     if "times" in body:
         times = sorted({t for t in (P._hhmm(x) for x in body.get("times") or []) if t})
         if not times:
