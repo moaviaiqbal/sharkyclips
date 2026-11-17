@@ -69,7 +69,7 @@ def test_semi_mode_by_default_and_api_mode_needs_a_connection(fake):
         PF.set_mode("tiktok", "api")
     _connect_tiktok(fake)
     # (1.2.36: the name comes from TikTok's creator info, the nickname)
-    assert PF.status("tiktok")["account"] == "utku alsir" and PF.mode("tiktok") == "semi"  # still the user's choice
+    assert PF.status("tiktok")["account"] == "demo creator" and PF.mode("tiktok") == "semi"  # still the user's choice
     assert PF.set_mode("tiktok", "api")["mode"] == "api"
     tok = (config.config_dir() / "platforms" / "tiktok" / "token.enc").read_text(encoding="utf-8")
     assert "TT-ACCESS" not in tok  # kept encrypted
@@ -114,7 +114,7 @@ def test_instagram_checks_the_token_and_the_account_type(fake, monkeypatch):
         PF.ig_connect("IGTOKEN-0123456789abcdef")
     fake.state["account_type"] = "MEDIA_CREATOR"
     st = PF.ig_connect("IGTOKEN-0123456789abcdef")
-    assert st["connected"] and st["account"] == "utku.clips" and st["privacy_note"] == "app_review"
+    assert st["connected"] and st["account"] == "demo.clips" and st["privacy_note"] == "app_review"
 
 
 def test_instagram_reels_resumable_upload(fake, tmp_path):

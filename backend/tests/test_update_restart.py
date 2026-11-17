@@ -96,8 +96,9 @@ def test_restart_now_comes_back_on_the_new_version(install):
     st = _get(port, "/api/app")
     assert st["version"] == "1.2.50" and st["disk_version"] == "1.2.51" and st["restart_needed"] is True
 
+    token = (app.parent / "home" / "api_token").read_text(encoding="ascii").strip()  # like the tray (web/security.py)
     req = urllib.request.Request(f"http://127.0.0.1:{port}/api/update/restart", data=b"{}", method="POST",
-                                 headers={"Content-Type": "application/json"})
+                                 headers={"Content-Type": "application/json", "X-SharkyClips-Token": token})
     with urllib.request.urlopen(req, timeout=5) as r:
         assert json.loads(r.read().decode("utf-8"))["restarting"] is True
 

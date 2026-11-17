@@ -100,7 +100,7 @@ def test_captions_lead_with_the_channel_tag_and_respect_the_limits(social):
     from sharkyclips.edit import brand
 
     old = config.get("channel_text")
-    brand.save_channel_text({"hashtags": ["#utkualsirr"]})
+    brand.save_channel_text({"hashtags": ["#democreator"]})
     try:
         _caption_checks(MP)
     finally:
@@ -114,7 +114,7 @@ def _caption_checks(MP):
     cap = v["drafts"]["reels"]["caption"]
     assert cap.startswith("Huge play 1\n\nWhat a moment 1.")
     tags = [w for w in cap.split() if w.startswith("#")]
-    assert tags[0] == "#utkualsirr" and "#deltaforce" in tags
+    assert tags[0] == "#democreator" and "#deltaforce" in tags
     assert v["drafts"]["youtube"]["title"] == "Huge play 1" and v["limits"]["reels"]["hashtags"] == 30
     assert {p["code"] for p in v["problems"]} == {"not_connected"}  # YouTube isn't connected here
     # too long / too many hashtags / long title: inline problems with one-tap fixes
@@ -157,7 +157,7 @@ def test_tiktok_post_screen_follows_tiktoks_rules(social):
     c = _client()
     v = c.get(f"/api/publish/{project.id}/c01", params={"platforms": "tiktok"}).json()
     tt = v["tiktok"]
-    assert tt["ok"] and tt["creator"] == {"username": "utkualsirr", "nickname": "utku alsir"}
+    assert tt["ok"] and tt["creator"] == {"username": "democreator", "nickname": "demo creator"}
     assert tt["privacy_options"] == ["SELF_ONLY"] and tt["privacy"] == "SELF_ONLY" and not tt["audited"]
     assert tt["stitch_disabled"] and tt["music_url"].startswith("https://www.tiktok.com/legal/")
     assert tt["settings"]["allow_comment"] is False and tt["settings"]["allow_duet"] is False
@@ -208,7 +208,7 @@ def test_unaudited_tiktok_posts_only_me_and_says_how_to_open_it(social):
     st = c.get(f"/api/publish/{project.id}/c01").json()["states"]["tiktok"]
     assert st["status"] == "published" and st["privacy"] == "self_only"
     assert st["make_public_url"] == "https://www.tiktok.com/tiktokstudio/content"
-    assert st["url"] == "https://www.tiktok.com/@utkualsirr"
+    assert st["url"] == "https://www.tiktok.com/@democreator"
     assert social.state["tiktok_posts"][-1]["post_info"]["privacy_level"] == "SELF_ONLY"
 
 
@@ -264,7 +264,7 @@ def test_everywhere_at_once_in_parallel_and_never_twice(yt, social):  # noqa: F8
     lib = c.get("/api/library").json()
     row = next(r for r in lib["rows"] if r["project_id"] == project.id and r["clip_id"] == "c01")
     assert row["platforms"]["everywhere"] and row["platforms"]["tiktok"]["status"] == "published"
-    assert lib["targets"] == ["tiktok", "reels"] and lib["accounts"]["reels"]["handle"] == "utku.clips"
+    assert lib["targets"] == ["tiktok", "reels"] and lib["accounts"]["reels"]["handle"] == "demo.clips"
 
 
 def test_partial_failure_keeps_the_others_and_retry_redoes_only_the_failed_one(social):
@@ -486,8 +486,8 @@ def test_ai_voice_line_and_labels_on_every_platform(social, monkeypatch):
 def test_accounts_cards_health_and_disconnect_keeps_the_app(social):
     c = _client()
     a = c.get("/api/accounts").json()
-    assert a["tiktok"]["connected"] and a["tiktok"]["handle"] == "utkualsirr" and a["tiktok"]["health"]["pill"] == "ok"
-    assert a["reels"]["handle"] == "utku.clips" and a["reels"]["encrypted"]
+    assert a["tiktok"]["connected"] and a["tiktok"]["handle"] == "democreator" and a["tiktok"]["health"]["pill"] == "ok"
+    assert a["reels"]["handle"] == "demo.clips" and a["reels"]["encrypted"]
     assert a["youtube"]["health"]["pill"] == "signed_out"
     assert a["quota"]["reels"] == {"used": 0, "total": 50} and a["quota"]["tiktok"]["total"] == PF.TIKTOK_DAILY_CAP
     assert "TT-ACCESS" not in (PF.folder("tiktok") / "token.enc").read_text(encoding="utf-8")
@@ -520,7 +520,7 @@ def test_instagram_login_with_the_address_pasted_back(social):
     assert bad.status_code == 400 and "expired" in bad.json()["error"]
     a = c.post("/api/platforms/reels/oauth/finish",
                json={"url": f"{r['redirect_uri']}?code=AQB&state={q['state']}#_"}).json()
-    assert a["reels"]["connected"] and a["reels"]["handle"] == "utku.clips"
+    assert a["reels"]["connected"] and a["reels"]["handle"] == "demo.clips"
     assert PF.load_token("reels")["access_token"] == IG_TOKEN
 
 
@@ -534,7 +534,7 @@ def test_views_and_likes_from_every_platform_feed_the_library_and_calibration(so
     _wait(_idle)
     rec = _rec(project, "c01", "tiktok")
     social.state["tt_videos"] = [{"id": "7300", "title": rec["caption"], "create_time": int(time.time()),
-                                  "view_count": 1000, "like_count": 50, "share_url": "https://www.tiktok.com/@utkualsirr/video/7300"}]
+                                  "view_count": 1000, "like_count": 50, "share_url": "https://www.tiktok.com/@democreator/video/7300"}]
     old = (datetime.now(timezone.utc) - timedelta(days=3)).isoformat()
     for p in ("tiktok", "reels"):
         PF.record(project, "c01", p, posted_at=old)

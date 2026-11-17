@@ -142,6 +142,9 @@ def _download_error(exc: Exception, url: str) -> SharkyClipsError:
 
 
 def _ingest_url(url: str) -> tuple[Project, dict]:
+    from . import netguard
+
+    netguard.check_public_url(url)  # 1.2.52: no imports from this PC / the local network (SSRF)
     console.print(f"Looking up [cyan]{url}[/] ...")
     lookup = kick.canonical(url) if kick.is_kick(url) else url  # channel links get a clear message
     yt_dlp = require_module("yt_dlp", "yt-dlp[default]")
@@ -166,6 +169,9 @@ def _ingest_url(url: str) -> tuple[Project, dict]:
     title = info.get("title") or info.get("id") or "video"
     canonical = info.get("webpage_url") or lookup
     media = info.get("media_url") or canonical  # the Kick fallback downloads its HLS playlist
+    for found in {canonical, media, info.get("url") if info.get("extractor_key") == "Generic" else None}:
+        if found and is_url(str(found)):
+            netguard.check_public_url(str(found))  # a redirect to a local address
     project = project_for_id(make_project_id(title, f"url:{info.get('extractor_key')}:{info.get('id') or canonical}"))
     project.dir.mkdir(parents=True, exist_ok=True)
 

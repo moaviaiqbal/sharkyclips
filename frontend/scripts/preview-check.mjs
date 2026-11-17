@@ -13,6 +13,7 @@
 //
 // LAYOUT_CHANNEL=msedge uses the installed Edge; CI uses Playwright's Chromium (the fixture's
 // source video is VP9 for it). Changes the fixture's render settings. Exit code 1 on failure.
+import { apiHeaders } from "./api-token.mjs";
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -29,7 +30,7 @@ try {
 async function putMode(request, url, mode) {
   for (let i = 1; ; i++) {
     try {
-      return await request.put(url, { data: { mode }, timeout: 60000 });
+      return await request.put(url, { data: { mode }, timeout: 60000, headers: H });
     } catch (e) {
       if (i >= 3) throw e;
     }
@@ -37,6 +38,7 @@ async function putMode(request, url, mode) {
 }
 
 const [base, pid, shotDir] = process.argv.slice(2);
+const H = await apiHeaders(base); // 1.2.52: the API token for write requests
 if (!base || !pid) throw new Error("usage: node preview-check.mjs <base-url> <project-id> [screenshot-dir]");
 if (shotDir) mkdirSync(shotDir, { recursive: true });
 const P = encodeURIComponent(pid);
@@ -67,7 +69,7 @@ async function openProject(w, h) {
 
 // ------------------------------------------------------------------ 1. sizes
 
-await api.put(`${base}/api/projects/${P}/review`, { data: { options: { layout: "auto", subtitles: "bold", hook: true, zoom: "strong" } } });
+await api.put(`${base}/api/projects/${P}/review`, { data: { options: { layout: "auto", subtitles: "bold", hook: true, zoom: "strong" } }, headers: H });
 for (const [w, h] of SIZES) {
   const { ctx, page } = await openProject(w, h);
   await page.waitForSelector(".tx-words .tx-w", { timeout: 15000 }).catch(() => {});
@@ -103,7 +105,7 @@ async function compareAt(page, t, plan) {
     await new Promise((ok) => requestAnimationFrame(() => requestAnimationFrame(ok)));
   }, t);
   const actual = await page.evaluate(() => document.querySelector(".player video").currentTime);
-  const res = await page.request.post(`${base}/api/projects/${P}/candidates/${CLIP}/plan`, { data: { samples: [actual] } });
+  const res = await page.request.post(`${base}/api/projects/${P}/candidates/${CLIP}/plan`, { data: { samples: [actual] }, headers: H });
   const sample = (await res.json()).samples[0];
   return page.evaluate(([geo, s]) => {
     const v = document.querySelector(".player video");
@@ -164,9 +166,10 @@ const TIMES = [1.2, 1.75, 2.1, 2.6, 3.4]; // c01 = 1.0-3.6 s, smart zoom pulse a
 for (const layout of ["auto", "crop", "fit"]) {
   await api.put(`${base}/api/projects/${P}/review`, {
     data: { options: { layout, zoom: "strong", subtitles: "none", hook: false, brand: false, loop: false } },
+    headers: H,
   });
   const { ctx, page } = await openProject(1366, 768);
-  const plan = await (await page.request.post(`${base}/api/projects/${P}/candidates/${CLIP}/plan`, { data: {} })).json();
+  const plan = await (await page.request.post(`${base}/api/projects/${P}/candidates/${CLIP}/plan`, { data: {}, headers: H })).json();
   if (!plan.geometry) {
     problems.push(`${layout}: the plan has no geometry`);
     await ctx.close();

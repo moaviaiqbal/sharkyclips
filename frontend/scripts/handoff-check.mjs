@@ -3,9 +3,11 @@
 // Publish with Instagram + TikTok (semi-automatic, the default) -> the guide opens -> "Copy & open"
 // copies the caption and opens the upload page -> "Copied, paste and share" -> "I shared it" moves
 // on to TikTok -> both shared.
+import { apiHeaders } from "./api-token.mjs";
 import { mkdirSync } from "node:fs";
 
 const [base, pid, shots] = process.argv.slice(2);
+const H = await apiHeaders(base); // 1.2.52: the API token for write requests
 if (!base || !pid) {
   console.error("usage: handoff-check.mjs <base-url> <project-id> [shots-dir]");
   process.exit(2);
@@ -39,7 +41,7 @@ const shot = async (name) => {
   await page.screenshot({ path: `${shots}/${name}.png` });
 };
 
-await page.request.put(`${base}/api/publish/targets`, { data: { targets: ["tiktok", "reels"] } });
+await page.request.put(`${base}/api/publish/targets`, { data: { targets: ["tiktok", "reels"] }, headers: H });
 await page.goto(`${base}/#/p/${encodeURIComponent(pid)}`);
 // HANDOFF_RESUME=1: the files were made already (POST /api/publish): reopen the guide from the card
 const go = process.env.HANDOFF_RESUME

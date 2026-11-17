@@ -14,6 +14,7 @@ sherpa-onnx>=1.10        # laughter / shouting detection (small ONNX audio-event
 mlx-whisper>=0.4.2; platform_system == "Darwin" and platform_machine == "arm64"
 # Phase 5 - web UI + 9:16 rendering
 fastapi>=0.115
+opentelemetry-api>=1.45.2  # 1.2.52: CVE-2026-126360 (pulled in by fastapi)
 uvicorn>=0.30
 opencv-python-headless>=4.9,<5   # facecam detection (5.x dropped the bundled face model)
 requests>=2.31            # Ollama API, Twitch chat

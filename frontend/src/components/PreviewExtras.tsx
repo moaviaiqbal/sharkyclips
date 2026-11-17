@@ -50,7 +50,7 @@ export function PlatformOverlay({ plan, view }: { plan: EditPlanView | null; vie
       </div>
       {left > 0 && <div className="pview-left" style={{ top: pct(top, CH), bottom: pct(bottom, CH), width: pct(left, CW) }} />}
       <div className="pview-bottom" style={{ height: pct(bottom, CH) }}>
-        <b>@{view === "reels" ? "utkualsirr48" : "utkualsirr"}</b>
+        <b>@yourchannel</b>
         <span>{t("pview.caption")}</span>
         <em>{t("pview.bottom")}</em>
       </div>

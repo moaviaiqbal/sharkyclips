@@ -36,6 +36,7 @@ from typing import Any, Callable
 from .. import governor
 from ..errors import SharkyClipsError
 from ..governor import JobCancelled  # noqa: F401 - re-exported, raised from governor checkpoints
+from ..redact import redact
 from ..ui import console, set_progress_sink
 
 _SAVE_LOCK = threading.Lock()
@@ -563,13 +564,13 @@ class JobManager:
                 job.status = "cancelled"
             except SharkyClipsError as exc:
                 job.status = "cancelled" if job.cancel_requested else "error"
-                job.error = {"message": exc.message, "hint": exc.hint}
+                job.error = {"message": redact(exc.message), "hint": redact(exc.hint)}
             except Exception as exc:  # noqa: BLE001 - shown in the UI, full trace in the terminal
                 if job.cancel_requested:
                     job.status = "cancelled"
                 else:
                     job.status = "error"
-                    job.error = {"message": f"{type(exc).__name__}: {exc}"[:600], "hint": None}
+                    job.error = {"message": redact(f"{type(exc).__name__}: {exc}")[:600], "hint": None}
                     console.print(f"[red]Job {job.kind} failed:[/]\n{traceback.format_exc()}")
             finally:
                 set_progress_sink(None)

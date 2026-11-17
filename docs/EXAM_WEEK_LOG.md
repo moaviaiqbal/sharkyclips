@@ -245,7 +245,7 @@ history for keys/tokens):
 
 **Open questions for you:**
 
-- **Commit author email.** All 19 commits are authored as `utkualsir <utkualsir@gmail.com>`. When
+- **Commit author email.** All 19 commits are authored as the owner's personal e-mail address. When
   the repo goes public, that address is visible in the history. Rewriting history is destructive,
   so I didn't. If you mind: set `git config user.email <id>+utkualsir@users.noreply.github.com`
   for future commits, and decide yourself whether to rewrite old ones before going public.

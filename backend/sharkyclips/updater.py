@@ -11,6 +11,17 @@ The server then restarts itself (see `cli.py serve`, exit code RESTART_CODE).
     pull ever ends on a lower VERSION: going back to an older SharkyClips is impossible
   * "restart needed" is decided by the server itself: the version this Python process loaded
     vs. the VERSION file on disk now (`restart_state`), never by a version baked into the UI
+
+1.2.52 supply-chain rules:
+  * only the official repository (OFFICIAL_REPO, over https / ssh to github.com) and branch
+    (OFFICIAL_BRANCH) are updated from; any other `origin` (a fork, a planted remote) gets
+    reason "unofficial_remote" and nothing is fetched or applied. Forks set
+    SHARKYCLIPS_UPDATE_REPO / SHARKYCLIPS_UPDATE_BRANCH to their own.
+  * only a RELEASE is installed: the commit of the tag v<remote VERSION>, which must lie on the
+    official branch. `git merge --ff-only <that commit>` instead of `git pull`, so what was
+    checked is exactly what gets installed (a commit pushed in between is never picked up).
+  * Settings key "update_require_signed": true also needs `git verify-tag` to pass (a signed tag).
+  * git itself checks every object's hash, and the transport is https to github.com.
 """
 
 from __future__ import annotations
@@ -32,12 +43,65 @@ from .procs import no_window
 RESTART_CODE = 75  # `serve` restarts the server when it exits with this code
 REQUIREMENTS = ("backend/requirements.txt", "backend/requirements-nvidia.txt")
 RELEASES_URL = "https://github.com/utkualsir/sharkyclips/releases"
+OFFICIAL_REPO = "github.com/utkualsir/sharkyclips"
+OFFICIAL_BRANCH = "main"
 _VERSION_RE = re.compile(r'__version__\s*=\s*["\']([^"\']+)["\']')
 
 
 def _git_env() -> dict[str, str]:
     # Never wait for a password prompt in the background (the server has no terminal).
     return {**os.environ, "GIT_TERMINAL_PROMPT": "0", "GCM_INTERACTIVE": "never", "LC_ALL": "C"}
+
+
+def _norm_remote(url: str) -> str:
+    u = (url or "").strip().replace("\\", "/")
+    u = re.sub(r"^(?:https?|ssh|git)://(?:[^@/]+@)?", "", u, flags=re.I)
+    u = re.sub(r"^git@([^:/]+):", r"\1/", u, flags=re.I)
+    u = re.sub(r"\.git/?$", "", u.rstrip("/"))
+    return u.rstrip("/").lower()
+
+
+def official_remote(root: Path = REPO_ROOT) -> str | None:
+    """None when `origin` / the upstream branch are the official ones, else why not."""
+    want_repo = _norm_remote(os.environ.get("SHARKYCLIPS_UPDATE_REPO") or OFFICIAL_REPO)
+    want_branch = os.environ.get("SHARKYCLIPS_UPDATE_BRANCH") or OFFICIAL_BRANCH
+    try:
+        url = git("remote", "get-url", "origin", root=root)
+        upstream = git("rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}", root=root)
+    except SharkyClipsError:
+        return "no_upstream"
+    if _norm_remote(url) != want_repo:
+        return "unofficial_remote"
+    if upstream != f"origin/{want_branch}":
+        return "unofficial_branch"
+    return None
+
+
+def release_commit(version: str, root: Path = REPO_ROOT) -> str | None:
+    """The commit of the release tag v<version> if it lies on the upstream branch (else None)."""
+    try:
+        sha = git("rev-parse", "--verify", "--quiet", f"refs/tags/v{version}^{{commit}}", root=root)
+    except SharkyClipsError:
+        return None
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", sha or ""):
+        return None
+    try:
+        git("merge-base", "--is-ancestor", sha, "@{u}", root=root)
+    except SharkyClipsError:
+        return None  # a tag that isn't on the official branch
+    return sha
+
+
+def _signed_ok(version: str, root: Path) -> bool:
+    from . import config
+
+    if config.get("update_require_signed") is not True:
+        return True
+    try:
+        git("verify-tag", f"v{version}", root=root)
+        return True
+    except SharkyClipsError:
+        return False
 
 
 def git(*args: str, timeout: float = 60, root: Path = REPO_ROOT) -> str:
@@ -150,6 +214,10 @@ def status(fetch: bool = True, root: Path = REPO_ROOT) -> dict:
         out["reason"] = "no_upstream"
         return out
     out.update(supported=True, branch=branch, upstream=upstream)
+    why = official_remote(root)
+    if why:  # 1.2.52: never fetch from / update to anything but the official repository
+        out.update(supported=False, reason=why)
+        return out
     clean_stale_state(root)
     if fetch:
         try:
@@ -177,6 +245,8 @@ def status(fetch: bool = True, root: Path = REPO_ROOT) -> dict:
     out["available"] = behind > 0 and is_newer(out["latest"], __version__)
     if behind and not out["available"]:
         out["reason"] = "not_newer"
+    if out["available"] and release_commit(out["latest"], root) is None:
+        out.update(available=False, reason="not_released")  # VERSION bumped, but not tagged yet
     out["dirty"] = bool(git("status", "--porcelain", "--untracked-files=no", root=root))
     return out
 
@@ -185,6 +255,10 @@ def apply(on_stage: Callable[[str], None] | None = None, root: Path = REPO_ROOT,
           python: str = sys.executable) -> dict:
     """git pull, then reinstall Python packages if the requirements changed."""
     stage = on_stage or (lambda _s: None)
+    if official_remote(root):
+        raise SharkyClipsError("This copy of SharkyClips doesn't come from the official GitHub repository, "
+                               "so it isn't updated automatically.",
+                               f"Download the latest version from {RELEASES_URL}.")
     clean_stale_state(root)
     before_rev = git("rev-parse", "HEAD", root=root)
     before_ver = disk_version(root) or __version__
@@ -205,8 +279,15 @@ def apply(on_stage: Callable[[str], None] | None = None, root: Path = REPO_ROOT,
     if remote and version_tuple(remote) < version_tuple(before_ver):
         raise SharkyClipsError(f"The version on GitHub ({remote}) is older than this one ({before_ver}).",
                                "SharkyClips never goes back to an older version. Nothing was changed.")
-    try:
-        git("pull", "--ff-only", "--quiet", root=root, timeout=300)
+    target = release_commit(remote, root) if remote else None
+    if target is None:
+        raise SharkyClipsError("The new version isn't released yet (no release tag on GitHub).",
+                               "Try again in a few minutes. Nothing was changed.")
+    if not _signed_ok(remote, root):
+        raise SharkyClipsError(f"The release tag v{remote} has no valid signature.",
+                               "Nothing was changed. Download the release from GitHub instead.")
+    try:  # exactly the checked release commit, never "whatever is on the branch now"
+        git("merge", "--ff-only", "--quiet", target, root=root, timeout=300)
     except SharkyClipsError as exc:
         raise SharkyClipsError(exc.message, "Files of SharkyClips were changed on this computer. Undo those "
                                           "changes (or run `git stash` in the SharkyClips folder) and try again.")

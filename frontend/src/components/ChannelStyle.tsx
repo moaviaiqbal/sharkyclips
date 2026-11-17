@@ -268,7 +268,7 @@ export function ChannelStyleCard() {
           </div>
           <label>
             <span className="field-label">{t("cstyle.always")}</span>
-            <input className="input" dir="ltr" value={always} placeholder="#utkualsirr" onChange={(x) => setAlways(x.target.value)} />
+            <input className="input" dir="ltr" value={always} placeholder="#yourchannel" onChange={(x) => setAlways(x.target.value)} />
           </label>
           <label>
             <span className="field-label">{t("cstyle.rules")}</span>

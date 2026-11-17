@@ -774,6 +774,14 @@ class Scheduler:
 
         A = _app()
         acts: list[str] = []
+        # 0. 1.2.52: uploads deferred because the quota was used up start after the reset
+        if youtube.connected():
+            for d in youtube.take_due_deferred(now):
+                try:
+                    A.submit_upload(d["project_id"], d["clip_id"], d.get("body") or {})
+                    acts.append(f"deferred:{d['project_id']}:{d['clip_id']}")
+                except Exception as exc:  # noqa: BLE001 - the clip is gone: drop it
+                    acts.append(f"deferred_failed:{d['project_id']}:{d['clip_id']}:{type(exc).__name__}")
         items = P.load()
         pj = _plan_jobs()
         # 1. keep the plan in line with YouTube / the projects
@@ -848,7 +856,7 @@ class Scheduler:
                         acts.append(f"governor:{key}")
                         continue
                     need = youtube.COST["upload"] + (youtube.COST["thumbnail"] if _wide(it["meta"]) else 0)
-                    if youtube.daily_quota() - youtube.quota_used() < need:
+                    if youtube.upload_room() < need:  # 1.2.52: stop before the limit (reserve)
                         P.patch(key, next_try_at=iso(youtube.next_reset()))
                         acts.append(f"quota:{key}")
                         continue

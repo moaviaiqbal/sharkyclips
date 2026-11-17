@@ -2734,6 +2734,16 @@ const zh: Record<string, string> = {
   "full.settings_desc": "导入视频时，整个视频也可以定时、按你频道的风格上传到 YouTube。每次上传都由你确认。",
   "full.settings_time": "发布时间",
   "full.settings_time_hint": "没有其他完整视频的下一个晚上，在这个时间。",
+  "lan.no_pin": "只有在运行 SharkyClips 的电脑上设置访问 PIN 后，其他设备才能使用它（设置 > 其他设备）。",
+  "ytc.own_setup": "连接你自己的 Google 项目",
+  "ytc.own_setup_desc": "YouTube 上传使用你自己的免费 Google 项目。简短的向导会一步步带你完成（约 5 分钟，只需一次）。",
+  "ytc.reload_client": "重新加载 Google 客户端",
+  "ytc.reload_client_hint": "重新读取设置文件夹中的 google_client.json（例如更换密钥之后）。",
+  "ytc.reload_ok": "已加载 Google 客户端（{project}）。你的 YouTube 登录继续有效。",
+  "ytc.reload_none": "设置文件夹中没有 google_client.json：请使用向导连接你自己的 Google 项目。",
+  "ytc.reload_reconnect": "新的 Google 客户端是另一个客户端：请重新连接 YouTube。",
+  "yt.deferred": "今天的 YouTube 配额已用完：重置后将自动上传（{when}）。",
+  "yt.quota_tomorrow": "今日配额已用完：上传将等到明天",
 };
 
 export default zh;

@@ -41,3 +41,10 @@ config.local.json
 installer/dist/
 docs/.video/
 .coverage
+
+# 1.2.52: Google OAuth clients and other secrets live only in ~/.sharkyclips, never in the repo
+backend/sharkyclips/google_client.json
+google_client.json
+client_secret*.json
+*.enc
+api_token

@@ -2805,6 +2805,16 @@ const en: Record<string, string> = {
   "full.settings_desc": "When you import a video, the whole video can also go to YouTube, scheduled and in your channel's style. You confirm every upload.",
   "full.settings_time": "Release time",
   "full.settings_time_hint": "The next evening without another full video, at this time.",
+  "lan.no_pin": "Other devices can only use SharkyClips after an access PIN is set on the computer running it (Settings > Other devices).",
+  "ytc.own_setup": "Connect your own Google project",
+  "ytc.own_setup_desc": "YouTube uploads use your own free Google project. A short guide walks you through it (about 5 minutes, once).",
+  "ytc.reload_client": "Reload Google client",
+  "ytc.reload_client_hint": "Reads google_client.json in the settings folder again (e.g. after you rotated its secret).",
+  "ytc.reload_ok": "Google client loaded ({project}). Your YouTube sign-in keeps working.",
+  "ytc.reload_none": "No google_client.json in the settings folder: use the guided setup with your own Google project.",
+  "ytc.reload_reconnect": "The new Google client is a different one: connect YouTube again.",
+  "yt.deferred": "Today's YouTube quota is used up: it uploads automatically after the reset ({when}).",
+  "yt.quota_tomorrow": "Quota used up today: uploads wait for tomorrow",
 };
 
 export default en;

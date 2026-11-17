@@ -2,6 +2,7 @@
 // themes, plus the 1.2.41 delete flow end to end (select a clip -> delete -> undo toast -> back).
 // Same server as layout-check.mjs (python frontend/scripts/layout-fixture.py <dir>, then serve).
 //   node scripts/axe-check.mjs http://127.0.0.1:8799 <project-id>
+import { apiHeaders } from "./api-token.mjs";
 import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 
@@ -17,7 +18,7 @@ const AXE = readFileSync(req.resolve("axe-core/axe.min.js"), "utf8");
 async function putMode(request, url, mode) {
   for (let i = 1; ; i++) {
     try {
-      return await request.put(url, { data: { mode }, timeout: 60000 });
+      return await request.put(url, { data: { mode }, timeout: 60000, headers: H });
     } catch (e) {
       if (i >= 3) throw e;
     }
@@ -25,6 +26,7 @@ async function putMode(request, url, mode) {
 }
 
 const [base, pid] = process.argv.slice(2);
+const H = await apiHeaders(base); // 1.2.52: the API token for write requests
 if (!base || !pid) throw new Error("usage: node axe-check.mjs <base-url> <project-id>");
 const P = encodeURIComponent(pid);
 const LANG = process.env.AXE_LANG || "tr";
@@ -63,7 +65,7 @@ const SCREENS = [
 const browser = await chromium.launch(process.env.AXE_CHANNEL ? { channel: process.env.AXE_CHANNEL } : {});
 const failures = [];
 for (const theme of ["dark", "light"]) {
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, bypassCSP: true }); // axe is injected as an inline script (1.2.52 CSP)
   await ctx.addInitScript(([l, t]) => {
     localStorage.setItem("cf-lang", l);
     localStorage.setItem("cf-lang-set", "1");
@@ -101,7 +103,7 @@ for (const theme of ["dark", "light"]) {
 
 // ---- the delete flow: pick a clip, delete it, undo from the toast
 {
-  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 } });
+  const ctx = await browser.newContext({ viewport: { width: 1366, height: 768 }, bypassCSP: true }); // axe is injected as an inline script (1.2.52 CSP)
   await ctx.addInitScript((l) => {
     localStorage.setItem("cf-lang", l);
     localStorage.setItem("cf-lang-set", "1");

@@ -99,9 +99,9 @@ def test_telegram_setup_and_pairing(tg):
     assert st["link"] == f"https://t.me/my_clips_bot?start={code}"
     tg.push(message={"text": "/start wrongcode", "chat": {"id": 5}})
     assert phone.pair_check()["paired"] is False  # someone else / a wrong code: ignored
-    tg.push(message={"text": f"/start {code}", "chat": {"id": 42, "first_name": "Utku"}})
+    tg.push(message={"text": f"/start {code}", "chat": {"id": 42, "first_name": "Demo"}})
     st = phone.pair_check()
-    assert st["paired"] and st["chat"] == "Utku" and st["link"] is None
+    assert st["paired"] and st["chat"] == "Demo" and st["link"] is None
     assert tg.calls[-1][0] == "sendMessage" and tg.calls[-1][1]["chat_id"] == 42
     assert TOKEN not in phone.secret_path().read_text(encoding="utf-8", errors="replace")  # stored encrypted
     phone.send_test()

@@ -24,7 +24,24 @@ export function LanGate({ children }: { children: ReactNode }) {
 
   if (failed || (status && (!status.required || status.authenticated))) return <>{children}</>;
   if (!status) return null;
+  if (!status.enabled) return <LanNoPin />; // 1.2.52: LAN mode without a PIN serves nothing
   return <LanLogin kind={status.kind} onDone={() => window.location.reload()} />;
+}
+
+/** Another device, but no access PIN is set on the PC yet: nothing to log in to. */
+function LanNoPin() {
+  const { t } = useI18n();
+  return (
+    <main className="lan-login">
+      <div className="card lan-login-card" role="alert">
+        <span className="lan-login-mark" aria-hidden="true">
+          <BrandMark size={34} />
+        </span>
+        <h1 className="display">SharkyClips</h1>
+        <p className="muted">{t("lan.no_pin")}</p>
+      </div>
+    </main>
+  );
 }
 
 function LanLogin({ kind, onDone }: { kind: AuthStatus["kind"]; onDone: () => void }) {

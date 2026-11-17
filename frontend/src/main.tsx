@@ -1,3 +1,4 @@
+import "./csrf"; // first: the API token on every write request (1.2.52)
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App";

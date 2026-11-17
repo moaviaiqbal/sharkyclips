@@ -44,10 +44,10 @@ if (!process.env.PQ_RESUME) {
 await page.getByRole("button", { name: /Hiçbirini seçme/ }).click();
 for (let i = 0; i < n; i++) await rows.nth(i).locator(".pq-pick input").check();
 await page.locator(".pq-chip.pq-plan").first().waitFor({ timeout: 10000 }); // the automatic times
-// open the editor of the first clip: the AI texts are filled in and #utkualsirr is there
+// open the editor of the first clip: the AI texts are filled in and #democreator is there
 await rows.first().getByRole("button", { name: /Düzenle/ }).click();
 const tags = await rows.first().locator(".pq-editor input.input").nth(2).inputValue();
-if (!tags.includes("#utkualsirr")) fail(`hashtags: ${tags}`);
+if (!tags.includes("#democreator")) fail(`hashtags: ${tags}`);
 await shot("1-picked");
 await page.locator(".pq-actions .btn-primary").click();
 }

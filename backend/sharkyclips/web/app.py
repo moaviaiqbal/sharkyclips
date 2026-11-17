@@ -32,6 +32,7 @@ from ..render import ENCODERS, pick_encoder
 from . import state
 from .auth import LOCAL_HOSTS, LanGuard
 from .auth import router as _auth_router
+from .security import SecurityGuard, render_index
 from .jobs import ACTIVE, CLIP_KINDS, Job, JobManager, explicit
 from .power import ShutdownTimer
 
@@ -71,15 +72,20 @@ class ExplicitRequests:
                 await self.app(scope, receive, send)
         else:
             await self.app(scope, receive, send)
-app = FastAPI(title="SharkyClips", version=__version__, docs_url="/api/docs", redoc_url=None)
+_DOCS = os.environ.get("SHARKYCLIPS_API_DOCS") == "1"  # 1.2.52: the API browser only on request
+app = FastAPI(title="SharkyClips", version=__version__, docs_url="/api/docs" if _DOCS else None, redoc_url=None,
+              openapi_url="/openapi.json" if _DOCS else None)
 app.state.lan_url = None
 app.add_middleware(LanGuard)  # optional access PIN for other devices (--lan)
 app.add_middleware(ExplicitRequests)
+app.add_middleware(SecurityGuard)  # 1.2.52, outermost: Host / Origin / API token / headers (security.py)
 
 
 @app.exception_handler(SharkyClipsError)
 async def _sharkyclips_error(_req: Request, exc: SharkyClipsError):
-    body = {"error": exc.message, "hint": exc.hint}
+    from ..redact import redact
+
+    body = {"error": redact(exc.message), "hint": redact(exc.hint)}  # 1.2.52: never a token in the UI
     if getattr(exc, "code", None):
         body["code"] = exc.code  # type: ignore[attr-defined]
     if getattr(exc, "problems", None):
@@ -1513,6 +1519,10 @@ def api_create(body: dict, request: Request) -> dict:
         raise SharkyClipsError("Paste a video URL or choose a file.")
     from ..ingest import is_url
 
+    if is_url(source):
+        from ..netguard import check_public_url
+
+        check_public_url(source)  # 1.2.52: SSRF (also checked again in ingest)
     if not is_url(source):
         if not _is_local(request):
             raise SharkyClipsError("Local file paths only work on the computer running SharkyClips.",
@@ -1549,12 +1559,24 @@ async def api_upload(request: Request, filename: str = Query(...), mode: str = Q
     dest = up_dir / f"{safe}{suffix}"
     part = dest.with_name(dest.name + ".uploading")
     size = 0
+    # 1.2.52: an upload never fills the disk: it stops while 2 GB are still free
+    keep_free = 2 * 1024**3
+    try:
+        declared = int(request.headers.get("content-length") or 0)
+    except ValueError:
+        declared = 0
+    if declared and shutil.disk_usage(up_dir).free - declared < keep_free:
+        raise SharkyClipsError("Not enough free disk space for this video.",
+                               "Free some space (Settings > Storage) and try again.")
     try:
         with open(part, "wb") as f:
             async for chunk in request.stream():
                 f.write(chunk)
                 size += len(chunk)
-    except Exception:
+                if size % (256 * 1024**2) < len(chunk) and shutil.disk_usage(up_dir).free < keep_free:
+                    raise SharkyClipsError("The disk is almost full, so the upload stopped.",
+                                           "Free some space (Settings > Storage) and try again.")
+    except BaseException:
         part.unlink(missing_ok=True)
         raise
     if size == 0:
@@ -2166,6 +2188,17 @@ def api_youtube_client_delete(request: Request) -> dict:
     return _yt_view()
 
 
+@app.post("/api/youtube/shared-client/reload")
+def api_youtube_shared_reload(request: Request) -> dict:
+    """1.2.52 "Reload Google client": re-read ~/.sharkyclips/google_client.json (a rotated client
+    dropped in) and report whether the current sign-in keeps working. This PC only."""
+    from .. import youtube
+
+    if not _is_local(request):
+        raise HTTPException(403, "Only the computer running SharkyClips can do this.")
+    return {**_yt_view(), "reload": youtube.reload_shared()}
+
+
 @app.post("/api/youtube/connect")
 def api_youtube_connect(request: Request, body: dict | None = None) -> dict:
     """Start "Connect with Google": a one-shot listener on a random 127.0.0.1 port, and the
@@ -2253,7 +2286,12 @@ def api_upload_clip(project_id: str, cid: str, body: dict) -> dict:
     project = _project(project_id)
     if not youtube.connected():
         raise SharkyClipsError("Connect YouTube first (Settings > YouTube).")
-    youtube.check_quota(youtube.COST["upload"])
+    _cand(project, cid)
+    if youtube.upload_room() < youtube.COST["upload"]:
+        # 1.2.52: today's quota is (nearly) used up: queue it for after Google's reset
+        item = youtube.defer_upload(project.id, cid, body)
+        return {"deferred": True, "after": item["after"], "status": "queued", "kind": "upload",
+                "project_id": project.id}
     return submit_upload(project.id, cid, body).to_dict()
 
 
@@ -2500,13 +2538,15 @@ if (FRONTEND_DIST / "assets").is_dir():
 @app.get("/{rest:path}", include_in_schema=False)
 def spa(rest: str, request: Request):
     candidate = (FRONTEND_DIST / rest).resolve()
-    if rest and candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
+    if rest and rest != "index.html" and candidate.is_file() and FRONTEND_DIST.resolve() in candidate.parents:
         return FileResponse(candidate)
     index = FRONTEND_DIST / "index.html"
     if not index.is_file():
         return Response("The web UI isn't built yet. Run: cd frontend && npm install && npm run build",
                         media_type="text/plain", status_code=503)
-    return FileResponse(index, headers={"Cache-Control": "no-cache"})
+    html, csp = render_index(index.read_bytes())  # the UI's API token + a CSP for its inline scripts
+    return Response(html, media_type="text/html; charset=utf-8",
+                    headers={"Cache-Control": "no-store", "Content-Security-Policy": csp})
 
 
 def _cleanup_uploads() -> None:
@@ -2524,6 +2564,9 @@ _cleanup_uploads()
 @app.on_event("startup")
 def _restore_queue() -> None:
     """Unfinished renders / best-of videos from the last run go back into the queue."""
+    from .security import token
+
+    token()  # 1.2.52: <settings>/api_token exists as soon as the server runs (tray, launcher)
     speeds.load(config.workspace_dir() / "_speeds.json")
     if os.environ.get("SHARKYCLIPS_NO_GOVERNOR") != "1":
         startup.apply_ollama_autostart()  # Ollama's updater puts its Startup shortcut back

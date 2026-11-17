@@ -542,8 +542,11 @@ export function UploadDialog({
       if (source.startsWith("ab:") && hookTest) {
         body.ab_how = source === `ab:${hookTest.upload_pick.label}` ? hookTest.upload_pick.how ?? "manual" : "manual";
       }
-      await api.uploadClip(projectId, cand.id, body);
-      toast({ kind: "ok", text: t("yt.queued") });
+      const res = (await api.uploadClip(projectId, cand.id, body)) as unknown as { deferred?: boolean; after?: string };
+      toast({
+        kind: "ok",
+        text: res?.deferred ? t("yt.deferred", { when: new Date(res.after ?? "").toLocaleString() }) : t("yt.queued"),
+      });
       onClose();
     } catch (e: any) {
       toast({ kind: "err", text: e.message, hint: e.hint });
@@ -563,14 +566,14 @@ export function UploadDialog({
           <div className="export-sum">
             {yt?.connected && (
               <span className={noQuota ? "warn-text" : "muted"}>
-                {t("yt.left_today", { n: yt.quota.uploads_left })}
+                {noQuota ? t("yt.quota_tomorrow") : t("yt.left_today", { n: yt.quota.uploads_left })}
               </span>
             )}
           </div>
           <button className="btn btn-ghost" onClick={onClose}>
             {t("common.cancel")}
           </button>
-          <button className="btn btn-primary" onClick={submit} disabled={busy || !!live || !!notConnected || !!noQuota || !title.trim() || !sources.length}>
+          <button className="btn btn-primary" onClick={submit} disabled={busy || !!live || !!notConnected || !title.trim() || !sources.length}>
             <Icon name="upload" />
             {t("yt.upload")}
           </button>
@@ -859,6 +862,33 @@ export function YoutubeCard({ isLocal, quota, onQuota }: { isLocal: boolean; quo
             <a href="https://myaccount.google.com/permissions" target="_blank" rel="noreferrer">{t("yt.legal_manage")}</a>
           </p>
         </div>
+        {yt && isLocal && (
+          <div className="ytc-row">
+            <button
+              className="btn btn-sm btn-ghost"
+              title={t("ytc.reload_client_hint")}
+              onClick={async () => {
+                try {
+                  const s = await api.youtubeReloadClient();
+                  setYt(s);
+                  const r = s.reload;
+                  toast({
+                    kind: r.needs_reconnect ? "err" : "ok",
+                    text: r.needs_reconnect
+                      ? t("ytc.reload_reconnect")
+                      : r.available
+                        ? t("ytc.reload_ok", { project: r.project_id ?? "" })
+                        : t("ytc.reload_none"),
+                  });
+                } catch (e: any) {
+                  toast({ kind: "err", text: e.message, hint: e.hint });
+                }
+              }}
+            >
+              <Icon name="refresh" size={13} /> {t("ytc.reload_client")}
+            </button>
+          </div>
+        )}
         {yt && isLocal && (
           <details className="ytc-adv" open={wizard} onToggle={(e) => setWizard((e.target as HTMLDetailsElement).open)}>
             <summary>{t("ytc.adv_title")}</summary>

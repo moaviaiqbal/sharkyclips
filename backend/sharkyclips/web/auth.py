@@ -32,12 +32,15 @@ def _host(conn: HTTPConnection) -> str:
 
 
 def needs_login(conn: HTTPConnection) -> bool:
-    """True when this request may not reach the API yet."""
-    if is_local_host(_host(conn)) or not lanauth.enabled():
+    """True when this request may not reach the API yet. 1.2.52: another device never gets in
+    without an access PIN (LAN mode without one serves only the static UI files)."""
+    if is_local_host(_host(conn)):
         return False
     path = conn.url.path
     if path.startswith(OPEN_PREFIXES) or not path.startswith(GUARDED_PREFIXES):
         return False
+    if not lanauth.enabled():
+        return True
     return not lanauth.session_valid(conn.cookies.get(lanauth.COOKIE))
 
 
@@ -48,9 +51,17 @@ class LanGuard:
         self.app = app
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        if scope["type"] == "http" and needs_login(HTTPConnection(scope)):
-            res = JSONResponse({"error": "Log in with the access PIN first.", "code": "auth_required",
-                                "hint": None}, status_code=401)
+        if scope["type"] in ("http", "websocket") and needs_login(HTTPConnection(scope)):
+            if scope["type"] == "websocket":
+                await send({"type": "websocket.close", "code": 1008})
+                return
+            if not lanauth.enabled():
+                res = JSONResponse({"error": "Set an access PIN on the computer running SharkyClips first.",
+                                    "code": "pin_required", "hint": "Settings > Other devices > Set PIN."},
+                                   status_code=403)
+            else:
+                res = JSONResponse({"error": "Log in with the access PIN first.", "code": "auth_required",
+                                    "hint": None}, status_code=401)
             await res(scope, receive, send)
             return
         await self.app(scope, receive, send)
@@ -59,8 +70,8 @@ class LanGuard:
 def _status(request: Request) -> dict:
     local = is_local_host(_host(request))
     on = lanauth.enabled()
-    authed = local or not on or lanauth.session_valid(request.cookies.get(lanauth.COOKIE))
-    return {"enabled": on, "kind": lanauth.kind(), "is_local": local, "required": on and not local,
+    authed = local or (on and lanauth.session_valid(request.cookies.get(lanauth.COOKIE)))
+    return {"enabled": on, "kind": lanauth.kind(), "is_local": local, "required": not local,
             "authenticated": authed, "lan": bool(getattr(request.app.state, "lan_url", None))}
 
 
@@ -77,8 +88,11 @@ def auth_status(request: Request) -> dict:
 @router.post("/login")
 def auth_login(request: Request, body: dict | None = None) -> JSONResponse:
     ip = _host(request)
-    if is_local_host(ip) or not lanauth.enabled():
+    if is_local_host(ip):
         return JSONResponse(_status(request))
+    if not lanauth.enabled():
+        return JSONResponse({"error": "Set an access PIN on the computer running SharkyClips first.",
+                             "code": "pin_required", "hint": None}, status_code=403)
     wait = lanauth.limiter.wait(ip)
     if wait > 0:
         secs = math.ceil(wait)
@@ -91,14 +105,14 @@ def auth_login(request: Request, body: dict | None = None) -> JSONResponse:
     lanauth.limiter.success(ip)
     res = JSONResponse({**_status(request), "authenticated": True})
     res.set_cookie(lanauth.COOKIE, lanauth.new_session(), max_age=lanauth.SESSION_DAYS * 86400,
-                   httponly=True, samesite="strict", path="/")
+                   httponly=True, samesite="strict", path="/", secure=request.url.scheme == "https")
     return res
 
 
 @router.post("/logout")
 def auth_logout(request: Request) -> JSONResponse:
     lanauth.end_session(request.cookies.get(lanauth.COOKIE))
-    res = JSONResponse({**_status(request), "authenticated": is_local_host(_host(request)) or not lanauth.enabled()})
+    res = JSONResponse({**_status(request), "authenticated": is_local_host(_host(request))})
     res.delete_cookie(lanauth.COOKIE, path="/")
     return res
 

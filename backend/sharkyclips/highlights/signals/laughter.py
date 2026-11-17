@@ -25,6 +25,10 @@ MODEL_NAME = "sherpa-onnx-ced-mini-audio-tagging-2024-04-19"
 MODEL_URL = ("https://github.com/k2-fsa/sherpa-onnx/releases/download/"
              f"audio-tagging-models/{MODEL_NAME}.tar.bz2")
 MODEL_FILES = ("model.int8.onnx", "class_labels_indices.csv")
+# 1.2.52: the download is checked before anything from it is used (supply chain)
+MODEL_SHA256 = "bec8bfa0af2c20ec3a9e7c6dd6c92d0fb6e96d6b25370ebe7a48e7283a60a02c"
+FILE_SHA256 = {"model.int8.onnx": "ff29f39f9fbe637f72535160e9d006d61d872fdab0fce838672265b9b38cf946",
+               "class_labels_indices.csv": "cdd1049833c4b86127c2773ac0d14a2754b6a6d0d1798002ed5c66e699708429"}
 
 WINDOW_S = 2.0
 HOP_S = 2.0  # non-overlapping: 2 s resolution is plenty for laughter, and half the work
@@ -74,6 +78,15 @@ def ensure_model(show_progress: bool = True) -> Path:
             with open(archive, "wb") as f:
                 while chunk := resp.read(1 << 20):
                     f.write(chunk)
+    import hashlib
+
+    h = hashlib.sha256()
+    with open(archive, "rb") as f:
+        while chunk := f.read(1 << 20):
+            h.update(chunk)
+    if h.hexdigest() != MODEL_SHA256:
+        archive.unlink(missing_ok=True)
+        raise RuntimeError("the audio event model download is damaged or not the expected file (checksum)")
     # Extract only known file names, by content: no paths from the archive are used.
     with tarfile.open(archive, "r:bz2") as tar:
         for member in tar.getmembers():
@@ -81,7 +94,10 @@ def ensure_model(show_progress: bool = True) -> Path:
             if base in MODEL_FILES and member.isfile():
                 src = tar.extractfile(member)
                 if src is not None:
-                    (d / base).write_bytes(src.read())
+                    data = src.read()
+                    if hashlib.sha256(data).hexdigest() != FILE_SHA256[base]:
+                        raise RuntimeError(f"{base} in the model download has the wrong checksum")
+                    (d / base).write_bytes(data)
     archive.unlink(missing_ok=True)
     if not model_ready():
         raise RuntimeError("model archive did not contain the expected files")

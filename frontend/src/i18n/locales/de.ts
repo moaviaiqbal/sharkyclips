@@ -2793,6 +2793,16 @@ const de: Record<string, string> = {
   "full.settings_desc": "Wenn du ein Video importierst, kann auch das ganze Video auf YouTube gehen, geplant und im Stil deines Kanals. Du bestätigst jeden Upload.",
   "full.settings_time": "Uhrzeit der Veröffentlichung",
   "full.settings_time_hint": "Der nächste Abend ohne anderes ganzes Video, zu dieser Uhrzeit.",
+  "lan.no_pin": "Andere Geräte können SharkyClips erst nutzen, wenn auf dem Computer, auf dem es läuft, eine Zugangs-PIN festgelegt ist (Einstellungen > Andere Geräte).",
+  "ytc.own_setup": "Eigenes Google-Projekt verbinden",
+  "ytc.own_setup_desc": "YouTube-Uploads laufen über dein eigenes kostenloses Google-Projekt. Eine kurze Anleitung führt dich durch (etwa 5 Minuten, einmalig).",
+  "ytc.reload_client": "Google-Client neu laden",
+  "ytc.reload_client_hint": "Liest google_client.json im Einstellungsordner neu ein (z. B. nachdem du das Secret erneuert hast).",
+  "ytc.reload_ok": "Google-Client geladen ({project}). Deine YouTube-Anmeldung funktioniert weiter.",
+  "ytc.reload_none": "Keine google_client.json im Einstellungsordner: nutze die Anleitung mit deinem eigenen Google-Projekt.",
+  "ytc.reload_reconnect": "Der neue Google-Client ist ein anderer: verbinde YouTube erneut.",
+  "yt.deferred": "Das YouTube-Kontingent für heute ist aufgebraucht: Der Upload startet nach dem Reset automatisch ({when}).",
+  "yt.quota_tomorrow": "Kontingent für heute aufgebraucht: Uploads warten auf morgen",
 };
 
 export default de;

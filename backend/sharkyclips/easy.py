@@ -327,8 +327,19 @@ def to_png(src: Path, dest: Path) -> Path:
     return dest
 
 
+def is_openable_folder(path: Path) -> bool:
+    try:
+        p = Path(path)
+        return p.is_dir() and not p.is_symlink() and not str(p).startswith(("\\\\", "//"))
+    except (OSError, ValueError):
+        return False
+
+
 def open_folder(path: Path) -> bool:
-    """Show the folder in Explorer / Finder (never in tests)."""
+    """Show the folder in Explorer / Finder (never in tests). 1.2.52: only a real folder: "open"
+    on a file would RUN it (an .exe, a .bat, a shortcut)."""
+    if not is_openable_folder(path):
+        return False
     if os.environ.get("PYTEST_CURRENT_TEST") or os.environ.get("SHARKYCLIPS_NO_OPEN") == "1":
         return False
     try:

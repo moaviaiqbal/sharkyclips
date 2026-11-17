@@ -1182,7 +1182,7 @@ def build_hashtags(p: dict, *, fmt: str, gid: str | None, game_name: str, facts:
     out = out[:12] if len(out) <= 12 else head + names + mood[:12 - len(head + names + fmt_tags + tail)] + fmt_tags + tail
     from .. import channelstyle
 
-    return channelstyle.ensure_hashtags(out, 12)  # 1.2.51: #utkualsirr & co. always, in the creator's spelling
+    return channelstyle.ensure_hashtags(out, 12)  # 1.2.51: #democreator & co. always, in the creator's spelling
 
 
 def real_words(text: str, extra: set[str] | frozenset[str] = frozenset()) -> bool:

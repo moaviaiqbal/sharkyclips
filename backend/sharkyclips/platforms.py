@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -1168,7 +1169,7 @@ def ig_start(app_id: str, app_secret: str, port: int, redirect: str | None = Non
     return f"{ig_auth_host()}/oauth/authorize?{urlencode(q)}"
 
 
-def ig_finish(code: str, state: str | None = None) -> dict:
+def ig_finish(code: str, state: str | None = None, require_state: bool = False) -> dict:
     """code -> short-lived token -> 60-day token -> profile. `code` may be the whole address the
     browser ended on (the https://localhost page that doesn't load)."""
     from urllib.parse import parse_qs
@@ -1182,7 +1183,8 @@ def ig_finish(code: str, state: str | None = None) -> dict:
     code = code.split("#")[0].strip()
     with _plock:
         p = _pending.get("ig")
-    if p is None or time.time() - p["at"] > 1800 or (state and state != p["state"]):
+    # the browser redirect must carry our state; a code pasted by hand on this PC may come alone
+    if p is None or time.time() - p["at"] > 1800 or (require_state and not state)             or (state and not hmac.compare_digest(str(state), str(p["state"]))):
         raise SharkyClipsError("This Instagram sign-in expired.", "Start the connection again.")
     if not code:
         raise SharkyClipsError("Instagram didn't send a sign-in code.",

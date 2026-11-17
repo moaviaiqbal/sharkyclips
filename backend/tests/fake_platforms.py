@@ -33,7 +33,7 @@ from urllib.parse import parse_qs, urlparse
 IG_TOKEN = "IGTOKEN-0123456789abcdef"
 FB_TOKEN = "EAAFAKE0123456789abcdefSYSTEMUSER"
 FB_IG_ID = "17841400000000001"
-FB_IG = {"id": FB_IG_ID, "username": "utkualsirr48", "profile_picture_url": ""}
+FB_IG = {"id": FB_IG_ID, "username": "democreator48", "profile_picture_url": ""}
 
 
 class FakePlatforms:
@@ -96,7 +96,7 @@ class FakePlatforms:
                     return None
                 ig = {"instagram_business_account": FB_IG}
                 if rest == "me/accounts":
-                    pages = [{"id": "1001", "name": "Utku", **ig}] if st["fb_pages"] == "pages" else []
+                    pages = [{"id": "1001", "name": "Demo", **ig}] if st["fb_pages"] == "pages" else []
                     self._json(200, {"data": pages})
                     return None
                 if rest == "me/businesses":
@@ -125,13 +125,13 @@ class FakePlatforms:
                         return
                     u = u._replace(path=path)
                 if u.path == "/v2/user/info/":
-                    return self._json(200, {"data": {"user": {"display_name": "utku"}}, "error": {"code": "ok"}})
+                    return self._json(200, {"data": {"user": {"display_name": "demo"}}, "error": {"code": "ok"}})
                 if u.path == "/access_token":  # IG short -> long token
                     return self._json(200, {"access_token": IG_TOKEN, "token_type": "bearer", "expires_in": 5184000})
                 if u.path == "/v21.0/me":
                     if q.get("access_token") != IG_TOKEN:
                         return self._json(400, {"error": {"code": 190, "message": "Invalid OAuth access token"}})
-                    return self._json(200, {"user_id": "1784", "username": "utku.clips", "account_type": st["account_type"]})
+                    return self._json(200, {"user_id": "1784", "username": "demo.clips", "account_type": st["account_type"]})
                 if u.path == "/refresh_access_token":
                     st["refreshes"] += 1
                     return self._json(200, {"access_token": q["access_token"], "expires_in": 5184000})
@@ -224,7 +224,7 @@ class FakePlatforms:
                         return
                 if u.path == "/v2/post/publish/creator_info/query/":
                     return self._json(200, {"data": {"privacy_level_options": st["privacy_options"],
-                                                     "creator_username": "utkualsirr", "creator_nickname": "utku alsir",
+                                                     "creator_username": "democreator", "creator_nickname": "demo creator",
                                                      "creator_avatar_url": "",
                                                      "comment_disabled": st["tt_comment_disabled"], "duet_disabled": False,
                                                      "stitch_disabled": True,

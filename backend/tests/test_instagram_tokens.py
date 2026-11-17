@@ -43,13 +43,13 @@ def test_pasted_tokens_lose_spaces_line_breaks_and_wrappers():
 def test_facebook_token_connects_through_graph_facebook(fake):
     pasted = f"  {FB_TOKEN[:12]}\n{FB_TOKEN[12:]}  \n"  # wrapped over two lines, spaces around
     st = PF.ig_connect(pasted)
-    assert st["connected"] and st["account"] == "utkualsirr48"
+    assert st["connected"] and st["account"] == "democreator48"
     tok = PF.load_token("reels")
     assert tok["access_token"] == FB_TOKEN and tok["graph"] == "facebook" and tok["user_id"] == FB_IG_ID
     assert tok["expires_at"] == 0 and tok["token_type"] == "SYSTEM_USER" and "instagram_content_publish" in tok["scope"]
     assert not [c for c in fake.state["calls"] if c[1].startswith("/v21.0/")]  # never the Instagram graph
     a = PF.account("reels")
-    assert a["handle"] == "utkualsirr48" and a["health"]["pill"] == "ok" and a["stats"]
+    assert a["handle"] == "democreator48" and a["health"]["pill"] == "ok" and a["stats"]
     # a system-user token doesn't expire: nothing is refreshed, even long after
     PF.save_token("reels", {**tok, "saved_at": time.time() - 30 * 86400})
     assert PF.keep_fresh() == [] and fake.state["refreshes"] == 0
@@ -59,7 +59,7 @@ def test_facebook_token_connects_through_graph_facebook(fake):
 
 def test_facebook_token_finds_the_account_through_the_business_portfolio(fake):
     fake.state["fb_pages"] = "business"  # a system user: the Page comes with the portfolio, not /me/accounts
-    assert PF.ig_connect(FB_TOKEN)["account"] == "utkualsirr48"
+    assert PF.ig_connect(FB_TOKEN)["account"] == "democreator48"
     assert ("GET", "/v24.0/me/businesses") in fake.state["fb_calls"]
 
 
@@ -67,10 +67,10 @@ def test_facebook_token_with_the_account_id_given(fake):
     fake.state["fb_pages"] = "none"  # nothing to discover: the id typed in the account field
     with pytest.raises(SharkyClipsError, match="doesn't reach any Instagram"):
         PF.ig_connect(FB_TOKEN)
-    assert PF.ig_connect(FB_TOKEN, FB_IG_ID)["account"] == "utkualsirr48"
+    assert PF.ig_connect(FB_TOKEN, FB_IG_ID)["account"] == "democreator48"
     fake.state["fb_pages"] = "pages"  # a username or profile link is looked up among the token's accounts
-    assert PF.ig_connect(FB_TOKEN, "https://www.instagram.com/utkualsirr48/")["account"] == "utkualsirr48"
-    assert PF.ig_connect(FB_TOKEN, "@UtkuAlsirr48")["account"] == "utkualsirr48"
+    assert PF.ig_connect(FB_TOKEN, "https://www.instagram.com/democreator48/")["account"] == "democreator48"
+    assert PF.ig_connect(FB_TOKEN, "@DemoCreator48")["account"] == "democreator48"
 
 
 def test_wrong_account_is_said_clearly_in_turkish(fake):
@@ -92,7 +92,7 @@ def test_token_that_may_not_post_is_refused(fake):
     fake.state["fb_no_publish"] = True
     with pytest.raises(SharkyClipsError, match="isn't allowed to post to it") as e:
         PF.ig_connect(FB_TOKEN)
-    assert "@utkualsirr48" in e.value.message and "instagram_content_publish" in e.value.hint
+    assert "@democreator48" in e.value.message and "instagram_content_publish" in e.value.hint
 
 
 def test_reels_upload_views_and_delete_on_graph_facebook(fake, tmp_path):

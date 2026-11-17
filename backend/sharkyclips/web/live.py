@@ -366,7 +366,7 @@ def api_markers_put(body: dict, request: Request) -> dict:
         import re
 
         if ch and not re.fullmatch(r"[a-z0-9_]{3,25}", ch):
-            raise SharkyClipsError("That isn't a Twitch channel name.", "Just the name, e.g. utkualsir.")
+            raise SharkyClipsError("That isn't a Twitch channel name.", "Just the name, e.g. yourchannel.")
         changes["live_twitch_channel"] = ch
     if "youtube_chat" in body:
         changes["live_youtube_chat"] = bool(body["youtube_chat"])

@@ -37,6 +37,41 @@ os.environ["SHARKYCLIPS_DOWNLOADS"] = str(_home / "downloads" / "SharkyClips")
 os.environ["SHARKYCLIPS_QUEUE_HOME"] = str(_home / "queue-home")
 os.environ.pop("CLIPFORGE_HOME", None)
 os.environ.pop("SHARKYCLIPS_SUPERVISED", None)
+os.environ["SHARKYCLIPS_ALLOWED_HOSTS"] = "testserver"  # TestClient's Host name (web/security.py)
+
+
+def _token_by_default() -> None:
+    """1.2.52: the UI sends the install's API token with every write request (web/security.py);
+    TestClient does the same by default, like the UI. test_security.py drops it on purpose."""
+    from starlette import testclient
+
+    orig = testclient.TestClient.__init__
+    if getattr(orig, "_sc_token", False):
+        return
+
+    def init(self, *a, **kw):
+        from sharkyclips.web.security import TOKEN_HEADER, token
+
+        headers = dict(kw.pop("headers", None) or {})
+        headers.setdefault(TOKEN_HEADER, token())
+        orig(self, *a, headers=headers, **kw)
+
+    init._sc_token = True  # type: ignore[attr-defined]
+    testclient.TestClient.__init__ = init  # type: ignore[method-assign]
+
+
+_token_by_default()
+
+
+def _offline_dns() -> None:
+    """Import links in tests never need real DNS: names resolve to a public documentation
+    address (netguard.py's SSRF check). test_security.py checks the real logic with its own resolver."""
+    from sharkyclips import netguard
+
+    netguard._resolve = lambda host: ["93.184.216.34"]
+
+
+_offline_dns()
 
 
 def pytest_collection_modifyitems(config, items):

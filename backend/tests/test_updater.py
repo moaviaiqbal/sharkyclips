@@ -17,12 +17,20 @@ def run(cwd: Path, *args: str) -> str:
     return subprocess.run(["git", *args], cwd=cwd, check=True, capture_output=True, text=True).stdout.strip()
 
 
-def commit_version(repo: Path, version: str, message: str) -> None:
+def commit_version(repo: Path, version: str, message: str, tag: bool = True) -> None:
     (repo / "VERSION").write_text(version + "\n", encoding="utf-8")
     (repo / "backend").mkdir(exist_ok=True)
     (repo / "backend" / "requirements.txt").write_text("rich\n", encoding="utf-8")
     run(repo, "add", "-A")
     run(repo, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", message)
+    if tag:  # 1.2.52: the updater installs only tagged releases
+        run(repo, "tag", "-f", f"v{version}")
+
+
+@pytest.fixture(autouse=True)
+def _local_remote_is_official(monkeypatch, tmp_path):
+    """The bare repo in tmp_path plays GitHub (updater.official_remote)."""
+    monkeypatch.setenv("SHARKYCLIPS_UPDATE_REPO", str(tmp_path / "remote.git"))
 
 
 @pytest.fixture
@@ -34,7 +42,7 @@ def repos(tmp_path):
     run(tmp_path, "clone", "-q", str(remote), str(author))
     run(author, "checkout", "-q", "-b", "main")
     commit_version(author, __version__, "First release")
-    run(author, "push", "-q", "-u", "origin", "main")
+    run(author, "push", "-q", "--tags", "-u", "origin", "main")
     run(tmp_path, "clone", "-q", str(remote), str(user))
     return author, user
 
@@ -61,7 +69,7 @@ def test_up_to_date(repos):
 def test_update_available_and_apply(repos):
     author, user = repos
     commit_version(author, "9.9.9", "Faster rendering")
-    run(author, "push", "-q")
+    run(author, "push", "-q", "--tags", "origin", "main")
     st = updater.status(root=user)
     assert st["available"] and st["behind"] == 1
     assert st["latest"] == "9.9.9"
@@ -77,7 +85,7 @@ def test_update_available_and_apply(repos):
 def test_apply_refuses_conflicting_local_changes(repos):
     author, user = repos
     commit_version(author, "9.9.9", "New version")
-    run(author, "push", "-q")
+    run(author, "push", "-q", "--tags", "origin", "main")
     (user / "VERSION").write_text("# edited by hand\n", encoding="utf-8")
     updater.status(root=user)
     with pytest.raises(updater.SharkyClipsError):
@@ -97,7 +105,7 @@ def at_1250(tmp_path, monkeypatch):
     run(tmp_path, "clone", "-q", str(remote), str(author))
     run(author, "checkout", "-q", "-b", "main")
     commit_version(author, "1.2.50", "SharkyClips 1.2.50")
-    run(author, "push", "-q", "-u", "origin", "main")
+    run(author, "push", "-q", "--tags", "-u", "origin", "main")
     run(tmp_path, "clone", "-q", str(remote), str(user))
     monkeypatch.setattr(updater, "__version__", "1.2.50")
     return author, user
@@ -105,7 +113,7 @@ def at_1250(tmp_path, monkeypatch):
 
 def push_version(author: Path, version: str) -> None:
     commit_version(author, version, f"SharkyClips {version}")
-    run(author, "push", "-q")
+    run(author, "push", "-q", "--tags", "origin", "main")
 
 
 def test_semver_compare():
@@ -133,7 +141,7 @@ def test_remote_same_version_shows_no_update(at_1250):
     (author / "CHANGELOG.md").write_text("typo fixed\n", encoding="utf-8")
     run(author, "add", "-A")
     run(author, "-c", "user.name=t", "-c", "user.email=t@example.com", "commit", "-q", "-m", "CHANGELOG typo")
-    run(author, "push", "-q")
+    run(author, "push", "-q", "--tags", "origin", "main")
     st = updater.status(root=user)
     assert st["behind"] == 1 and st["available"] is False
 

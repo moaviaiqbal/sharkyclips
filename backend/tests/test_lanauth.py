@@ -84,8 +84,15 @@ def test_limiter_global_cap():
     assert lim.wait("10.0.0.99", now=1061) == 0
 
 
-def test_no_pin_means_open_and_local_never_needs_login():
-    assert phone().get("/api/meta").status_code == 200
+def test_no_pin_means_closed_and_local_never_needs_login():
+    """1.2.52: LAN mode without a PIN no longer serves the API to other devices."""
+    r = phone().get("/api/meta")
+    assert r.status_code == 403 and r.json()["code"] == "pin_required"
+    assert phone().get("/api/projects/x/media/source").status_code == 403  # media routes too
+    assert phone().post("/api/auth/login", json={"secret": "1234"}).json()["code"] == "pin_required"
+    st = phone().get("/api/auth/status").json()
+    assert st["required"] and not st["enabled"] and not st["authenticated"]
+    assert local.get("/api/meta").status_code == 200
     lanauth.set_secret("1234")
     assert local.get("/api/meta").status_code == 200
     s = local.get("/api/auth/status").json()

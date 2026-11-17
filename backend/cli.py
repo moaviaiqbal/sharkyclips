@@ -54,6 +54,12 @@ def _log_without_console() -> None:
 
 _log_without_console()
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+try:  # 1.2.52: no token-like text ever reaches the console / log file (sharkyclips/redact.py)
+    from sharkyclips import redact as _redact
+
+    _redact.install()
+except ImportError:
+    pass
 os.environ.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
 os.environ.setdefault("HF_HUB_VERBOSITY", "error")  # hide "unauthenticated requests" notice
 
@@ -426,8 +432,10 @@ def _restart_if_outdated(port: int, running: str, wait: float = 40.0) -> bool:
         with urllib.request.urlopen(f"{base}/api/jobs", timeout=3) as r:
             if any(j.get("status") in ("queued", "running") for j in json.loads(r.read().decode("utf-8"))):
                 return False
+        from sharkyclips.web.security import local_headers
+
         req = urllib.request.Request(f"{base}/api/update/restart", data=b"{}", method="POST",
-                                     headers={"Content-Type": "application/json"})
+                                     headers={"Content-Type": "application/json", **local_headers()})
         with urllib.request.urlopen(req, timeout=5) as r:
             if not json.loads(r.read().decode("utf-8")).get("restarting"):
                 return False
@@ -645,7 +653,7 @@ def _serve_locked(args, RESTART_CODE: int) -> int:  # noqa: N803 - the updater's
                 console.print("[dim]Other devices log in with your access PIN. Windows may ask to allow "
                               "Python through the firewall: allow it for private networks.[/]")
             else:
-                console.print("[yellow]No access PIN set: anyone on this network can use SharkyClips.[/] "
+                console.print("[yellow]No access PIN set: other devices can't use SharkyClips until you set one.[/] "
                               "Set one in Settings > Network access, or run [bold]python cli.py lan-pin[/].")
                 console.print("[dim]Windows may ask to allow Python through the firewall: allow it for "
                               "private networks.[/]")
@@ -784,8 +792,11 @@ def _quit_server(port: int, proc) -> None:
     import urllib.request
 
     try:
+        from sharkyclips.web.security import local_headers
+
         req = urllib.request.Request(f"http://127.0.0.1:{port}/api/quit", data=b"{}", method="POST",
-                                     headers={"Content-Type": "application/json", "X-SharkyClips": "quit"})
+                                     headers={"Content-Type": "application/json", "X-SharkyClips": "quit",
+                                              **local_headers()})
         urllib.request.urlopen(req, timeout=10).close()
     except Exception:  # noqa: BLE001
         pass
@@ -831,12 +842,15 @@ def _migrate_windows_shortcuts() -> None:
         "foreach ($d in @([Environment]::GetFolderPath('Desktop'), [Environment]::GetFolderPath('Programs'))) { "
         "$p = Join-Path $d 'SharkyClips.lnk'; if (-not (Test-Path $p)) { continue }; "
         "$s = $sh.CreateShortcut($p); if ($s.TargetPath -notlike '*SharkyClips.bat') { continue }; "
-        f"$s.TargetPath = '{pythonw}'; $s.Arguments = '\"{root / 'backend' / 'cli.py'}\" launch --tray'; "
-        f"$s.WorkingDirectory = '{root}'; $s.WindowStyle = 1; $s.Save() }}"
+        # 1.2.52: paths go in as environment variables, never pasted into the script (a ' in a
+        # folder name can't end the string and run something)
+        "$s.TargetPath = $env:SC_PYW; $s.Arguments = '\"' + $env:SC_CLI + '\" launch --tray'; "
+        "$s.WorkingDirectory = $env:SC_ROOT; $s.WindowStyle = 1; $s.Save() }"
     )
+    env = {**os.environ, "SC_PYW": str(pythonw), "SC_CLI": str(root / "backend" / "cli.py"), "SC_ROOT": str(root)}
     try:
         subprocess.run(["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", script],
-                       capture_output=True, timeout=30, **procs.no_window())
+                       capture_output=True, timeout=30, env=env, **procs.no_window())
         config.update(launcher_version=2)
     except (OSError, subprocess.SubprocessError):
         pass

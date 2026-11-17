@@ -7,6 +7,104 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.52] - 2026-11-18
+### Security update
+- **Other websites can't use SharkyClips any more.** Until now, a web page open in your browser
+  could secretly send commands to SharkyClips on your computer (publish, delete, change settings,
+  disconnect accounts). Now SharkyClips only obeys its own window: every action carries a secret
+  key that only the SharkyClips page knows, requests from other sites and other address names are
+  refused, and other sites can't show or read your clips.
+- **YouTube: connect your own Google project.** SharkyClips no longer comes with a shared Google
+  connection. Settings > YouTube > **Connect your own Google project** walks you through it in
+  about 5 minutes (once): your uploads then run on your own free quota. If you already set up a
+  Google client file, **Reload Google client** reads it again.
+- **The YouTube quota is guarded.** Settings > YouTube shows today's use. New uploads stop a bit
+  before the limit, and an upload that doesn't fit today waits and starts by itself after
+  Google's daily reset.
+- **Phone / other devices (network mode) need a PIN.** Without an access PIN no other device can
+  use SharkyClips. Set one in Settings > Other devices.
+- **Safer links and updates.** "Paste a link" only accepts public internet addresses (never your
+  own computer or home network). Updates come only from the official SharkyClips page and only
+  as finished releases; downloaded models are checked before use.
+- **Your keys stay private.** Account sign-ins stay encrypted on your computer and are now also
+  hidden in every log and error message.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Güvenlik güncellemesi
+- **Başka web siteleri artık SharkyClips'i kullanamaz.** Şimdiye kadar tarayıcında açık bir web
+  sayfası bilgisayarındaki SharkyClips'e gizlice komut gönderebiliyordu (yayınla, sil, ayarları
+  değiştir, hesap bağlantısını kes). Artık SharkyClips sadece kendi penceresini dinliyor: her
+  işlem yalnızca SharkyClips sayfasının bildiği gizli bir anahtar taşıyor, başka sitelerden ve
+  başka adres adlarından gelen istekler reddediliyor, başka siteler kliplerini gösteremiyor ya da
+  okuyamıyor.
+- **YouTube: kendi Google projeni bağla.** SharkyClips artık ortak bir Google bağlantısıyla
+  gelmiyor. Ayarlar > YouTube > **Kendi Google projeni bağla** seni yaklaşık 5 dakikada (bir kez)
+  adım adım götürür: yüklemelerin kendi ücretsiz kotanla çalışır. Zaten bir Google istemci
+  dosyası kurduysan **Google istemcisini yeniden yükle** onu tekrar okur.
+- **YouTube kotası korunuyor.** Ayarlar > YouTube bugünkü kullanımı gösterir. Yeni yüklemeler
+  sınırdan biraz önce durur; bugüne sığmayan bir yükleme bekler ve Google'ın günlük
+  sıfırlamasından sonra kendiliğinden başlar.
+- **Telefon / diğer cihazlar (ağ modu) PIN ister.** Erişim PIN'i olmadan başka hiçbir cihaz
+  SharkyClips'i kullanamaz. Ayarlar > Diğer cihazlar'dan bir PIN belirle.
+- **Daha güvenli bağlantılar ve güncellemeler.** "Link yapıştır" sadece herkese açık internet
+  adreslerini kabul eder (asla kendi bilgisayarını ya da ev ağını değil). Güncellemeler sadece
+  resmi SharkyClips sayfasından ve sadece tamamlanmış sürümler olarak gelir; indirilen modeller
+  kullanılmadan önce kontrol edilir.
+- **Anahtarların gizli kalır.** Hesap girişleri bilgisayarında şifreli kalır ve artık her kayıt
+  dosyasında ve hata mesajında da gizlenir.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Sicherheitsupdate:** Andere Websites in deinem Browser können SharkyClips keine Befehle mehr schicken (Veröffentlichen, Löschen, Einstellungen). Jede Aktion trägt einen geheimen Schlüssel, den nur die SharkyClips-Seite kennt.
+- **YouTube mit deinem eigenen Google-Projekt:** Einstellungen > YouTube > „Eigenes Google-Projekt verbinden“ führt dich in etwa 5 Minuten durch; „Google-Client neu laden“ liest eine Client-Datei erneut ein.
+- **YouTube-Kontingent geschützt:** Uploads stoppen kurz vor dem Limit, was heute nicht passt, startet nach dem täglichen Reset von selbst.
+- Andere Geräte brauchen eine PIN, eingefügte Links nur öffentliche Adressen, Updates nur offizielle Releases, und Anmeldedaten tauchen in keinem Log auf.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Biztonsági frissítés:** a böngésződben megnyitott más weboldalak már nem küldhetnek parancsot a SharkyClipsnek (közzététel, törlés, beállítások). Minden művelet egy titkos kulcsot visz, amelyet csak a SharkyClips oldala ismer.
+- **YouTube a saját Google-projekteddel:** Beállítások > YouTube > „Saját Google-projekt csatlakoztatása” kb. 5 perc alatt végigvezet; a „Google-kliens újratöltése” újraolvassa a kliensfájlt.
+- **Védett YouTube-kvóta:** a feltöltések a határ előtt megállnak, ami ma nem fér bele, a napi visszaállítás után magától indul.
+- Más eszközökhöz PIN kell, a beillesztett linkek csak nyilvános címek lehetnek, frissítés csak hivatalos kiadásból, a belépési adatok semmilyen naplóban nem jelennek meg.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Обновление безопасности:** другие сайты в вашем браузере больше не могут отправлять SharkyClips команды (публикация, удаление, настройки). Каждое действие несёт секретный ключ, который знает только страница SharkyClips.
+- **YouTube через ваш собственный проект Google:** Настройки > YouTube > «Подключить свой проект Google» проведёт вас по шагам примерно за 5 минут; «Перезагрузить клиент Google» заново читает файл клиента.
+- **Квота YouTube под защитой:** загрузки останавливаются чуть раньше лимита, а то, что не помещается сегодня, начнётся само после ежедневного сброса.
+- Другим устройствам нужен PIN-код, вставленные ссылки — только публичные адреса, обновления — только официальные релизы, данные входа не попадают ни в один журнал.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **تحديث أمني:** لم يعد بإمكان المواقع الأخرى المفتوحة في متصفحك إرسال أوامر إلى SharkyClips (النشر، الحذف، الإعدادات). كل إجراء يحمل مفتاحًا سريًا لا تعرفه إلا صفحة SharkyClips.
+- **YouTube عبر مشروع Google الخاص بك:** الإعدادات > YouTube > «اربط مشروع Google الخاص بك» يرشدك خلال نحو 5 دقائق؛ و«إعادة تحميل عميل Google» يعيد قراءة ملف العميل.
+- **حماية حصة YouTube:** تتوقف عمليات الرفع قبل الحد بقليل، وما لا يتسع اليوم يبدأ تلقائيًا بعد إعادة التعيين اليومية.
+- تحتاج الأجهزة الأخرى إلى رمز PIN، والروابط الملصقة إلى عناوين عامة فقط، والتحديثات إلى إصدارات رسمية فقط، ولا تظهر بيانات الدخول في أي سجل.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **安全更新：** 浏览器中打开的其他网站再也无法向 SharkyClips 发送命令（发布、删除、更改设置）。每个操作都带有只有 SharkyClips 页面知道的密钥。
+- **用你自己的 Google 项目连接 YouTube：** 设置 > YouTube >“连接你自己的 Google 项目”约 5 分钟一步步完成；“重新加载 Google 客户端”会重新读取客户端文件。
+- **保护 YouTube 配额：** 上传会在达到上限前停下，今天放不下的上传会在每日重置后自动开始。
+- 其他设备需要 PIN，粘贴的链接只能是公开地址，更新只来自官方正式版本，登录信息不会出现在任何日志中。
+
+</details>
+
 ## [1.2.51] - 2026-11-16
 ### Fixed: the "updated to an older version" bar
 - SharkyClips said "updated to 1.2.49, but the old version 1.2.50 is still running" (and before

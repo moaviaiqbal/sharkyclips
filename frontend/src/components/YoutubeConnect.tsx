@@ -159,6 +159,31 @@ export function useYoutubeConnect(
   };
 }
 
+/** 1.2.52: no Google client on this PC (public builds ship none): the guided "connect your own
+ * Google project" setup is the default way in. */
+function OwnProjectSetup({
+  yt,
+  onStatus,
+  onAdvanced,
+}: {
+  yt: YoutubeStatus;
+  onStatus: (s: YoutubeStatus) => void;
+  onAdvanced?: () => void;
+}) {
+  const { t } = useI18n();
+  const [open, setOpen] = useState(false);
+  if (open && !onAdvanced) return <AdvancedWizard yt={yt} onStatus={onStatus} onClose={() => setOpen(false)} />;
+  return (
+    <div className="ytc">
+      <p className="muted ytc-sub" style={{ margin: 0 }}>{t("ytc.own_setup_desc")}</p>
+      <button className="btn btn-primary" onClick={() => (onAdvanced ? onAdvanced() : setOpen(true))}>
+        <GoogleG size={18} />
+        <span>{t("ytc.own_setup")}</span>
+      </button>
+    </div>
+  );
+}
+
 /** The big "Connect with Google" button and everything that follows it. */
 export function ConnectYoutube({
   yt,
@@ -179,20 +204,7 @@ export function ConnectYoutube({
   const c = useYoutubeConnect(yt, onStatus);
   if (meta && !meta.is_local)
     return <p className="muted">{t("yt.local_only")}</p>;
-  if (yt && !yt.ready)
-    return (
-      <div className="notice">
-        <Icon name="alert" />
-        <span>
-          {t("ytc.not_ready")}{" "}
-          {onAdvanced && (
-            <button className="link-btn" onClick={onAdvanced}>
-              {t("ytc.adv_start")}
-            </button>
-          )}
-        </span>
-      </div>
-    );
+  if (yt && !yt.ready) return <OwnProjectSetup yt={yt} onStatus={onStatus} onAdvanced={onAdvanced} />;
   return (
     <div className="ytc">
       {c.phase === "waiting" ? (

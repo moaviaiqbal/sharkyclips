@@ -19,14 +19,14 @@ from sharkyclips.titles import banks
 OTHER = ["#Warzone", "#CallofDutyWarzone", "#CoD", "#CoDMobile", "#Valorant", "#ValorantTricks", "#TFT",
          "#Dota2Comparison", "#Fortnite", "#PUBG", "#ApexLegends", "#Overwatch2", "#EldenRing", "#TeamFortress2",
          "#DeltaForce", "#CS2", "#Minecraft"]
-SOCIALS = ["🟩 Kick: https://kick.com/utkualsirr", "📸 Instagram: https://www.instagram.com/utkualsirr",
-           "🔷 Facebook: https://www.facebook.com/utkualsirr"]
+SOCIALS = ["🟩 Kick: https://kick.com/democreator", "📸 Instagram: https://www.instagram.com/democreator",
+           "🔷 Facebook: https://www.facebook.com/democreator"]
 
 
 @pytest.fixture(autouse=True)
 def _channel():
     old = config.get("channel_text")
-    brand.save_channel_text({"hashtags": ["#utkualsirr"], "names": ["utku alsir"],
+    brand.save_channel_text({"hashtags": ["#democreator"], "names": ["demo creator"],
                              "socials": {"enabled": True, "lines": SOCIALS, "headings": {}}})
     yield
     config.update(channel_text=old)
@@ -96,13 +96,13 @@ def test_lol_clip_never_gets_another_games_hashtags_or_tags():
                                        "tr", OTHER + ["#viral", "#fyp", "#Deepfuck", "#KocaoYar", "#outplay"],
                                        "League of Legends", [])
     _no_other_game(hashtags + tags, "lol")
-    assert hashtags[:3] == ["#utkualsirr", "#shorts", "#leagueoflegends"]  # YouTube shows the first 3
+    assert hashtags[:3] == ["#democreator", "#shorts", "#leagueoflegends"]  # YouTube shows the first 3
     assert 5 <= len(hashtags) <= 8
     assert "#pentakill" in hashtags and "#yasuo" in hashtags
     assert not {"#viral", "#fyp", "#deepfuck", "#kocaoyar"} & {h.lower() for h in hashtags}
     assert 10 <= len(tags) <= 20 and sum(len(t) for t in tags) + len(tags) <= 500
     assert not any("#" in t for t in tags)
-    assert "yasuo" in tags and "utku alsir" in tags and "lol pentakill" in tags
+    assert "yasuo" in tags and "demo creator" in tags and "lol pentakill" in tags
     assert any("türkçe" in t for t in tags) and any(re.search(r"montage|gameplay|funny", t) for t in tags)
 
 
@@ -114,10 +114,10 @@ def test_delta_force_clip_tags():
     bank = banks.get("delta_force")
     f = banks.clip_facts(bank, c, tr)
     assert {"Zero Dam", "M4A1"} <= {t["term"] for t in f["terms"]}
-    h = banks.build_hashtags(bank, f, "exciting", "tr", channel=["#utkualsirr"], llm=["#Warzone", "#Tarkov", "#loot"])
-    t = banks.build_tags(bank, f, "exciting", "tr", channel=["utku alsir", "utkualsirr"])
+    h = banks.build_hashtags(bank, f, "exciting", "tr", channel=["#democreator"], llm=["#Warzone", "#Tarkov", "#loot"])
+    t = banks.build_tags(bank, f, "exciting", "tr", channel=["demo creator", "democreator"])
     _no_other_game(h + t, "delta_force")
-    assert h[:3] == ["#utkualsirr", "#shorts", "#deltaforce"] and "#extraction" in h
+    assert h[:3] == ["#democreator", "#shorts", "#deltaforce"] and "#extraction" in h
     assert "delta force türkçe" in t and "delta force tahliye" in t
 
 
@@ -128,21 +128,21 @@ def test_unknown_game_gets_only_generic_and_channel_tags():
     h, t = analyze.clip_tags("gaming", {"id": "generic", "name": "", "known": False}, f, "funny", "tr",
                              ["#LeagueofLegends", "#Valorant", "#UnknownGame", "#gaming"], "Gaming", [])
     _no_other_game(h + t, "generic")
-    assert h[0] == "#utkualsirr" and h[1] == "#shorts" and "#gaming" in h
+    assert h[0] == "#democreator" and h[1] == "#shorts" and "#gaming" in h
     assert "#clutch" in h and not any("unknown" in x.lower() for x in h)
     assert 10 <= len(t) <= 20
 
 
 def test_channel_hashtag_is_never_trimmed():
-    brand.save_channel_text({"hashtags": ["#utkualsirr", "#sharkysquad", "#utkuyayin"]})
+    brand.save_channel_text({"hashtags": ["#democreator", "#sharkysquad", "#utkuyayin"]})
     c, tr = _lol_clip()
     bank = banks.get("lol")
     f = banks.clip_facts(bank, c, tr)
     h = banks.build_hashtags(bank, f, "skill", "tr", channel=brand.channel_hashtags(), limit=4)
-    assert h[:3] == ["#utkualsirr", "#sharkysquad", "#utkuyayin"] and "#shorts" in h and "#leagueoflegends" in h
+    assert h[:3] == ["#democreator", "#sharkysquad", "#utkuyayin"] and "#shorts" in h and "#leagueoflegends" in h
     # the channel tag also stays first when the clip's own hashtags already contain it
-    h2 = banks.build_hashtags(bank, f, "skill", "tr", channel=["#utkualsirr"], llm=["#UtkuAlsirr", "#utkualsirr"])
-    assert h2[0] == "#utkualsirr" and [x.lower() for x in h2].count("#utkualsirr") == 1
+    h2 = banks.build_hashtags(bank, f, "skill", "tr", channel=["#democreator"], llm=["#DemoCreator", "#democreator"])
+    assert h2[0] == "#democreator" and [x.lower() for x in h2].count("#democreator") == 1
 
 
 # ===================================================================== socials + descriptions
@@ -157,10 +157,10 @@ def test_socials_block_exact_format_and_translated_heading():
 
 
 def test_description_order_text_hashtags_socials_and_note_before_socials():
-    d = publishing.compose_description("Bu maçta 1v4 attım. Sen olsan ne yapardın?", ["utkualsirr", "shorts", "lol"],
+    d = publishing.compose_description("Bu maçta 1v4 attım. Sen olsan ne yapardın?", ["democreator", "shorts", "lol"],
                                        lang="tr")
     parts = d.split("\n\n")
-    assert parts[0].startswith("Bu maçta") and parts[1] == "#utkualsirr #shorts #lol"
+    assert parts[0].startswith("Bu maçta") and parts[1] == "#democreator #shorts #lol"
     assert parts[2] == brand.socials_block("tr")
     assert publishing.compose_description(d, [], lang="tr").count("kick.com") == 1  # never twice
     noted = youtube.with_note(d, "AI voice line.")
@@ -183,7 +183,7 @@ def test_tight_caption_drops_socials_lines_never_cuts_a_link():
 
 def test_finish_description_drops_sentences_naming_other_games():
     out = analyze.finish_description("Bu Warzone gibiydi. Yasuo ile dörtlü aldım. Sen olsan ne yapardın?", "tr", None,
-                                     ["#utkualsirr", "#shorts"], game_id="lol")
+                                     ["#democreator", "#shorts"], game_id="lol")
     assert "Warzone" not in out and out.startswith("Yasuo ile")
 
 
@@ -285,8 +285,8 @@ def test_studio_and_brand_channel_api():
         assert r.status_code == 200 and r.json()["custom"] is True
         assert c.put("/api/studio/games/lol", json={"bank": {"hashtags": "x"}}).status_code == 400
         assert c.delete("/api/studio/games/lol").status_code == 200 and not banks.is_custom("lol")
-        ch = c.put("/api/brand/channel", json={"hashtags": ["utkualsirr", "#utkualsirr", "#x y"]}).json()
-        assert ch["hashtags"] == ["#utkualsirr", "#xy"] and ch["preview"].startswith("🎮")
+        ch = c.put("/api/brand/channel", json={"hashtags": ["democreator", "#democreator", "#x y"]}).json()
+        assert ch["hashtags"] == ["#democreator", "#xy"] and ch["preview"].startswith("🎮")
 
 
 # ===================================================================== analysis end to end
@@ -356,7 +356,7 @@ def test_lol_project_analysis_names_only_lol(monkeypatch):
     assert c["llm"]["game_or_topic"] == "League of Legends"  # not the model's "Warzone" guess
     assert "Warzone" not in c["llm"]["what_happens"]
     _no_other_game(pub["titles"] + pub["hashtags"] + pub["tags"] + [pub["description"], pub["cover_text"]], "lol")
-    assert pub["hashtags"][:3] == ["#utkualsirr", "#shorts", "#leagueoflegends"]
+    assert pub["hashtags"][:3] == ["#democreator", "#shorts", "#leagueoflegends"]
     assert len(pub["titles"]) >= 5 and sum(bool(T.caps_words(t)) for t in pub["titles"]) >= len(pub["titles"]) - 1
     assert not any("Warzone" in t or "Valorant" in t for t in pub["titles"])
     assert pub["description"].split("\n\n")[0].rstrip().endswith("?")
@@ -379,9 +379,9 @@ def test_lol_project_analysis_names_only_lol(monkeypatch):
     from sharkyclips.web import publishing as webpub
 
     meta = webpub.prefill(p, c2)
-    assert meta["hashtags"][0] == "utkualsirr" and meta["tags"] == c2["publish"]["tags"]
+    assert meta["hashtags"][0] == "democreator" and meta["tags"] == c2["publish"]["tags"]
     full = publishing.compose_description(meta["description"], meta["hashtags"], lang="tr")
-    assert full.endswith(SOCIALS[-1]) and "#utkualsirr #shorts #leagueoflegends" in full
+    assert full.endswith(SOCIALS[-1]) and "#democreator #shorts #leagueoflegends" in full
 
 
 # ===================================================================== 1.2.26 follow-ups (seen on real projects)

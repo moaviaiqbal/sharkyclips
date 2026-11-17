@@ -373,7 +373,7 @@ def test_health_is_red_when_signed_out_and_amber_offline(monkeypatch):
     monkeypatch.setattr(youtube, "signed_out", lambda: None)
     assert autopilot.health()["fix"] == "connect"
     monkeypatch.setattr(youtube, "connected", lambda: True)
-    monkeypatch.setattr(youtube, "status", lambda: {"channel": {"title": "utku"}, "lock": {"state": "unlocked"}})
+    monkeypatch.setattr(youtube, "status", lambda: {"channel": {"title": "demo"}, "lock": {"state": "unlocked"}})
     monkeypatch.setattr(youtube, "_expire_access", lambda: None)
 
     def offline():
@@ -383,7 +383,7 @@ def test_health_is_red_when_signed_out_and_amber_offline(monkeypatch):
 
     monkeypatch.setattr(youtube, "access_token", offline)
     h = autopilot.health(probe=True)
-    assert h["state"] == "warn" and h["code"] == "offline" and h["channel"] == "utku"
+    assert h["state"] == "warn" and h["code"] == "offline" and h["channel"] == "demo"
     monkeypatch.setattr(youtube, "access_token", lambda: "tok")
     assert autopilot.health(probe=True)["state"] == "ok"
     autopilot.path().unlink(missing_ok=True)

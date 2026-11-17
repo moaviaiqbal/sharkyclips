@@ -1880,9 +1880,11 @@ def api_ig_callback(code: str = "", state: str = "", error: str = "", error_desc
 
     if error or not code:
         msg, ok = (error_description or error or "Instagram didn't connect."), False
+    elif not state:  # 1.2.52: a redirect from anywhere else (login CSRF) has no / a wrong state
+        msg, ok = "This Instagram sign-in expired. Start the connection again.", False
     else:
         try:
-            PF.ig_finish(code, state)
+            PF.ig_finish(code, state, require_state=True)
             msg, ok = "Instagram is connected. You can close this tab.", True
         except SharkyClipsError as exc:
             msg, ok = f"{exc.message} {exc.hint or ''}", False

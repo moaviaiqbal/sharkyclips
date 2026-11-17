@@ -169,9 +169,9 @@ def build(root: Path) -> str:
         "title": "TOPLAM 55 KILL & 44 REVIVE! LOBİYİ TEK BAŞIMIZA TEMİZLEDİK, KİMSE DURDURAMADI! 🚨💀 (DELTA FORCE)",
         "titles": [TITLES[0], TITLES[3], "TOPLAM 55 KILL & 44 REVIVE! LOBİYİ TEK BAŞIMIZA TEMİZLEDİK! 🚨💀 (DELTA FORCE)"],
         "description": "Delta Force'ta efsane bir maçla karşınızdayım!\n\n⏱️ Bölümler:\n00:00 Giriş\n01:35 İlk kill\n\n"
-                       "#DeltaForce #utkualsirr", "chapters": [{"t": 0, "label": "Giriş"}, {"t": 95, "label": "İlk kill"},
+                       "#DeltaForce #democreator", "chapters": [{"t": 0, "label": "Giriş"}, {"t": 95, "label": "İlk kill"},
                                                               {"t": 300, "label": "Final"}],
-        "hashtags": ["#DeltaForce", "#utkualsirr"], "tags": ["Delta Force Türkçe", "utkualsirr"], "category": "20",
+        "hashtags": ["#DeltaForce", "#democreator"], "tags": ["Delta Force Türkçe", "democreator"], "category": "20",
         "made_for_kids": False, "language": "tr", "publish_at": "2099-01-01T19:00:00Z",
         "thumbnail": str(d / "full_thumb.jpg") if (d / "full_thumb.jpg").is_file() else None}})
     return PID

@@ -741,7 +741,10 @@ def api_create(body: dict, request: Request) -> dict:
     if not source:
         raise SharkyClipsError("Paste a video link or drop a file.")
     from ..ingest import is_url
+    from ..netguard import check_public_url
 
+    if is_url(source):
+        check_public_url(source)  # 1.2.52: SSRF (also checked again in ingest)
     if not is_url(source):
         if not A._is_local(request):
             raise SharkyClipsError("Local file paths only work on the computer running SharkyClips.",

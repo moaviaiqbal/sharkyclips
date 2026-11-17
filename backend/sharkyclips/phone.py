@@ -172,7 +172,7 @@ def set_token(token: str) -> dict:
         raise SharkyClipsError("That doesn't look like a bot token.",
                                "@BotFather sends it after /newbot: numbers, a colon, then letters (123456:ABC...).")
     me = call("getMe", token=token)
-    code = secrets.token_hex(4)
+    code = secrets.token_urlsafe(16)  # 1.2.52: 128 bits (Telegram start parameters allow A-Z a-z 0-9 _ -)
     bot = me.get("username") or ""
     data = {"token": token, "bot": bot, "code": code, "link": f"https://t.me/{bot}?start={code}", "offset": 0}
     with _lock:
@@ -191,8 +191,8 @@ def pair_check() -> dict:
             d["offset"] = int(u["update_id"]) + 1
             msg = u.get("message") or {}
             text = str(msg.get("text") or "")
-            if text.strip() in (f"/start {d['code']}", d["code"]):
-                chat = msg.get("chat") or {}
+            chat = msg.get("chat") or {}
+            if chat.get("type", "private") == "private" and text.strip() in (f"/start {d['code']}", d["code"]):
                 d["chat_id"] = chat.get("id")
                 d["chat_name"] = chat.get("first_name") or chat.get("username") or ""
         _save(d)

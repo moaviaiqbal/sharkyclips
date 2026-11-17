@@ -9,6 +9,7 @@ UI. The UI's live check called POST /api/youtube/client/check, which the old ser
 from __future__ import annotations
 
 import codecs
+from pathlib import Path
 import json
 import threading
 import urllib.parse
@@ -98,14 +99,21 @@ def test_installed_wins_over_a_web_block_and_bad_shapes_explain():
             youtube.check_client_text(bad)
 
 
-def test_shipped_built_in_client_is_a_valid_desktop_client(monkeypatch):
-    """backend/sharkyclips/google_client.json: Easy mode's "Connect with Google"."""
+def test_repo_ships_no_google_client(monkeypatch, tmp_path):
+    """1.2.52: public builds ship no Google client. The built-in one is read only from the
+    settings folder (~/.sharkyclips/google_client.json); the repo has an example without secrets."""
+    pkg = Path(youtube.__file__).parent
+    assert not (pkg / "google_client.json").exists()
+    example = json.loads((pkg / "google_client.example.json").read_text(encoding="utf-8"))
+    assert not example["client_secret"].startswith("GOCSPX-") and "YOUR" in example["client_id"]
     monkeypatch.delenv("SHARKYCLIPS_SHARED_CLIENT")
-    info = youtube.shared_info()
-    assert info["available"], "google_client.json has no client"
-    assert info["client"]["client_id"].endswith(".apps.googleusercontent.com")
-    assert info["client"]["client_secret"].startswith("GOCSPX-")
-    assert info["verification"] == "production" and info["user_cap"] == 100  # published, not verified
+    monkeypatch.setenv("SHARKYCLIPS_HOME", str(tmp_path))
+    assert youtube.shared_path() == tmp_path / "google_client.json"
+    assert not youtube.shared_info()["available"]
+    assert not youtube.status()["ready"]  # the UI shows the guided own-project setup
+    (tmp_path / "google_client.json").write_text(json.dumps({
+        "client_id": FAKE_ID, "client_secret": "GOCSPX-x", "project_id": "mine"}), encoding="utf-8")
+    assert youtube.shared_info()["available"] and youtube.status()["mode"] == "shared"
 
 
 # ------------------------------------------------------------------ old server after an update

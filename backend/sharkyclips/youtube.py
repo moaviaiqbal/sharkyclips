@@ -2,9 +2,11 @@
 
 Everything stays on this computer. Two ways to sign in:
 
-  shared ("easy")  SharkyClips ships one Google OAuth client of type "Desktop app"
-                   (google_client.json next to this file). Google says an installed app's client
-                   secret is not confidential; PKCE + a loopback redirect protect the sign-in.
+  shared ("easy")  a Google OAuth client of type "Desktop app" in the SETTINGS folder
+                   (~/.sharkyclips/google_client.json). 1.2.52: public builds ship none (the
+                   repo only has google_client.example.json), so every user brings their own
+                   Google project unless they drop such a file in. Settings > YouTube >
+                   "Reload Google client" re-reads it (a rotated secret keeps the sign-in).
   own ("advanced") the user makes their own free Google Cloud client and loads its JSON in
                    Settings (own quota, no shared limits). It wins over the shared one.
 
@@ -70,7 +72,7 @@ CATEGORY = {"gaming": "20", "study": "27", "music": "10"}  # Gaming, Education, 
 # Categories a video can be put in (the ones YouTube offers for uploads in every region).
 CATEGORIES = ("1", "2", "10", "15", "17", "19", "20", "22", "23", "24", "25", "26", "27", "28", "29")
 CONSOLE = "https://console.cloud.google.com"
-SHARED_FILE = Path(__file__).with_name("google_client.json")
+SHARED_NAME = "google_client.json"  # 1.2.52: only in the settings folder, never in the repo
 CREATE_CHANNEL_URL = "https://www.youtube.com/create_channel"
 
 _lock = threading.RLock()
@@ -176,21 +178,91 @@ def spend(units: int) -> None:
         _write("quota.json", {"day": day, "used": used + units})
 
 
+DEFAULT_RESERVE = 300  # 1.2.52: units kept free for thumbnails, edits and deletes after the last upload
+
+
+def quota_reserve() -> int:
+    try:
+        return max(0, min(5000, int(config.get("youtube_quota_reserve") if config.get("youtube_quota_reserve")
+                                    is not None else DEFAULT_RESERVE)))
+    except (TypeError, ValueError):
+        return DEFAULT_RESERVE
+
+
+def upload_room(now: datetime | None = None) -> int:
+    """Units new uploads may still use today (the reserve stays free)."""
+    return daily_quota() - quota_used(now) - quota_reserve()
+
+
 def quota_view(now: datetime | None = None) -> dict:
     used = quota_used(now)
     limit = daily_quota()
+    room = max(0, upload_room(now))
     per = COST["upload"] + COST["thumbnail"]
-    return {"used": used, "limit": limit, "uploads_left": max(0, (limit - used) // COST["upload"]),
-            "uploads_left_with_thumbnail": max(0, (limit - used) // per),
-            "resets_at": next_reset(now).isoformat(timespec="seconds")}
+    return {"used": used, "limit": limit, "reserve": quota_reserve(),
+            "uploads_left": room // COST["upload"], "uploads_left_with_thumbnail": room // per,
+            "resets_at": next_reset(now).isoformat(timespec="seconds"),
+            "deferred": len(deferred_list())}
 
 
 def check_quota(units: int) -> None:
     left = daily_quota() - quota_used()
+    if units >= COST["upload"]:  # a new upload stops before the limit (the reserve stays free)
+        left -= quota_reserve()
     if units > left:
         reset = next_reset().astimezone().strftime("%H:%M")
         raise _err("Today's YouTube upload limit is used up.",
                    f"Google's free API quota resets at midnight Pacific Time ({reset} here).", reason="quotaExceeded")
+
+
+# ------------------------------------------------------------------ deferred uploads (1.2.52)
+# An upload asked for while today's quota is (nearly) used up waits in deferred.json and the
+# publish scheduler starts it after Google's reset (midnight Pacific): "queued for tomorrow".
+
+
+def deferred_list() -> list[dict]:
+    data = _read("deferred.json") or {}
+    items = data.get("items") if isinstance(data, dict) else None
+    return [i for i in items or [] if isinstance(i, dict) and i.get("project_id") and i.get("clip_id")]
+
+
+def defer_upload(project_id: str, clip_id: str, body: dict, now: datetime | None = None) -> dict:
+    with _lock:
+        items = [i for i in deferred_list() if (i["project_id"], i["clip_id"]) != (project_id, clip_id)]
+        item = {"project_id": project_id, "clip_id": clip_id, "body": body,
+                "after": next_reset(now).isoformat(timespec="seconds"), "at": _now()}
+        _write("deferred.json", {"items": (items + [item])[-200:]})
+    return item
+
+
+def take_due_deferred(now: datetime | None = None) -> list[dict]:
+    """Deferred uploads whose day has come and that fit into today's room (removed from the file)."""
+    now = now or datetime.now(timezone.utc)
+    with _lock:
+        items, due, keep = deferred_list(), [], []
+        room = upload_room(now)
+        for i in items:
+            try:
+                after = datetime.fromisoformat(str(i.get("after")))
+            except ValueError:
+                after = now
+            if after <= now and room >= COST["upload"]:
+                due.append(i)
+                room -= COST["upload"] + COST["thumbnail"]
+            else:
+                keep.append(i)
+        if due:
+            _write("deferred.json", {"items": keep})
+        return due
+
+
+def cancel_deferred(project_id: str, clip_id: str) -> bool:
+    with _lock:
+        items = deferred_list()
+        keep = [i for i in items if (i["project_id"], i["clip_id"]) != (project_id, clip_id)]
+        if len(keep) != len(items):
+            _write("deferred.json", {"items": keep})
+        return len(keep) != len(items)
 
 
 # ------------------------------------------------------------------ client + tokens
@@ -226,8 +298,7 @@ VERIFICATION = ("testing", "production", "in_review", "verified")
 def shared_info() -> dict:
     """The built-in client's public facts: is it set up, Google's verification state, user cap.
     SHARKYCLIPS_SHARED_CLIENT may point at another JSON (tests, forks)."""
-    env = os.environ.get("SHARKYCLIPS_SHARED_CLIENT")
-    path = Path(env) if env else SHARED_FILE
+    path = shared_path()
     try:
         data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
     except (OSError, ValueError):
@@ -239,8 +310,34 @@ def shared_info() -> dict:
             "user_cap": int(data.get("user_cap") or 100), "project_id": (client or {}).get("project_id")}
 
 
+def shared_path() -> Path:
+    env = os.environ.get("SHARKYCLIPS_SHARED_CLIENT")
+    return Path(env) if env else config.config_dir() / SHARED_NAME
+
+
 def shared_client() -> dict | None:
     return shared_info()["client"]
+
+
+def reload_shared() -> dict:
+    """Settings > YouTube > "Reload Google client": read ~/.sharkyclips/google_client.json again
+    (e.g. after rotating its secret) and say what that means for the current sign-in. Nothing is
+    cached, so this only checks the file and reports; a broken file changes nothing."""
+    path = shared_path()
+    info = shared_info()
+    tok = _token() or {}
+    if path.is_file() and not info["available"]:
+        raise _err("google_client.json in the settings folder isn't a valid Desktop app client.",
+                   "Download the JSON of an OAuth client of type 'Desktop app' and save it as "
+                   f"{path.name} in {path.parent}.", reason="bad_shared_client")
+    want = tok.get("client_id")
+    matches = bool(info["client"]) and (not want or info["client"]["client_id"] == want)
+    return {"available": info["available"], "project_id": info["project_id"], "file": path.name,
+            "connected": connected(),
+            # the sign-in was made with this client (a new secret for the same client id keeps working)
+            "token_ok": connected() and (matches or (load_client() or {}).get("client_id") == want),
+            "needs_reconnect": connected() and bool(want) and not matches
+                               and (load_client() or {}).get("client_id") != want}
 
 
 def active_client() -> dict | None:

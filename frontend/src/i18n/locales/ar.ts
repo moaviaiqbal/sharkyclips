@@ -2740,6 +2740,16 @@ const ar: Record<string, string> = {
   "full.settings_desc": "عند استيراد فيديو يمكن أن يذهب الفيديو كله أيضًا إلى YouTube، مجدولًا وبأسلوب قناتك. أنت تؤكد كل عملية رفع.",
   "full.settings_time": "وقت النشر",
   "full.settings_time_hint": "أقرب مساء بلا فيديو كامل آخر، في هذا الوقت.",
+  "lan.no_pin": "لا يمكن للأجهزة الأخرى استخدام SharkyClips إلا بعد تعيين رمز PIN للوصول على الكمبيوتر الذي يعمل عليه (الإعدادات > الأجهزة الأخرى).",
+  "ytc.own_setup": "اربط مشروع Google الخاص بك",
+  "ytc.own_setup_desc": "تتم عمليات الرفع إلى YouTube عبر مشروع Google المجاني الخاص بك. يرشدك دليل قصير خطوة بخطوة (نحو 5 دقائق، مرة واحدة).",
+  "ytc.reload_client": "إعادة تحميل عميل Google",
+  "ytc.reload_client_hint": "يعيد قراءة google_client.json في مجلد الإعدادات (مثلًا بعد تغيير المفتاح السري).",
+  "ytc.reload_ok": "تم تحميل عميل Google ({project}). يظل تسجيل دخولك إلى YouTube يعمل.",
+  "ytc.reload_none": "لا يوجد google_client.json في مجلد الإعدادات: استخدم الإعداد الموجَّه مع مشروع Google الخاص بك.",
+  "ytc.reload_reconnect": "عميل Google الجديد مختلف: اربط YouTube مرة أخرى.",
+  "yt.deferred": "نفدت حصة YouTube لليوم: سيتم الرفع تلقائيًا بعد إعادة التعيين ({when}).",
+  "yt.quota_tomorrow": "نفدت حصة اليوم: تنتظر عمليات الرفع حتى الغد",
 };
 
 export default ar;

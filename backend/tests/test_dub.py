@@ -76,7 +76,7 @@ def _engines(order: list[np.ndarray]):
 
 
 def _ready(tmp_path):
-    dub.give_consent("Utku")
+    dub.give_consent("Demo")
     dub.save_sample(_wav(tmp_path / "me.wav", 9.0), "recorded")
 
 
@@ -96,7 +96,7 @@ def test_no_voice_without_consent_and_an_own_sample(tmp_path):
         dub.save_sample(_wav(tmp_path / "a.wav", 9.0), "file")
     with pytest.raises(SharkyClipsError):
         dub.give_consent("  ")
-    dub.give_consent("Utku")
+    dub.give_consent("Demo")
     with pytest.raises(SharkyClipsError, match="too short"):
         dub.save_sample(_wav(tmp_path / "b.wav", 2.0), "file")
     p = dub.save_sample(_wav(tmp_path / "c.wav", 40.0), "recorded")
@@ -112,8 +112,8 @@ def test_api_consent_needs_both_boxes():
     from sharkyclips.web.app import app
 
     c = TestClient(app)
-    assert c.post("/api/voice/consent", json={"name": "Utku", "own_voice": True}).status_code == 400
-    r = c.post("/api/voice/consent", json={"name": "Utku", "own_voice": True, "no_others": True})
+    assert c.post("/api/voice/consent", json={"name": "Demo", "own_voice": True}).status_code == 400
+    r = c.post("/api/voice/consent", json={"name": "Demo", "own_voice": True, "no_others": True})
     assert r.status_code == 200 and r.json()["consent"] and not r.json()["ready"]
 
 

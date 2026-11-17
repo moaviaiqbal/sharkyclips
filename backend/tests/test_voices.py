@@ -84,7 +84,7 @@ def test_facecam_picks_the_live_overlay_not_the_hud_portrait():
 
 
 def test_facecam_layouts_are_remembered_per_channel_and_resolution(monkeypatch):
-    meta = {"source": {"uploader": "utku alsir"}, "width": 1920, "height": 1080, "game_detect": {"game": "lol"}}
+    meta = {"source": {"uploader": "demo creator"}, "width": 1920, "height": 1080, "game_detect": {"game": "lol"}}
     facecam.forget_layout(meta)
     assert facecam.find_layout(meta) is None
     facecam.remember_layout(meta, Facecam(0, 0.74, 0.27, 0.26, "manual"), confirmed=True)

@@ -1,4 +1,5 @@
 // Typed client for the SharkyClips REST API (backend/sharkyclips/web/app.py).
+import { onCsrfRefused } from "./csrf";
 
 export type Mode = "gaming" | "study" | "music";
 export type Layout = "auto" | "split" | "fit" | "crop";
@@ -1481,6 +1482,7 @@ export async function req<T>(method: string, path: string, body?: unknown): Prom
       code = typeof data.code === "string" ? data.code : null;
       problems = Array.isArray(data.problems) ? data.problems : null;
       if (res.status === 401 && data.code === "auth_required") window.dispatchEvent(new Event(AUTH_EVENT));
+      if (res.status === 403 && data.code === "csrf") onCsrfRefused();
     } catch {
       /* not JSON */
     }
@@ -1648,6 +1650,12 @@ export const api = {
     return data;
   },
   youtubeRemoveClient: () => req<YoutubeStatus>("DELETE", "/api/youtube/client"),
+  /** 1.2.52: re-read ~/.sharkyclips/google_client.json (a rotated client) */
+  youtubeReloadClient: () =>
+    req<YoutubeStatus & { reload: { available: boolean; project_id: string | null; connected: boolean; token_ok: boolean; needs_reconnect: boolean } }>(
+      "POST",
+      "/api/youtube/shared-client/reload",
+    ),
   youtubeConnect: (open = true) => req<{ id: string; url: string; opened: boolean; port: number }>("POST", "/api/youtube/connect", { open }),
   youtubeConnectState: (id: string) => req<ConnectFlow>("GET", `/api/youtube/connect/${encodeURIComponent(id)}`),
   youtubeConnectCancel: (id: string) => req<ConnectFlow>("DELETE", `/api/youtube/connect/${encodeURIComponent(id)}`),

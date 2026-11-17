@@ -69,8 +69,10 @@ class _Mode:
 
     def set(self, mode: str) -> None:
         self.value, self.at = mode, time.monotonic()
+        from .web.security import local_headers
+
         req = urllib.request.Request(f"{self.url}/api/governor", data=json.dumps({"mode": mode}).encode(),
-                                     headers={"Content-Type": "application/json"}, method="PUT")
+                                     headers={"Content-Type": "application/json", **local_headers()}, method="PUT")
         try:
             urllib.request.urlopen(req, timeout=3).close()
         except Exception:  # noqa: BLE001

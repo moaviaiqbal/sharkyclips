@@ -17,8 +17,8 @@ from sharkyclips.errors import SharkyClipsError
 from sharkyclips.project import Project, write_json_atomic
 from sharkyclips.titles import style
 
-SOCIALS = ("🎮 Canlı Yayınlar & Sosyal Medya:\n🟩 Kick: https://kick.com/utkualsirr\n"
-           "📸 Instagram: https://www.instagram.com/utkualsirr")
+SOCIALS = ("🎮 Canlı Yayınlar & Sosyal Medya:\n🟩 Kick: https://kick.com/democreator\n"
+           "📸 Instagram: https://www.instagram.com/democreator")
 
 SHORTS = [  # (title, views) - the creator's sentence-case Shorts with "kanka" / "abi"
     ("6-10 adam beni NASIL kesiyor kanka?! 🤯 Shutdown + Double Kill", 1500),
@@ -28,7 +28,7 @@ SHORTS = [  # (title, views) - the creator's sentence-case Shorts with "kanka" /
     ("Mermi bitti, şimdi ne yapacağız?", 380),
     ("Ben arabadayken adam neden koşuyordu kanka?", 120),
     ("Roketi attım ve aniden çok iyi bir durum yarattım", 350),
-    ('"KARDEŞİMİ KURTARACAĞIM" DEDİKTEN 1 SANİYE SONRA... 💀😂 #utkualsirr', 260),
+    ('"KARDEŞİMİ KURTARACAĞIM" DEDİKTEN 1 SANİYE SONRA... 💀😂 #democreator', 260),
 ]
 LONGS = [
     ("DEMİR ELODA AKIL SAĞLIĞIMI KAYBETTİM! VİKTOR İLE 1v9 MAÇ TAŞIDIM! ⚡🤬", 10),
@@ -47,8 +47,8 @@ def _seed(fake: FakeYouTube) -> None:
         fake.videos[f"S{i}"] = {
             "snippet": {"title": title, "categoryId": "20", "publishedAt": (t0 + timedelta(days=i)).isoformat(),
                         "description": "Kanka bu ne ya 😂 Siz olsanız ne yapardınız? 👇\n\nHashtag'ler:\n"
-                                       "#leagueoflegends #lol #utkualsirr #gaming #shorts",
-                        "tags": ["League of Legends Shorts", "Utku Alsirr Shorts"]},
+                                       "#leagueoflegends #lol #democreator #gaming #shorts",
+                        "tags": ["League of Legends Shorts", "Demo Creatorr Shorts"]},
             "status": {"privacyStatus": "public"}, "statistics": {"viewCount": str(views), "likeCount": "4"},
             "contentDetails": {"duration": "PT25S"}}
         i += 1
@@ -57,8 +57,8 @@ def _seed(fake: FakeYouTube) -> None:
             "snippet": {"title": title, "categoryId": "20", "publishedAt": (t0 + timedelta(days=i)).isoformat(),
                         "description": "Delta Force'ta efsane bir maçla karşınızdayım!\n\nMaç anlatımı burada. "
                                        "İyi seyirler!\n\nVideoyu beğenmeyi, kanala abone olmayı ve yorum yapmayı "
-                                       f"unutmayın! 🚀\n\n{SOCIALS}\n\nHashtag'ler\n#DeltaForce #UtkuAlsirr #GamingTR",
-                        "tags": ["Delta Force Türkçe", "Utku Alsirr Delta Force"]},
+                                       f"unutmayın! 🚀\n\n{SOCIALS}\n\nHashtag'ler\n#DeltaForce #DemoCreator #GamingTR",
+                        "tags": ["Delta Force Türkçe", "Demo Creatorr Delta Force"]},
             "status": {"privacyStatus": "public"}, "statistics": {"viewCount": str(views), "likeCount": "1"},
             "contentDetails": {"duration": "PT25M10S"}}
         i += 1
@@ -81,7 +81,7 @@ def yt(monkeypatch):
     saved = {f.name: f.read_bytes() for f in cs.folder().glob("*.json")} if cs.folder().is_dir() else {}
     _clear_channel_files()
     old = {k: config.load().get(k) for k in ("pubqueue", "performance_mode", "full_upload_time", "output_language")}
-    config.update(pubqueue={"brand_hashtag": "#utkualsirr", "timezone": "Europe/Budapest"},
+    config.update(pubqueue={"brand_hashtag": "#democreator", "timezone": "Europe/Budapest"},
                   performance_mode="turbo", output_language="tr")
     youtube.set_client({"installed": {"client_id": "1.apps.googleusercontent.com", "client_secret": "s"}})
     url = youtube.auth_url("http://127.0.0.1:8123/")
@@ -142,12 +142,12 @@ def test_channel_is_read_only_and_profiled(yt):
     assert short["title"]["case"] == "mixed" and long["title"]["case"] == "upper"
     assert "kanka" in short["title"]["slang"]
     assert long["title"]["paren_rate"] >= 0.5 and "DELTA FORCE" in long["title"]["paren_examples"]
-    assert any("kick.com/utkualsirr" in ln for ln in long["description"]["fixed_lines"])
+    assert any("kick.com/democreator" in ln for ln in long["description"]["fixed_lines"])
     assert long["description"]["hashtag_position"] == "end"
     perf = p["performance"]["short"]
     assert perf["k"] >= 1 and perf["top"][0]["views"] >= perf["bottom"][0]["views"]
     md = cs._path("style_profile.md").read_text(encoding="utf-8")
-    assert "Kanal Stil Profili" in md and "Shorts" in md and "#utkualsirr" in md
+    assert "Kanal Stil Profili" in md and "Shorts" in md and "#democreator" in md
     # the best real titles became My style examples (few-shot, never copied)
     ex = [e for e in style.load()["examples"] if e["source"] == "channel"]
     assert ex and all("#" not in e["title"] for e in ex)
@@ -174,9 +174,9 @@ def test_rules_follow_the_channel(yt):
 def test_always_hashtag_in_the_creators_spelling(yt):
     _seed(yt)
     cs.refresh()
-    out = cs.ensure_hashtags(["#DeltaForce", "#UtkuAlsirr", "#GamingTR"], 12)
-    assert out == ["#DeltaForce", "#utkualsirr", "#GamingTR"]  # its place, the creator's spelling
-    assert cs.ensure_hashtags([f"#t{i}" for i in range(20)], 12)[-1] == "#utkualsirr"
+    out = cs.ensure_hashtags(["#DeltaForce", "#DemoCreator", "#GamingTR"], 12)
+    assert out == ["#DeltaForce", "#democreator", "#GamingTR"]  # its place, the creator's spelling
+    assert cs.ensure_hashtags([f"#t{i}" for i in range(20)], 12)[-1] == "#democreator"
 
 
 def test_variety_and_edits_survive_reanalysis(yt):
@@ -265,14 +265,14 @@ def test_prepare_builds_the_draft_in_the_channel_layout(yt, monkeypatch):
     monkeypatch.setattr(longmeta, "write", lambda *a, **k: {
         "titles": ["55 KILL ATTIK! LOBİYİ SİLDİK! 🚨💀 (DELTA FORCE)"], "language": "tr", "profile": "my_style",
         "body": "Delta Force'ta efsane bir maçla karşınızdayım!\n\nHikaye. İyi seyirler!\n\nAbone olmayı unutmayın! 🚀",
-        "hashtags": ["#DeltaForce", "#UtkuAlsirr", "#GamingTR"], "tags": ["Delta Force Türkçe"]})
+        "hashtags": ["#DeltaForce", "#DemoCreator", "#GamingTR"], "tags": ["Delta Force Türkçe"]})
     d = fullvideo.prepare(p)
     dr = d["draft"]
     assert d["status"] == "review" and dr["category"] == "20" and dr["made_for_kids"] is False
     assert dr["chapters"][0] == {"t": 0.0, "label": "Giriş"} and len(dr["chapters"]) >= 3
     assert "00:00 Giriş" in dr["description"] and "⏱️ Bölümler:" in dr["description"]
-    assert "#utkualsirr" in dr["description"] and "#UtkuAlsirr" not in dr["description"]
-    assert "utkualsirr" in dr["tags"]
+    assert "#democreator" in dr["description"] and "#DemoCreator" not in dr["description"]
+    assert "democreator" in dr["tags"]
     t = datetime.fromisoformat(dr["publish_at"].replace("Z", "+00:00"))
     assert t > datetime.now(timezone.utc) + timedelta(minutes=59) and t.astimezone(fullvideo.tz()).hour == 20
     shutil.rmtree(p.dir, ignore_errors=True)
@@ -280,8 +280,8 @@ def test_prepare_builds_the_draft_in_the_channel_layout(yt, monkeypatch):
 
 def _draft(p: Project) -> None:
     fullvideo.save(p, {"status": "review", "draft": {
-        "title": "55 KILL ATTIK! 🚨💀 (DELTA FORCE)", "description": "Hikaye.\n\n#DeltaForce #utkualsirr",
-        "tags": ["Delta Force Türkçe", "utkualsirr"], "category": "20", "made_for_kids": False, "language": "tr",
+        "title": "55 KILL ATTIK! 🚨💀 (DELTA FORCE)", "description": "Hikaye.\n\n#DeltaForce #democreator",
+        "tags": ["Delta Force Türkçe", "democreator"], "category": "20", "made_for_kids": False, "language": "tr",
         "publish_at": fullvideo._iso(fullvideo.next_free_evening(skip_project=p.id))}})
 
 

@@ -2764,6 +2764,16 @@ const hu: Record<string, string> = {
   "full.settings_desc": "Egy videó importálásakor a teljes videó is mehet a YouTube-ra, ütemezve és a csatornád stílusában. Minden feltöltést te hagysz jóvá.",
   "full.settings_time": "Megjelenési időpont",
   "full.settings_time_hint": "A következő este, amikor nincs másik teljes videó, ebben az időpontban.",
+  "lan.no_pin": "Más eszközök csak akkor használhatják a SharkyClipset, ha a futtató gépen hozzáférési PIN-kódot állítottak be (Beállítások > Más eszközök).",
+  "ytc.own_setup": "Saját Google-projekt csatlakoztatása",
+  "ytc.own_setup_desc": "A YouTube-feltöltések a saját ingyenes Google-projekteden keresztül mennek. Egy rövid útmutató végigvezet (kb. 5 perc, egyszer).",
+  "ytc.reload_client": "Google-kliens újratöltése",
+  "ytc.reload_client_hint": "Újra beolvassa a beállítások mappában lévő google_client.json fájlt (pl. a titkos kulcs cseréje után).",
+  "ytc.reload_ok": "Google-kliens betöltve ({project}). A YouTube-bejelentkezésed továbbra is működik.",
+  "ytc.reload_none": "Nincs google_client.json a beállítások mappában: használd az útmutatót a saját Google-projekteddel.",
+  "ytc.reload_reconnect": "Az új Google-kliens egy másik kliens: csatlakoztasd újra a YouTube-ot.",
+  "yt.deferred": "A mai YouTube-kvóta elfogyott: a visszaállítás után automatikusan feltöltődik ({when}).",
+  "yt.quota_tomorrow": "A mai kvóta elfogyott: a feltöltések holnapra várnak",
 };
 
 export default hu;

@@ -8,6 +8,7 @@
 //
 // LAYOUT_CHANNEL=msedge uses the installed Edge (Windows dev PC); CI uses Playwright's Chromium.
 // LAYOUT_QUICK=1 checks fewer combinations. Exit code 1 when anything overlaps.
+import { apiHeaders } from "./api-token.mjs";
 import { mkdirSync } from "node:fs";
 import { createRequire } from "node:module";
 import { join } from "node:path";
@@ -25,7 +26,7 @@ try {
 async function putMode(request, url, mode) {
   for (let i = 1; ; i++) {
     try {
-      return await request.put(url, { data: { mode }, timeout: 60000 });
+      return await request.put(url, { data: { mode }, timeout: 60000, headers: H });
     } catch (e) {
       if (i >= 3) throw e;
     }
@@ -33,6 +34,7 @@ async function putMode(request, url, mode) {
 }
 
 const [base, pid, shotDir] = process.argv.slice(2);
+const H = await apiHeaders(base); // 1.2.52: the API token for write requests
 if (!base || !pid) throw new Error("usage: node layout-check.mjs <base-url> <project-id> [screenshot-dir]");
 if (shotDir) mkdirSync(shotDir, { recursive: true });
 const quick = process.env.LAYOUT_QUICK === "1";

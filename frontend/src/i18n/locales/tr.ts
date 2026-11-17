@@ -2761,6 +2761,16 @@ const tr: Record<string, string> = {
   "full.settings_desc": "Bir video içe aktardığında videonun tamamı da YouTube'a gidebilir: zamanlanmış ve kanalının tarzında. Her yüklemeyi sen onaylarsın.",
   "full.settings_time": "Yayın saati",
   "full.settings_time_hint": "Başka tam video olmayan bir sonraki akşam, bu saatte.",
+  "lan.no_pin": "Diğer cihazlar SharkyClips'i ancak çalıştığı bilgisayarda bir erişim PIN'i belirlendikten sonra kullanabilir (Ayarlar > Diğer cihazlar).",
+  "ytc.own_setup": "Kendi Google projeni bağla",
+  "ytc.own_setup_desc": "YouTube yüklemeleri kendi ücretsiz Google projenle yapılır. Kısa bir rehber adım adım gösterir (yaklaşık 5 dakika, bir kez).",
+  "ytc.reload_client": "Google istemcisini yeniden yükle",
+  "ytc.reload_client_hint": "Ayarlar klasöründeki google_client.json dosyasını yeniden okur (ör. gizli anahtarı yeniledikten sonra).",
+  "ytc.reload_ok": "Google istemcisi yüklendi ({project}). YouTube bağlantın çalışmaya devam ediyor.",
+  "ytc.reload_none": "Ayarlar klasöründe google_client.json yok: kendi Google projenle rehberli kurulumu kullan.",
+  "ytc.reload_reconnect": "Yeni Google istemcisi farklı bir istemci: YouTube'u yeniden bağla.",
+  "yt.deferred": "Bugünkü YouTube kotası doldu: sıfırlamadan sonra otomatik yüklenecek ({when}).",
+  "yt.quota_tomorrow": "Bugünkü kota doldu: yüklemeler yarını bekler",
 };
 
 export default tr;

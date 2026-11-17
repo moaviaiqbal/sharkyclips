@@ -18,7 +18,7 @@ What the analysis gives the writers (titles/style.py, titles/__init__.py, longme
   prompt_block(fmt, kind)  the channel's habits + what works best (top 20 % vs bottom 20 % by
                            views) as rules for the local LLM
   title_rules(fmt, kind)   case (ALL CAPS / mixed), emoji count, punctuation, for the local fixes
-  ensure_hashtags(tags)    the always-there hashtags (#utkualsirr) in the creator's spelling
+  ensure_hashtags(tags)    the always-there hashtags (#democreator) in the creator's spelling
   sync_examples()          the best real titles become My style examples (few-shot, never copied)
 Instagram / Meta: nothing here talks to them; Instagram texts come from the same metadata.
 """
@@ -141,7 +141,7 @@ DEFAULT_EDITS = {"enabled": True, "notes": "", "extra_rules": [], "avoid": [], "
 
 
 def _brand_hashtag() -> str:
-    """The channel hashtag the creator set (Publish queue / Brand kit), e.g. #utkualsirr."""
+    """The channel hashtag the creator set (Publish queue / Brand kit), e.g. #democreator."""
     pq = config.get("pubqueue") or {}
     tag = str(pq.get("brand_hashtag") or "").strip()
     if not tag:
@@ -786,7 +786,7 @@ def title_rules(fmt: str, kind: str = "gaming") -> dict:
 
 
 def ensure_hashtags(tags: list[str], limit: int = 15) -> list[str]:
-    """The always-there hashtags (#utkualsirr) in the creator's spelling, once, kept within `limit`.
+    """The always-there hashtags (#democreator) in the creator's spelling, once, kept within `limit`.
     One that is already in the list keeps its place (the channel tag often leads: YouTube shows
     the first three); a missing one is added at the end."""
     p = active()  # no Channel style profile (or switched off): the hashtags stay as they are

@@ -25,7 +25,7 @@ ENV = {"SHARKYCLIPS_TT_HEADLESS": "1", "SHARKYCLIPS_TT_PACE": "0.01,0.03", "SHAR
        "SHARKYCLIPS_TT_TIMEOUT_SCALE": "0.15"}
 
 CAPTION = ("Akali'yle kaçırılan combo suçlu kanka mıydı?\n\nTakım savaşında her şey ters gitti.\n\n"
-           "#lol #leagueoflegends #oyun #shorts\n\nYouTube: https://youtube.com/@utkualsir · Instagram @utkualsirr48")
+           "#lol #leagueoflegends #oyun #shorts\n\nYouTube: https://youtube.com/@democreator · Instagram @democreator48")
 
 
 @pytest.fixture(scope="module")
@@ -77,7 +77,7 @@ def _flat(s: str) -> str:
 def test_split_caption_puts_the_hashtags_last():
     body, tags = TB.split_caption(CAPTION)
     assert tags == ["#lol", "#leagueoflegends", "#oyun", "#shorts"]
-    assert body.endswith("Instagram @utkualsirr48") and "#" not in body  # socials before the hashtags
+    assert body.endswith("Instagram @democreator48") and "#" not in body  # socials before the hashtags
     assert TB.expected_text(body, tags).endswith("#oyun #shorts")
 
 

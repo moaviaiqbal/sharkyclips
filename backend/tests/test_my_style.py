@@ -47,7 +47,7 @@ def test_profile_lives_in_the_settings_folder_and_the_repo_has_only_a_generic_sa
     assert S.profile_path().parent == config.config_dir() / "style" and S.profile_path().is_file()
     sample = json.loads(S.SAMPLE_FILE.read_text(encoding="utf-8"))
     flat = json.dumps(sample, ensure_ascii=False).casefold()
-    assert "utku" not in flat and "kick.com" not in flat and sample["examples"]
+    assert "demo" not in flat and "kick.com" not in flat and sample["examples"]
     shutil.rmtree(S.folder())
     assert S.active("tr") is None  # no profile: the normal title style
     S.load_sample()
