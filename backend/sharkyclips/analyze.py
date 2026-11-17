@@ -235,13 +235,18 @@ def clip_tags(mode: str, game: dict, facts: dict, moment: str | None, lang: str,
     names = brand.channel_names()
     if mode == "gaming":
         bank = banks.get(game["id"])
-        return (banks.build_hashtags(bank, facts, moment, lang, channel=channel, llm=llm_hashtags, exclude=exclude),
+        from . import channelstyle
+
+        return (channelstyle.ensure_hashtags(
+                    banks.build_hashtags(bank, facts, moment, lang, channel=channel, llm=llm_hashtags, exclude=exclude), 12),
                 banks.build_tags(bank, facts, moment, lang, channel=names))
     keep = [h for h in clean_hashtags(llm_hashtags, topic, exclude=exclude)]
     out = list(channel) + [h for h in keep if h.casefold() not in {c.casefold() for c in channel}]
     hashtags = out[:max(8, len(channel) + 3)]
     tags = [h.lstrip("#") for h in keep if h.lower() != "#shorts"] + [topic] + names + [mode, "shorts"]
-    return hashtags, youtube.clean_tags([t for t in tags if t])[:20]
+    from . import channelstyle
+
+    return channelstyle.ensure_hashtags(hashtags, 12), youtube.clean_tags([t for t in tags if t])[:20]
 
 
 def length_fit(duration: float, mode: str) -> int:
@@ -397,6 +402,10 @@ def _prompt(meta: dict, mode: str, c: dict, transcript: dict, out_lang: str, gam
                  else '1. game_or_topic: exactly "Gaming" (the game is unknown: never guess it).')
     else:
         topic = '1. game_or_topic: the game or topic, from the video title and transcript (e.g. "Delta Force").'
+    from . import channelstyle
+
+    cover_voice = channelstyle.cover_rules("short", mode if mode in channelstyle.KINDS else "gaming") \
+        if channelstyle.applies(out_lang) else ""
     return _context_block(meta, mode, c, transcript, game, facts) + f"""
 
 TASK: judge this clip and write its publish package.
@@ -407,7 +416,7 @@ TASK: judge this clip and write its publish package.
 5. start_shift_s / end_shift_s (-10..10): move the start earlier (negative) to include needed setup, or later to cut dead air; move the end so the clip ends right after the payoff/reaction. 0 if the cut is already good.
 6. hashtags: 6-10 hashtags about what happens in THIS clip (moment, event, character, map); mix {lang_name(out_lang)} and universal English tags. Never another game, no channel or person names, no #viral / #fyp.
 7. hook_text: 2-4 punchy words in {lang_name(out_lang)}, correct spelling, shown on screen in the first seconds to make people stay; one key word may be in CAPITALS. About this clip, no swearing, no emojis.
-8. cover_scene (English): describe one striking image for the thumbnail based on what really happens (subject, action, emotion, setting). cover_text: 2-4 punchy words in {lang_name(out_lang)} for the thumbnail, same style as the hook.
+8. cover_scene (English): describe one striking image for the thumbnail based on what really happens (subject, action, emotion, setting). cover_text: 2-4 punchy words in {lang_name(out_lang)} for the thumbnail, same style as the hook. {cover_voice}
 """
 
 

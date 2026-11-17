@@ -246,7 +246,19 @@ class FakeYouTube:
             names = ["Fake Channel", "Second Channel", "Third Channel"]
             self._send(h, 200, {"items": [
                 {"id": "UCfake" if i == 0 else f"UCfake{i + 1}", "snippet": {"title": names[i % 3], "thumbnails": {
-                    "default": {"url": f"{self.base}/avatar.png"}}}} for i in range(self.channel_count)]})
+                    "default": {"url": f"{self.base}/avatar.png"}}},
+                 "contentDetails": {"relatedPlaylists": {"uploads": "UUfake" if i == 0 else f"UUfake{i + 1}"}},
+                 "statistics": {"videoCount": str(len(self.videos))}} for i in range(self.channel_count)]})
+            return
+        if path == "/www/youtube/v3/playlistItems" and method == "GET":  # 1.2.51: the uploads list (read only)
+            ids = list(reversed(list(self.videos)))  # newest first, like YouTube
+            n = int(q.get("maxResults") or 5)
+            start = int(q.get("pageToken") or 0)
+            page = ids[start:start + n]
+            body = {"items": [{"contentDetails": {"videoId": i}} for i in page]}
+            if start + n < len(ids):
+                body["nextPageToken"] = str(start + n)
+            self._send(h, 200, body)
             return
         if path == "/www/upload/youtube/v3/videos" and method == "POST":
             if self.quota_exceeded:
@@ -277,7 +289,8 @@ class FakeYouTube:
                     v = self.videos.get(i)
                     if v:
                         items.append({"id": i, "snippet": v["snippet"], "status": v["status"],
-                                      "statistics": v["statistics"]})
+                                      "statistics": v["statistics"],
+                                      "contentDetails": v.get("contentDetails") or {"duration": "PT30S"}})
                 self._send(h, 200, {"items": items})
                 return
             if method == "PUT":

@@ -152,7 +152,11 @@ def finish_onboarding(body: dict) -> dict:
 def app_state() -> dict:
     cfg = config.load()
     dev = dev_state()
-    return {"version": __version__, "onboarding": onboarding_needed(cfg), "whats_new": whats_new(cfg),
+    from . import updater
+
+    rs = updater.restart_state()
+    return {"version": __version__, "disk_version": rs["disk"], "restart_needed": rs["restart_needed"],
+            "onboarding": onboarding_needed(cfg), "whats_new": whats_new(cfg),
             "dev": dev if dev and not dev["stale"] else None, "dev_stale": dev if dev and dev["stale"] else None,
             "content_types": cfg.get("content_types") or [cfg.get("default_mode") or "gaming"],
             "youtube_signed_out": _yt_signed_out(), "instagram_manual": _ig_manual()}

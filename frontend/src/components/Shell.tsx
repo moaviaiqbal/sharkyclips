@@ -203,22 +203,67 @@ export function DevBanner() {
 
 // ---------------------------------------------------------------- stale server
 
-/** The UI files on disk are newer than the server answering them: an old SharkyClips process
- * kept running through an update (tray, second window). Its API lacks what this UI calls, so
- * things fail in odd ways. Offer the restart that finishes the update. */
+/** "1.2.10" -> [1, 2, 10]: compared as numbers, never as text. */
+export function versionParts(v: string | null | undefined): number[] {
+  const n = String(v ?? "").match(/\d+/g)?.slice(0, 3).map(Number) ?? [];
+  while (n.length < 3) n.push(0);
+  return n;
+}
+
+/** True only when `a` is a strictly higher version than `b`. */
+export function isNewer(a: string | null | undefined, b: string | null | undefined): boolean {
+  if (!a || !b) return false;
+  const x = versionParts(a);
+  const y = versionParts(b);
+  for (let i = 0; i < 3; i++) if (x[i] !== y[i]) return x[i] > y[i];
+  return false;
+}
+
+/** The files on disk are a NEWER version than the server answering (an old SharkyClips kept
+ * running through an update): offer the restart that finishes the update.
+ * 1.2.51: the server decides (`restart_needed`: its loaded code vs. the VERSION file now), never
+ * a version baked into these UI files at build time (a build made before the version bump said
+ * "updated to 1.2.49, the old 1.2.50 still runs" and the restart could never make it go away).
+ * Equal or lower = no bar. A restart that doesn't bring the new version within 45 s, or the ×,
+ * hides the bar for this version and the app goes on with the running one (no loop). */
+const STALE_WAIT_MS = 45_000;
+const dismissKey = (v: string) => `sharkyclips.stale-dismissed.${v}`;
+
 export function StaleServerBar() {
   const { t } = useI18n();
   const { state, refresh } = useAppState();
-  const [phase, setPhase] = useState<"idle" | "restarting" | "manual">("idle");
+  const [phase, setPhase] = useState<"idle" | "restarting" | "manual" | "hidden">("idle");
   const server = state?.version;
-  const stale = !!server && server !== UI_VERSION;
+  // An older server (before 1.2.51) has no restart_needed: then the UI build may only win upward.
+  const disk = state ? (state.disk_version ?? (isNewer(UI_VERSION, server) ? UI_VERSION : null)) : null;
+  const stale = !!server && !!disk && (state?.restart_needed ?? isNewer(disk, server));
+  const dismissed = (() => {
+    try {
+      return !!disk && window.sessionStorage.getItem(dismissKey(disk)) === "1";
+    } catch {
+      return false;
+    }
+  })();
+  const hide = () => {
+    try {
+      if (disk) window.sessionStorage.setItem(dismissKey(disk), "1");
+    } catch {
+      /* private mode: hidden for this page view only */
+    }
+    setPhase("hidden");
+  };
   useEffect(() => {
     if (phase !== "restarting") return;
-    if (server === UI_VERSION) return window.location.reload();
+    if (!stale) return window.location.reload(); // the new server answers
     const id = window.setInterval(refresh, 1000); // until the new server answers
-    return () => window.clearInterval(id);
-  }, [phase, server, refresh]);
-  if (!stale) return null;
+    const give = window.setTimeout(hide, STALE_WAIT_MS); // never wait forever
+    return () => {
+      window.clearInterval(id);
+      window.clearTimeout(give);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, stale, refresh]);
+  if (!stale || dismissed || phase === "hidden") return null;
   const restart = () =>
     api
       .updateRestart()
@@ -228,7 +273,7 @@ export function StaleServerBar() {
     <div className="dev-banner stale-bar" role="status">
       <Icon name="alert" size={15} />
       <span className="dev-banner-text">
-        <b>{t("stale.banner", { ui: UI_VERSION, server })}</b>{" "}
+        <b>{t("stale.banner", { ui: disk ?? "", server })}</b>{" "}
         {phase === "manual" && <span className="dev-banner-task">{t("stale.manual")}</span>}
       </span>
       {phase !== "manual" && (
@@ -236,6 +281,9 @@ export function StaleServerBar() {
           {t(phase === "restarting" ? "stale.restarting" : "stale.restart")}
         </button>
       )}
+      <button className="btn btn-sm btn-ghost" onClick={hide} aria-label={t("stale.dismiss")} title={t("stale.dismiss")}>
+        <Icon name="x" size={14} />
+      </button>
     </div>
   );
 }

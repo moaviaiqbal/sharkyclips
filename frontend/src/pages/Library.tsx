@@ -4,7 +4,7 @@ import { Icon } from "../components/Icons";
 import { DeleteDialog, useUndoToast } from "../components/Trash";
 import { fmtBytes as fmtSize } from "../format";
 import { trashApi } from "../trash";
-import { jobLabel, Modal, ProgressBar } from "../components/ui";
+import { jobLabel, Modal, ProgressBar, Toggle } from "../components/ui";
 import { fmtTime, sourceLabel } from "../format";
 import { UI_LANGUAGES, useI18n } from "../i18n";
 import { isActive, useJobs } from "../jobs";
@@ -124,6 +124,7 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<Mode>("gaming");
   const [language, setLanguage] = useState("auto");
+  const [fullUpload, setFullUpload] = useState(true);
   const [busy, setBusy] = useState(false);
   const [upload, setUpload] = useState<number | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -132,7 +133,13 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
   const abortRef = useRef<() => void>();
 
   useEffect(() => {
-    api.settings().then((s) => setMode(s.default_mode)).catch(() => {});
+    api
+      .settings()
+      .then((s) => {
+        setMode(s.default_mode);
+        setFullUpload(s.full_upload_default !== false);
+      })
+      .catch(() => {});
   }, []);
 
   const pickFile = (f: File | undefined | null) => {
@@ -150,9 +157,10 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
       if (tab === "link") {
         const v = url.trim();
         const isUrl = /^https?:\/\//i.test(v);
-        await api.create(isUrl ? { url: v, mode, language } : { path: v, mode, language });
+        const full_upload = fullUpload;
+        await api.create(isUrl ? { url: v, mode, language, full_upload } : { path: v, mode, language, full_upload });
       } else if (file) {
-        const up = uploadFile(file, mode, language, setUpload);
+        const up = uploadFile(file, mode, language, setUpload, fullUpload);
         abortRef.current = up.abort;
         await up.promise;
       }
@@ -286,6 +294,16 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
           ))}
         </select>
       </label>
+
+      <div className="toggle-line">
+        <span>
+          <span className="field-label" style={{ display: "block" }}>
+            {t("full.import_switch")}
+          </span>
+          <span className="field-hint">{t("full.import_hint")}</span>
+        </span>
+        <Toggle checked={fullUpload} onChange={setFullUpload} label={t("full.import_switch")} />
+      </div>
 
       {error && (
         <div className="notice notice-danger">

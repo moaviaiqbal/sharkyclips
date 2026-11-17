@@ -232,8 +232,10 @@ def digest(lang: str, gid: str | None, fmt: str) -> str:
     p = active(lang)
     if p is None:
         return "-"
+    from .. import channelstyle
+
     payload = [STYLE_VERSION, gid, fmt, [(e["id"], e["title"]) for e in p["examples"]], p["templates"],
-               p["channel_tag"], p["name"], sorted(glossary()["corrections"].items())]
+               p["channel_tag"], p["name"], sorted(glossary()["corrections"].items()), channelstyle.digest(fmt)]
     return hashlib.sha1(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()[:10]
 
 
@@ -604,9 +606,12 @@ def fix_apostrophes(text: str) -> str:
 
 
 def fix_title(text: str, lang: str, moment: str | None = None, sounds: dict[str, str] | None = None,
-              ascii_ok: set[str] | None = None, names: set[str] | None = None) -> str:
+              ascii_ok: set[str] | None = None, names: set[str] | None = None, rules: dict | None = None) -> str:
     """Local fixes: gaming terms kept, Turkish spelling, censored swears, ALL CAPS, strong
-    punctuation, exactly 2 emojis (before the parenthetical), at most 100 characters."""
+    punctuation, exactly 2 emojis (before the parenthetical), at most 100 characters.
+    `rules` (Channel style, 1.2.51): case "mixed" keeps the creator's sentence case, emoji_lo /
+    emoji_hi the channel's emoji count, punct=False leaves a title without "!" alone."""
+    r = {"case": "upper", "emoji_lo": 2, "emoji_hi": 2, "punct": True, **(rules or {})}
     body, paren, em = split_title(text)
     if lang == "tr":
         body = fix_apostrophes(body)
@@ -618,31 +623,44 @@ def fix_title(text: str, lang: str, moment: str | None = None, sounds: dict[str,
     body, _n = censor(body, lang)
     paren, _n = censor(paren, lang)
     if lang not in ("ar", "zh", "ja"):
-        body, paren = upper(body, lang, ascii_ok, names), upper(paren, lang, ascii_ok, names)
+        if r["case"] == "upper":
+            body, paren = upper(body, lang, ascii_ok, names), upper(paren, lang, ascii_ok, names)
+        else:
+            letters = [ch for ch in body if ch.isalpha()]
+            if len(letters) > 12 and sum(ch.isupper() for ch in letters) / len(letters) >= 0.8:
+                body = lower_title(body, lang)  # an ALL-CAPS draft -> the creator's sentence case
+            if body[:1].islower():
+                body = lexicon.upper_char(body[0], lang) + body[1:]
+            paren = upper(paren, lang, ascii_ok, names)  # the (CONTEXT) stays in capitals
     if lang == "tr":
         body, _f = fix_tr_suffixes(body, sounds)
         paren, _f = fix_tr_suffixes(paren, sounds)
     body = body.rstrip(" ,;:")
-    body = re.sub(r'\?"$', '?!"', body)
-    if body.endswith("."):
-        body = body.rstrip(".") + "!" if not body.endswith("...") else body
-    if body.endswith("?"):
-        body += "!"  # "?!"
-    if not re.search(r"[!?]|\.\.\.|…", body):
-        body += "!"
-    want = [e for e in dict.fromkeys(em)][:2]
+    if r["punct"]:
+        body = re.sub(r'\?"$', '?!"', body)
+        if body.endswith("."):
+            body = body.rstrip(".") + "!" if not body.endswith("...") else body
+        if body.endswith("?") and r["case"] == "upper":
+            body += "!"  # "?!"
+        if not re.search(r"[!?]|\.\.\.|…", body):
+            body += "!"
+    elif body.endswith(".") and not body.endswith("..."):
+        body = body.rstrip(".")
+    hi = max(0, int(r["emoji_hi"]))
+    lo = min(hi, max(0, int(r["emoji_lo"])))
+    want = [e for e in dict.fromkeys(em)][:hi]
     for ch in MOOD_EMOJI.get(moment or "", MOOD_EMOJI["other"]) + "🔥💀":
-        if len(want) >= 2:
+        if len(want) >= lo:
             break
         if ch not in want:
             want.append(ch)
     tail = "".join(want)
-    out = f"{body} {tail}" + (f" ({paren})" if paren else "")
+    out = (f"{body} {tail}" if tail else body) + (f" ({paren})" if paren else "")
     if len(out) > TITLE_LIMIT and paren:
-        out = f"{body} {tail}"
+        out = f"{body} {tail}".rstrip()
     if len(out) > TITLE_LIMIT:
         cut = body[:TITLE_LIMIT - len(tail) - 2].rsplit(" ", 1)[0].rstrip(" ,")
-        out = f"{cut}! {tail}" if not cut.endswith(("!", "?", "...")) else f"{cut} {tail}"
+        out = (f"{cut}! {tail}" if not cut.endswith(("!", "?", "...")) else f"{cut} {tail}").rstrip()
     return out
 
 
@@ -713,17 +731,22 @@ def hook_end(title: str) -> int:
 
 def check_title(title: str, *, lang: str, fmt: str, clip_text: str, forbidden=None,
                 example_titles: list[str] | None = None, used: list[str] | None = None,
-                too_similar=None) -> list[str]:
-    """Rule problems of one finished title ([] = fine)."""
+                too_similar=None, rules: dict | None = None) -> list[str]:
+    """Rule problems of one finished title ([] = fine). `rules`: see fix_title (Channel style)."""
+    r = {"case": "upper", "emoji_lo": 2, "emoji_hi": 2, "punct": True, **(rules or {})}
     errs = []
     body, paren, em = split_title(title)
     letters = [ch for ch in body + paren if ch.isalpha()]
-    if lang not in ("ar", "zh", "ja") and letters and not all(ch.isupper() for ch in letters if ch.lower() != "v"):
+    if (r["case"] == "upper" and lang not in ("ar", "zh", "ja") and letters
+            and not all(ch.isupper() for ch in letters if ch.lower() != "v")):
         errs.append("write the whole title in CAPITALS")
-    if len(em) != 2:
-        errs.append("use exactly 2 fitting emojis")
-    if not re.search(r"[!?]|\.\.\.|…", body):
+    if not r["emoji_lo"] <= len(em) <= r["emoji_hi"]:
+        errs.append("use exactly 2 fitting emojis" if r["emoji_lo"] == r["emoji_hi"] == 2
+                    else f"use {r['emoji_lo']}-{r['emoji_hi']} fitting emojis")
+    if r["punct"] and not re.search(r"[!?]|\.\.\.|…", body):
         errs.append('end the hook with "!" or "?!"')
+    if re.search(r"(?<![\w'’])[XN](?![\w'’])", body):
+        errs.append("a pattern placeholder (X / N) is left: write the clip's real words")
     if len(title) > TITLE_LIMIT:
         errs.append(f"at most {TITLE_LIMIT} characters")
     if HASHTAG_RE.search(title):
@@ -865,7 +888,10 @@ def examples_block(p: dict, gid: str | None, fmt: str, game_names: dict[str, str
 def title_task(p: dict, *, fmt: str, gid: str | None, game_name: str, what_happens: str, facts: str,
                clip_text: str, lang_label: str, n: int, game_names: dict[str, str], liked: list[str],
                used: list[str], problems: list[str], terms: list[str], moment: str | None,
-               allowed: set[str] | frozenset[str] = frozenset()) -> str:
+               allowed: set[str] | frozenset[str] = frozenset(), kind: str = "gaming") -> str:
+    from .. import channelstyle
+
+    r = channelstyle.title_rules(fmt, kind)
     parens = [split_title(e["title"])[1] for e in examples_for(p, gid, fmt, n=12) if e["game"] == (gid or "")]
     parens = [x for x in dict.fromkeys(parens) if x][:5]
     quotes = _quotable(clip_text, p["lang"], allowed) if fmt == "short" else []
@@ -892,13 +918,18 @@ def title_task(p: dict, *, fmt: str, gid: str | None, game_name: str, what_happe
     else:
         parts += ["Kinds: fact = the match in numbers / names (55 KILL & 44 REVIVE, 1v9, champion / operator names); "
                   "story = what happened, two strong sentences; rage = the mood (tilt, rage, chaos); question."]
+    emo = ("exactly 2 fitting emojis right after the main part (like 😂💀, 🔥😱, 🚨💀)" if r["emoji_lo"] == r["emoji_hi"] == 2
+           else f"{r['emoji_lo']}-{r['emoji_hi']} fitting emojis after the main part")
     parts += [
         "Rules:",
-        "- write in normal case; the app turns everything into CAPITALS",
-        '- one or two strong sentences ending with "!" or "?!" (or "..." for a cliffhanger)',
-        "- exactly 2 fitting emojis right after the main part (like 😂💀, 🔥😱, 🚨💀)",
-        "- often a short context in brackets at the end"
-        + (f", like the creator's: {', '.join('(' + x + ')' for x in parens)}" if parens else " like (FULL RAGE)"),
+        "- write in normal case; the app turns everything into CAPITALS" if r["case"] == "upper"
+        else "- write in the creator's sentence case (NOT all capitals); only 1-3 punchy words in CAPITALS",
+        '- one or two strong sentences ending with "!" or "?!" (or "..." for a cliffhanger)' if r["punct"]
+        else '- one or two short sentences; "?!", "?" or "!" when it fits, a plain ending is fine too',
+        f"- {emo}",
+        ("- often a short context in brackets at the end"
+         + (f", like the creator's: {', '.join('(' + x + ')' for x in parens)}" if parens else " like (FULL RAGE)"))
+        if r.get("paren", True) else "- a (BRACKET) ending only when it really adds context",
         f"- use real clip details (names, numbers, events); at most {TITLE_LIMIT} characters",
         "- swears are always censored with * (S*KTİR, B*K), never written out; at most ONE title may contain one "
         "(prefer quotes without swears)",
@@ -915,6 +946,9 @@ def title_task(p: dict, *, fmt: str, gid: str | None, game_name: str, what_happe
         parts.append("Names: spell exactly like this: " + ", ".join(terms[:30]))
     if used:
         parts += ["Do NOT repeat these (other clips / earlier ideas):"] + [f"- {u}" for u in used[-20:]]
+    block = channelstyle.prompt_block(fmt, kind)
+    if block:
+        parts += ["", block]
     if problems:
         parts += ["", "Problems with your earlier titles, fix them:"] + [f"- {x}" for x in problems[:10]]
     return "\n".join(parts)
@@ -1028,6 +1062,11 @@ def description_task(p: dict, *, fmt: str, gid: str | None, game_name: str, what
               f"Names: {', '.join(terms[:30]) or '(none)'}"]
     if game_name:
         parts.append(f"Only about {game_name}: never name another game.")
+    from .. import channelstyle
+
+    block = channelstyle.prompt_block(fmt)
+    if block:
+        parts += ["", block]
     if problems:
         parts += ["", "Problems last time, fix them:"] + [f"- {x}" for x in problems[:8]]
     return "\n".join(parts)
@@ -1140,7 +1179,10 @@ def build_hashtags(p: dict, *, fmt: str, gid: str | None, game_name: str, facts:
     mood = group(mood_in, limit=max(2, min(4, room)))
     extra = group(g.get("extra") or [], limit=max(0, 12 - len(head) - len(names) - len(mood) - len(fmt_tags) - len(tail)))
     out = head + names + mood + extra + fmt_tags + tail
-    return out[:12] if len(out) <= 12 else head + names + mood[:12 - len(head + names + fmt_tags + tail)] + fmt_tags + tail
+    out = out[:12] if len(out) <= 12 else head + names + mood[:12 - len(head + names + fmt_tags + tail)] + fmt_tags + tail
+    from .. import channelstyle
+
+    return channelstyle.ensure_hashtags(out, 12)  # 1.2.51: #utkualsirr & co. always, in the creator's spelling
 
 
 def real_words(text: str, extra: set[str] | frozenset[str] = frozenset()) -> bool:
@@ -1218,11 +1260,15 @@ def write_titles(model, p: dict, *, system: str, context: str, lang: str, lang_l
                  gid: str | None, game_name: str, what_happens: str, facts: str, clip_text: str, glossary,
                  used_titles: list[str], too_similar, forbidden, moment: str | None, liked: list[str],
                  strong: bool = False, avoid: list[str] | None = None, temperature: float = 0.8,
-                 n_out: int = 6, game_names: dict[str, str] | None = None) -> dict:
+                 n_out: int = 6, game_names: dict[str, str] | None = None, kind: str = "gaming",
+                 remember_choice: bool = True) -> dict:
     """The creator-style titles of one clip: draft -> proofread -> local fixes -> rule check ->
     write again with the problems (up to 3 rounds; 4 when the PC is idle / Turbo)."""
+    from .. import channelstyle
+
     n = 10 if strong else 8
     rounds = 3
+    rules = channelstyle.title_rules(fmt, kind)
     example_titles = [e["title"] for e in p["examples"]]
     checks: dict = {"rejected": [], "fixed": [], "rounds": 0, "style": "my_style", "strong": strong}
     pool: list[dict] = []
@@ -1236,7 +1282,7 @@ def write_titles(model, p: dict, *, system: str, context: str, lang: str, lang_l
             p, fmt=fmt, gid=gid, game_name=game_name, what_happens=what_happens, facts=facts, clip_text=clip_text,
             lang_label=lang_label, n=n, game_names=game_names or {}, liked=liked,
             used=used_titles[-20:] + avoid + [x["text"] for x in pool], problems=problems, terms=terms, moment=moment,
-            allowed=glossary.allowed if glossary is not None else frozenset())
+            allowed=glossary.allowed if glossary is not None else frozenset(), kind=kind)
         d = model.json(system, prompt, title_schema(n), temperature=temperature, num_predict=1400)
         d.pop("_soft_errors", None)
         drafts = [{"kind": t.get("kind") or "fact", "text": " ".join(str(t.get("text") or "").split())}
@@ -1258,11 +1304,12 @@ def write_titles(model, p: dict, *, system: str, context: str, lang: str, lang_l
             if quote_of(t["text"]) and not quote_of(new):
                 new = t["text"]  # the proofreader dropped the quote marks
             text = glossary.canonicalize(new) if glossary is not None else new
-            final = fix_title(text, lang, moment, names=name_words)
+            final = fix_title(text, lang, moment, names=name_words, rules=rules)
             if final != t["text"]:
                 checks["fixed"].append([t["text"], final])
             errs = check_title(final, lang=lang, fmt=fmt, clip_text=clip_text, forbidden=forbidden,
-                               example_titles=example_titles, used=used_titles + avoid, too_similar=too_similar)
+                               example_titles=example_titles, used=used_titles + avoid, too_similar=too_similar,
+                               rules=rules)
             plain = re.sub(r"\S*\*\S*", " ", lower_title(strip_emojis(final), lang))  # censored words
             unknown = lexicon.unknown_words(plain, lang,
                                             (glossary.allowed if glossary is not None else set())
@@ -1279,7 +1326,13 @@ def write_titles(model, p: dict, *, system: str, context: str, lang: str, lang_l
             pool.append({"style": t["kind"], "text": final})
         if len(pool) >= n_out:
             break
-    return {"titles": pick(pool, fmt, n_out), "checks": checks}
+    # 1.2.51 variety: a title that starts like one of the app's last chosen titles goes behind the others
+    pool = sorted(pool, key=lambda t: channelstyle.repeats_recent(t["text"], fmt))
+    chosen = pick(pool, fmt, n_out)
+    checks["rules"] = rules
+    if remember_choice and chosen:
+        channelstyle.remember([chosen[0]["text"]], fmt)
+    return {"titles": chosen, "checks": checks}
 
 
 def has_censored(text: str) -> bool:

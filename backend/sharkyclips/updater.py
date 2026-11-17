@@ -3,6 +3,14 @@
 SharkyClips is installed as a git checkout, so an update is `git pull --ff-only`
 followed by `pip install -r requirements.txt` when the requirements changed.
 The server then restarts itself (see `cli.py serve`, exit code RESTART_CODE).
+
+1.2.51 rules (the "updated to 1.2.49, but the old 1.2.50 is still running" bug):
+  * an update is offered only when the remote VERSION is a HIGHER semver than the running one
+    (`is_newer`); same or lower = nothing to do, whatever the commit count says
+  * `apply` refuses a lower remote version before pulling, and puts the old commit back if a
+    pull ever ends on a lower VERSION: going back to an older SharkyClips is impossible
+  * "restart needed" is decided by the server itself: the version this Python process loaded
+    vs. the VERSION file on disk now (`restart_state`), never by a version baked into the UI
 """
 
 from __future__ import annotations
@@ -61,8 +69,59 @@ def parse_version(text: str) -> str | None:
 VERSION_FILES = ("VERSION", "backend/sharkyclips/__init__.py", "backend/clipforge/__init__.py")
 
 
-def version_tuple(v: str) -> tuple[int, ...]:
-    return tuple(int(x) for x in re.findall(r"\d+", v)[:3]) or (0,)
+def version_tuple(v: str | None) -> tuple[int, ...]:
+    """Version parts as numbers, (1, 2, 10) for 1.2.10, so 1.2.10 > 1.2.9 (never a string compare)."""
+    nums = [int(x) for x in re.findall(r"\d+", str(v or ""))[:3]]
+    return tuple(nums + [0] * (3 - len(nums))) if nums else (0, 0, 0)
+
+
+def is_newer(candidate: str | None, current: str | None) -> bool:
+    """True only when `candidate` is a strictly higher version than `current`."""
+    if not candidate:
+        return False
+    return version_tuple(candidate) > version_tuple(current)
+
+
+def disk_version(root: Path = REPO_ROOT) -> str | None:
+    """The version of the files on disk right now (an update changes it under a running server)."""
+    for rel in VERSION_FILES:
+        try:
+            v = parse_version((root / rel).read_text(encoding="utf-8"))
+        except OSError:
+            continue
+        if v:
+            return v
+    return None
+
+
+def restart_state(running: str = __version__, root: Path = REPO_ROOT) -> dict:
+    """Does this server run older code than the files on disk? Only a HIGHER disk version asks
+    for a restart; an equal or lower one never does (no loop, no downgrade)."""
+    disk = disk_version(root)
+    return {"running": running, "disk": disk, "restart_needed": is_newer(disk, running)}
+
+
+STALE_LOCK_S = 10 * 60
+
+
+def clean_stale_state(root: Path = REPO_ROOT) -> list[str]:
+    """Left-overs of an update that died half-way: git lock files older than 10 minutes (a
+    crashed `git pull` leaves them and every later update fails on them). Returns what went."""
+    import time
+
+    gone = []
+    gitdir = root / ".git"
+    if not gitdir.is_dir():
+        return gone
+    for rel in ("index.lock", "HEAD.lock", "ORIG_HEAD.lock", "FETCH_HEAD.lock", "shallow.lock"):
+        f = gitdir / rel
+        try:
+            if f.is_file() and time.time() - f.stat().st_mtime > STALE_LOCK_S:
+                f.unlink()
+                gone.append(rel)
+        except OSError:
+            pass
+    return gone
 
 
 def _requirements_hash(root: Path = REPO_ROOT) -> str:
@@ -91,6 +150,7 @@ def status(fetch: bool = True, root: Path = REPO_ROOT) -> dict:
         out["reason"] = "no_upstream"
         return out
     out.update(supported=True, branch=branch, upstream=upstream)
+    clean_stale_state(root)
     if fetch:
         try:
             git("fetch", "--quiet", "--tags", root=root, timeout=90)
@@ -112,7 +172,11 @@ def status(fetch: bool = True, root: Path = REPO_ROOT) -> dict:
             if out["latest"]:
                 break
     out["latest"] = out["latest"] or __version__
-    out["available"] = behind > 0
+    # Only a strictly higher version is an update: a commit without a version bump, an equal
+    # or an older version is never offered (1.2.51: the app must never "update" backwards).
+    out["available"] = behind > 0 and is_newer(out["latest"], __version__)
+    if behind and not out["available"]:
+        out["reason"] = "not_newer"
     out["dirty"] = bool(git("status", "--porcelain", "--untracked-files=no", root=root))
     return out
 
@@ -121,15 +185,37 @@ def apply(on_stage: Callable[[str], None] | None = None, root: Path = REPO_ROOT,
           python: str = sys.executable) -> dict:
     """git pull, then reinstall Python packages if the requirements changed."""
     stage = on_stage or (lambda _s: None)
+    clean_stale_state(root)
     before_rev = git("rev-parse", "HEAD", root=root)
+    before_ver = disk_version(root) or __version__
     before_req = _requirements_hash(root)
     stage("update_download")
+    try:  # never pull an older version (a moved branch, a bad push): check before touching files
+        git("fetch", "--quiet", "--tags", root=root, timeout=90)
+        remote = None
+        for rel in VERSION_FILES:
+            try:
+                remote = parse_version(git("show", f"@{{u}}:{rel}", root=root))
+            except SharkyClipsError:
+                continue
+            if remote:
+                break
+    except SharkyClipsError:
+        remote = None
+    if remote and version_tuple(remote) < version_tuple(before_ver):
+        raise SharkyClipsError(f"The version on GitHub ({remote}) is older than this one ({before_ver}).",
+                               "SharkyClips never goes back to an older version. Nothing was changed.")
     try:
         git("pull", "--ff-only", "--quiet", root=root, timeout=300)
     except SharkyClipsError as exc:
         raise SharkyClipsError(exc.message, "Files of SharkyClips were changed on this computer. Undo those "
                                           "changes (or run `git stash` in the SharkyClips folder) and try again.")
     after_rev = git("rev-parse", "HEAD", root=root)
+    after_ver = disk_version(root)
+    if after_ver and version_tuple(after_ver) < version_tuple(before_ver):
+        git("reset", "--keep", before_rev, root=root)  # put the newer files back
+        raise SharkyClipsError(f"That update would go back to {after_ver}: undone, {before_ver} stays.",
+                               "SharkyClips never goes back to an older version.")
     deps = False
     if _requirements_hash(root) != before_req:
         stage("update_packages")
@@ -147,13 +233,7 @@ def apply(on_stage: Callable[[str], None] | None = None, root: Path = REPO_ROOT,
             raise SharkyClipsError(f"Installing the new Python packages failed: {tail[0][:300]}",
                                    "Run the installer again to repair SharkyClips.")
         deps = True
-    new_version = None
-    for rel in VERSION_FILES:
-        try:
-            new_version = parse_version((root / rel).read_text(encoding="utf-8"))
-        except OSError:
-            continue
-        if new_version:
-            break
+    new_version = disk_version(root) or __version__
     return {"from": before_rev[:10], "to": after_rev[:10], "changed": before_rev != after_rev,
-            "packages_updated": deps, "version": new_version or __version__, "restart_needed": True}
+            "packages_updated": deps, "version": new_version,
+            "restart_needed": is_newer(new_version, __version__) or deps}

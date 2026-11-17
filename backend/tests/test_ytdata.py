@@ -53,14 +53,14 @@ def _setup():
 def test_numbers_older_than_30_days_go():
     p = _setup()
     out = ytdata.purge(now=NOW)
-    assert out == {"uploads": 1, "calibration": 1, "hook_tests": 1}
+    assert out == {"uploads": 1, "calibration": 1, "hook_tests": 1, "channel_style": 0}
     ups = read_json(p.dir / "uploads.json")["uploads"]
     assert ups["c01"][0]["views"] == 900
     assert ups["c02"][0] == {"video_id": "OLD", "privacy": "public"}  # the id stays, the numbers go
     assert set(calibration.load()["entries"]) == {"a:c01", "a:c03"}  # typed-in numbers stay
     old = next(o for o in abtest.load_store()["observations"] if o["video_id"] == "OLD")
     assert "retention" not in old and "views" not in old and old["reward"] == 0.8
-    assert ytdata.purge(now=NOW) == {"uploads": 0, "calibration": 0, "hook_tests": 0}
+    assert ytdata.purge(now=NOW) == {"uploads": 0, "calibration": 0, "hook_tests": 0, "channel_style": 0}
 
 
 def test_disconnect_deletes_every_fetched_number(monkeypatch):

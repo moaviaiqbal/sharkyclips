@@ -4641,3 +4641,97 @@ a.edit-note:hover { text-decoration: underline; }
 .final-wait { display: grid; gap: 8px; }
 .final-play { display: grid; gap: 6px; justify-items: center; }
 .final-play video { width: min(100%, 300px); aspect-ratio: 9 / 16; background: #000; border-radius: 12px; }
+
+/* ---------------------------------------------------------------- 1.2.51 full video + Channel style */
+.full-alts {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+.full-alt {
+  display: block;
+  width: 100%;
+  text-align: start;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.full-alt[aria-pressed="true"] {
+  border-color: var(--gold-line);
+  background: var(--gold-soft);
+  color: var(--gold-text);
+}
+.cstyle-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  min-width: 0;
+}
+.cstyle-box {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  padding: 12px 14px;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  align-content: start;
+}
+.cstyle-box h3 {
+  margin: 0;
+  font-size: 14px;
+}
+.cstyle-box ul {
+  margin: 0;
+  padding-inline-start: 18px;
+  display: grid;
+  gap: 3px;
+  font-size: 13px;
+}
+.cstyle-box li,
+.cstyle-tags {
+  overflow-wrap: anywhere;
+}
+.cstyle-tags {
+  font-size: 12.5px;
+  color: var(--muted);
+}
+.cstyle-compare {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+.cstyle-compare th,
+.cstyle-compare td {
+  text-align: start;
+  vertical-align: top;
+  padding: 8px;
+  border-top: 1px solid var(--border);
+  overflow-wrap: anywhere;
+}
+.cstyle-compare th {
+  color: var(--muted);
+  font-weight: 600;
+}
+.cstyle-compare ol {
+  margin: 0;
+  padding-inline-start: 18px;
+}
+.cstyle-scroll {
+  overflow-x: auto;
+  min-width: 0;
+}
+.cstyle-md {
+  max-height: 360px;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

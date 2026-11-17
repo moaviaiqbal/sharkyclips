@@ -113,7 +113,10 @@ def examples(lang: str, mode: str, n: int = 15, game: str | None = None) -> list
 def style_digest(lang: str, mode: str, game: str | None = None) -> str:
     """Changes when the examples or the creator's likes change (part of the cache key)."""
     liked, disliked = feedback.examples(lang, mode)
-    payload = [TITLES_VERSION, [e["text"] for e in examples(lang, mode, game=game)], liked, disliked]
+    from .. import channelstyle
+
+    payload = [TITLES_VERSION, [e["text"] for e in examples(lang, mode, game=game)], liked, disliked,
+               channelstyle.digest("short", mode) if channelstyle.applies(lang) else "-"]
     return hashlib.sha1(json.dumps(payload, ensure_ascii=False).encode()).hexdigest()[:12]
 
 
@@ -464,6 +467,13 @@ def draft_task(*, lang: str, lang_label: str, mode: str, what_happens: str, topi
     if others:
         parts += ["Do NOT reuse words, phrases or patterns from these titles (they are other moments or "
                   "already used):", _bullets(others)]
+    from .. import channelstyle
+
+    block = channelstyle.prompt_block("short", mode if mode in channelstyle.KINDS else "gaming") \
+        if channelstyle.applies(lang) else ""
+    if block:  # 1.2.51: the creator's own channel (tone, words, what works); the rules above stay
+        parts += ["", block + "\n(Where this disagrees with the rules above, keep the rules above for form "
+                  "and follow the channel for tone and words.)"]
     if problems:
         parts += ["", "Problems with your earlier ideas, avoid them:", _bullets(problems[:10])]
     return "\n".join(parts)

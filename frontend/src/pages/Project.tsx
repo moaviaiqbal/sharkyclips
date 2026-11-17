@@ -28,6 +28,7 @@ import FastReview, { ShortcutSheet } from "../components/FastReview";
 import { ExportDialog, ExportsList, UploadDialog, UploadsLine } from "../components/Publish";
 import { PublishSetupDialog } from "../components/PublishTools";
 import { LongMetaDialog } from "../components/MyStyle";
+import { FullUploadButton } from "../components/FullUpload";
 import TranscriptEditor from "../components/TranscriptEditor";
 import SwearReview from "../components/SwearReview";
 import VoicesPanel from "../components/VoicesPanel";
@@ -1016,6 +1017,7 @@ export default function ProjectPage({ id }: { id: string }) {
               </button>
             )}
             {longOpen && <LongMetaDialog projectId={id} onClose={() => setLongOpen(false)} />}
+            <FullUploadButton projectId={id} canPrepare={!!project.analysis} />
             {project.highlights && (
               <a className="btn btn-sm" href={href.bestof(id)}>
                 <Icon name="layers" />

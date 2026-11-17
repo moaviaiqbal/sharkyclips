@@ -5,6 +5,7 @@ TikTok / YouTube: at most 3 automatic posts a day, one automatic retry."""
 
 from __future__ import annotations
 
+import shutil
 import time
 from datetime import datetime, timedelta, timezone
 
@@ -33,6 +34,8 @@ def manual(monkeypatch, tmp_path, cfg):  # noqa: F811
     PF.forget("reels")
     config.update(publish_targets=None, platform_modes={})
     _clean_projects()
+    for d in config.workspace_dir().glob("meta-*"):  # this file's projects (test_projects_empty)
+        shutil.rmtree(d, ignore_errors=True)
 
 
 def _fake_token():

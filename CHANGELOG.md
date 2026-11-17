@@ -7,6 +7,118 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.51] - 2026-11-16
+### Fixed: the "updated to an older version" bar
+- SharkyClips said "updated to 1.2.49, but the old version 1.2.50 is still running" (and before
+  that 1.2.47 vs 1.2.49), and "Restart now" never made it go away. The version check now only
+  counts a **higher** version: the same or an older one never shows an update or the bar, and
+  SharkyClips can never go back to an older version. "Restart now" really starts the new
+  version; if it doesn't come back within 45 seconds, the bar closes and you keep working (the
+  × hides it too). Left-over files of an interrupted update are cleaned up.
+
+### New: Channel style
+- Studio > Brand kit > **Channel style**: SharkyClips reads your own YouTube videos and Shorts
+  (read only: nothing on your channel changes) and learns how you write: title length, CAPITALS,
+  emojis, "?!", your words and tone, the (BRACKET) endings, description layout, the fixed parts
+  (Kick / Instagram links, sign-off), hashtags and tags, separately for gaming, study videos and
+  AI songs, and for Shorts and long videos.
+- It compares your best 20% and weakest 20% videos by views and shows what works. Every title,
+  description, hashtag and cover text the app writes follows your style (Shorts, TikTok, Reels and
+  full videos) and doesn't repeat the same opening clip after clip. #utkualsirr is always there.
+- Your last 3 videos: your real titles next to what SharkyClips would write. Edit the profile
+  (extra rules, words to avoid, notes, capitals), or press "Analyse again"; it updates by itself
+  once a week.
+
+### New: the full video on YouTube
+- When you import a video, SharkyClips can also upload the **whole video** to YouTube (the
+  "Upload the full video to YouTube" switch, on by default). It is written in your channel's
+  style: title, description with chapters (00:00 Giriş ...) and your fixed parts, tags with
+  #utkualsirr, the Gaming category, "not made for kids" and a 16:9 thumbnail suggestion.
+- Nothing goes out before you check it: the confirm screen lets you change the title,
+  description, tags and the time, then "Upload". It is always **scheduled** (default: the next
+  free evening at 20:00, Settings), never published at once.
+- At most one full video a day, one automatic retry, a progress bar, and a cut upload continues
+  where it stopped. When it goes public, the Shorts of that stream get "Tam video: <link>".
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Düzeltildi: "eski sürüme güncellendi" uyarısı
+- SharkyClips "1.2.49 sürümüne güncellendi ama eski 1.2.50 sürümü hâlâ çalışıyor" diyordu (daha
+  önce de 1.2.47 / 1.2.49 için), "Yeniden başlat" da uyarıyı hiç kaldırmıyordu. Sürüm kontrolü
+  artık sadece **daha yüksek** sürümü sayıyor: aynı ya da daha eski sürüm asla güncelleme ya da
+  uyarı göstermez ve SharkyClips asla eski sürüme dönemez. "Yeniden başlat" gerçekten yeni sürümü
+  açar; 45 saniye içinde gelmezse uyarı kapanır ve çalışmaya devam edersin (× ile de
+  gizleyebilirsin). Yarım kalmış güncellemelerin kalıntı dosyaları temizlenir.
+
+### Yeni: Kanal Stili
+- Stüdyo > Marka kiti > **Kanal Stili**: SharkyClips kendi YouTube videolarını ve Shorts'larını
+  okur (sadece okuma: kanalında hiçbir şey değişmez) ve nasıl yazdığını öğrenir: başlık uzunluğu,
+  BÜYÜK HARF, emoji, "?!", kelimelerin ve tonun, (PARANTEZ) sonları, açıklama düzeni, sabit
+  kısımlar (Kick / Instagram linkleri, kapanış), hashtag ve etiketler; oyun, ders videoları ve AI
+  şarkılar için, Shorts ve uzun videolar için ayrı ayrı.
+- İzlenmeye göre en iyi %20 ile en zayıf %20'yi karşılaştırıp neyin işe yaradığını gösterir.
+  Uygulamanın yazdığı her başlık, açıklama, hashtag ve kapak yazısı senin tarzına uyar (Shorts,
+  TikTok, Reels ve tam videolar), klipten klibe aynı kalıpla başlamaz. #utkualsirr her zaman var.
+- Son 3 videon: gerçek başlıkların ve SharkyClips'in yazacakları yan yana. Profili düzenle (ek
+  kurallar, kullanılmayacak kelimeler, notlar, büyük harf) ya da "Yeniden analiz et"e bas;
+  haftada bir kendiliğinden güncellenir.
+
+### Yeni: tam video YouTube'a
+- Bir video içe aktardığında SharkyClips **videonun tamamını** da YouTube'a yükleyebilir ("Tam
+  videoyu YouTube'a yükle" anahtarı, varsayılan açık). Kanalının tarzında hazırlanır: başlık,
+  bölümlü açıklama (00:00 Giriş ...) ve sabit kısımların, #utkualsirr'li etiketler, Oyun
+  kategorisi, "çocuklara özel değil" ve 16:9 küçük resim önerisi.
+- Sen kontrol etmeden hiçbir şey gitmez: onay ekranında başlık, açıklama, etiket ve saati
+  değiştirip "Yükle"ye basarsın. Video her zaman **zamanlanır** (varsayılan: bir sonraki boş akşam
+  20:00, Ayarlar), asla anında yayınlanmaz.
+- Günde en fazla 1 tam video, 1 otomatik tekrar deneme, ilerleme çubuğu; kesilen yükleme kaldığı
+  yerden devam eder. Herkese açık olunca o yayının Shorts'larına "Tam video: <link>" eklenir.
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Behoben:** Die Leiste „auf eine ältere Version aktualisiert“ erscheint nicht mehr. Nur eine höhere Version zählt als Update, zurück zu einer älteren geht es nie, und „Jetzt neu starten“ startet wirklich die neue Version (sonst schließt sich die Leiste nach 45 s).
+- **Neu: Kanalstil.** SharkyClips liest deine YouTube-Videos und Shorts (nur Lesen) und lernt deinen Stil: Titel, Beschreibungen, Hashtags, Tags, was am besten läuft. Alle Texte der App folgen ihm; deine letzten 3 Titel stehen zum Vergleich daneben.
+- **Neu: das ganze Video auf YouTube.** Beim Import kann auch das ganze Video hochgeladen werden, im Stil deines Kanals, mit Kapiteln und Thumbnail-Vorschlag, immer geplant (nächster freier Abend 20:00) und erst nach deiner Bestätigung.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Javítva:** nem jelenik meg többé a „régebbi verzióra frissült” sáv. Csak a magasabb verzió számít frissítésnek, régebbire visszalépni soha nem lehet, és az „Újraindítás most” tényleg az új verziót indítja (különben a sáv 45 mp után bezárul).
+- **Új: Csatornastílus.** A SharkyClips elolvassa a YouTube-videóidat és Shortsaidat (csak olvasás), és megtanulja a stílusodat: címek, leírások, hashtagek, címkék, mi működik a legjobban. Az app minden szövege ezt követi; az utolsó 3 címed összehasonlításként mellette áll.
+- **Új: a teljes videó a YouTube-ra.** Importáláskor a teljes videó is feltölthető, a csatornád stílusában, fejezetekkel és bélyegkép-javaslattal, mindig ütemezve (következő szabad este 20:00) és csak a jóváhagyásod után.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Исправлено:** больше нет панели «обновлено до более старой версии». Обновлением считается только более высокая версия, откат на старую невозможен, а «Перезапустить» действительно запускает новую версию (иначе панель закроется через 45 с).
+- **Новое: стиль канала.** SharkyClips читает ваши видео и Shorts на YouTube (только чтение) и изучает ваш стиль: названия, описания, хештеги, теги и то, что работает лучше всего. Все тексты приложения следуют ему; ваши последние 3 названия показаны рядом для сравнения.
+- **Новое: полное видео на YouTube.** При импорте можно загрузить и всё видео целиком, в стиле канала, с главами и предложенной обложкой, всегда по расписанию (ближайший свободный вечер в 20:00) и только после вашего подтверждения.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **إصلاح:** لم يعد يظهر شريط «تم التحديث إلى إصدار أقدم». الإصدار الأعلى فقط يُعدّ تحديثًا، ولا يمكن الرجوع إلى إصدار أقدم أبدًا، و«أعد التشغيل الآن» يشغّل الإصدار الجديد فعلًا (وإلا يُغلق الشريط بعد 45 ثانية).
+- **جديد: أسلوب القناة.** يقرأ SharkyClips فيديوهاتك ومقاطع Shorts على YouTube (قراءة فقط) ويتعلّم أسلوبك: العناوين والأوصاف والوسوم والكلمات المفتاحية وما ينجح أكثر. كل نصوص التطبيق تتبعه، وتظهر عناوينك الثلاثة الأخيرة بجانبها للمقارنة.
+- **جديد: الفيديو الكامل على YouTube.** عند الاستيراد يمكن رفع الفيديو كله أيضًا، بأسلوب قناتك، مع فصول وصورة مصغّرة مقترحة، مجدولًا دائمًا (أقرب مساء فارغ 20:00) وبعد تأكيدك فقط.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **修复：** 不再出现“已更新到更旧的版本”的提示条。只有更高的版本才算更新，永远不会回退到旧版本，“立即重启”会真正启动新版本（否则提示条会在 45 秒后关闭）。
+- **新功能：频道风格。** SharkyClips 读取你在 YouTube 上的视频和 Shorts（只读），学习你的风格：标题、简介、话题标签、标签以及最有效的写法。应用写的所有文字都遵循它，你最近 3 个视频的真实标题会并排显示以便对比。
+- **新功能：完整视频上传到 YouTube。** 导入时也可以上传整个视频，按你频道的风格撰写，带章节和缩略图建议，始终定时发布（下一个空闲晚上 20:00），并且只在你确认后上传。
+
+</details>
 ## [1.2.50] - 2026-11-16
 ### Changed: Instagram is posted by hand now (Manual mode)
 - Meta restricted a connected business account for automation. To keep your Instagram accounts

@@ -43,6 +43,11 @@ const SCREENS = [
     await page.waitForSelector(".pick-bar");
     await page.locator(".cand-pick input").nth(1).check();
   }],
+  ["project-full-video", "pro", `#/p/${P}`, ".side-tabs", async (page) => {
+    await page.locator('[data-testid="full-video"]').click();
+    await page.waitForSelector(".full-alts");
+  }],
+  ["studio-brand", "pro", "#/studio/brand", "#channel-style"],
   ["trash", "pro", "#/trash", ".trash-usage"],
   ["trash-empty-dialog", "pro", "#/trash", ".trash-usage", async (page) => {
     await page.locator(".trash-page .page-head .btn-danger").click();

@@ -18,7 +18,12 @@ SharkyClips (called ClipForge before 1.2.1) is a free, local stream-highlight cl
   `<!-- lang:xx -->` inside `<details><summary>Language</summary> ... </details>`. The app's
   "What's new in x.y.z" popup shows the block of the UI language (English fallback), once per
   version (config `seen_version`), so write it for users, not developers.
-- Then: commit, `git tag vX.Y.Z`, `git push` and `git push origin vX.Y.Z`.
+- Build the UI (`npm run build`) AFTER the VERSION bump: the bundle carries the version it was
+  built from (`test_committed_ui_build_matches_version` fails otherwise; a build made before the
+  bump caused the 1.2.47 / 1.2.49 "updated to an older version" bar).
+- Then: commit, `git tag vX.Y.Z` on that release commit, `git push`, `git push origin vX.Y.Z`
+  and `gh release create vX.Y.Z --verify-tag` (from the tag, notes = the CHANGELOG entry).
+  The updater offers only a strictly higher VERSION (semver) and never goes back.
 
 ### 2. "Under construction" flag (every work session)
 

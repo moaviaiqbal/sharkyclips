@@ -753,6 +753,12 @@ class Scheduler:
                 ytdata.daily()
             except Exception:  # noqa: BLE001 - never stops the publish loop
                 pass
+            try:  # 1.2.51: released full videos link their Shorts; weekly Channel style re-analysis
+                from .fullvideo_api import tick as full_tick
+
+                acts += full_tick()
+            except Exception:  # noqa: BLE001 - never stops the publish loop
+                pass
             try:  # 1.2.34 Autopilot: sign-in health check + the morning summary
                 from .. import autopilot
 

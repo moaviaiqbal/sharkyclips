@@ -22,6 +22,7 @@ import { href, type StudioTab } from "../router";
 import { useToast } from "../toast";
 import { LearnedWords, SwearCheckReview } from "../components/SwearCheck";
 import { MyStyleCard } from "../components/MyStyle";
+import { ChannelStyleCard } from "../components/ChannelStyle";
 
 const MOODS: Mood[] = ["hype", "chill", "sad", "funny"];
 const POSITIONS: LogoPos[] = ["tl", "tr", "bl", "br"];
@@ -441,6 +442,7 @@ function ChannelTextCard() {
 function BrandTab() {
   return (
     <div className="settings-list">
+      <ChannelStyleCard />
       <ChannelTextCard />
       <MyStyleCard />
       <BrandPresets />

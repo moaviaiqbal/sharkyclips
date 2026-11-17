@@ -30,7 +30,7 @@ export interface Meta {
 
 export interface Job {
   id: string;
-  kind: "import" | "transcribe" | "highlights" | "render" | "facecam" | "proxy" | "analyze" | "titles" | "chat" | "montage" | "benchmark" | "update" | "export" | "upload" | "yt_stats" | "music" | "story" | "story_render" | "ab" | "hook_fetch" | "cover_burn" | "voices" | "proofread" | "ai_cover" | "dub" | "platform_export" | "platform_upload" | "swearscan" | "long_metadata" | "pubqueue" | "reconcile" | "post";
+  kind: "import" | "transcribe" | "highlights" | "render" | "facecam" | "proxy" | "analyze" | "titles" | "chat" | "montage" | "benchmark" | "update" | "export" | "upload" | "yt_stats" | "music" | "story" | "story_render" | "ab" | "hook_fetch" | "cover_burn" | "voices" | "proofread" | "ai_cover" | "dub" | "platform_export" | "platform_upload" | "swearscan" | "long_metadata" | "pubqueue" | "reconcile" | "post" | "full_prepare" | "full_upload" | "channel_style" | "style_preview";
   lane: string;
   project_id: string | null;
   params: Record<string, any>;
@@ -883,6 +883,10 @@ export interface Word {
 }
 
 export interface Settings {
+  /** 1.2.51: the import's "Upload the full video to YouTube" switch starts on */
+  full_upload_default?: boolean;
+  /** 1.2.51: release time of a full video (HH:MM, the next free evening) */
+  full_upload_time?: string;
   ui_language: string;
   default_mode: Mode;
   video_encoder: string;
@@ -1497,6 +1501,10 @@ export interface DevState {
 
 export interface AppState {
   version: string;
+  /** 1.2.51: the VERSION file on disk now (an update changes it under the running server) */
+  disk_version?: string | null;
+  /** 1.2.51: the server runs older code than the files on disk (a strictly higher version) */
+  restart_needed?: boolean;
   /** first launch: show the 3-step onboarding */
   onboarding: boolean;
   /** version whose "What's new" should be shown once */
@@ -1557,7 +1565,7 @@ export const api = {
   hype: (id: string) => req<HypeCurve>("GET", `${P(id)}/hype`),
   words: (id: string, start: number, end: number) =>
     req<Word[]>("GET", `${P(id)}/words?start=${start}&end=${end}`),
-  create: (body: { url?: string; path?: string; mode: Mode; language: string }) =>
+  create: (body: { url?: string; path?: string; mode: Mode; language: string; full_upload?: boolean }) =>
     req<Job>("POST", "/api/projects", body),
   transcribe: (id: string, language = "auto", force = false) =>
     req<Job>("POST", `${P(id)}/transcribe`, { language, force }),
@@ -1793,7 +1801,7 @@ export interface UpdateStatus {
   behind: number;
   changes: string[];
   supported: boolean;
-  reason: null | "no_git" | "not_git_checkout" | "no_upstream" | "fetch_failed";
+  reason: null | "no_git" | "not_git_checkout" | "no_upstream" | "fetch_failed" | "not_newer";
   error?: string;
   releases_url: string;
   can_restart: boolean;
@@ -1826,15 +1834,126 @@ export const urls = {
   clipThumb: (pid: string, cid: string) => `${P(pid)}/clips/${encodeURIComponent(cid)}/thumbnail.jpg?kind=auto`,
 };
 
+// ---------------------------------------------------------------- 1.2.51: Channel style + full video
+
+export interface ChannelStyleEdits {
+  enabled: boolean;
+  notes: string;
+  extra_rules: string[];
+  avoid: string[];
+  always_hashtags: string[];
+  case: { short: "auto" | "upper" | "mixed"; long: "auto" | "upper" | "mixed" };
+}
+
+export interface ChannelStyleSummaryRow {
+  key: string;
+  kind: "gaming" | "study" | "music";
+  format: "short" | "long";
+  n: number;
+  title: string[];
+  description: string[];
+  fixed_lines: string[];
+  patterns: string[];
+  hashtags: string[];
+  always: string[];
+  tags: string[];
+  examples: string[];
+}
+
+export interface ChannelStylePerf {
+  format: "short" | "long";
+  n: number;
+  k: number;
+  views: { top_median: number; bottom_median: number };
+  length: { top: number; bottom: number };
+  works: { label: string; top: number; bottom: number }[];
+  weak: { label: string; top: number; bottom: number }[];
+  top_words: string[];
+  top: { title: string; views: number; id: string }[];
+  bottom: { title: string; views: number; id: string }[];
+}
+
+export interface ChannelStyleView {
+  profile: { counts: { total: number; short: number; long: number; kinds: Record<string, number> } } | null;
+  edits: ChannelStyleEdits;
+  summary: { styles: ChannelStyleSummaryRow[]; performance: ChannelStylePerf[] } | null;
+  summary_md: string;
+  preview: {
+    at: string;
+    items: { id: string; format: "short" | "long"; kind: string; real: string; views: number; generated: string[] }[];
+  } | null;
+  connected: boolean;
+  channel: { id: string; title: string } | null;
+  analyzed_at: string | null;
+  next_at: string | null;
+  files: { profile: string; summary: string };
+}
+
+export interface FullChapter {
+  t: number;
+  label: string;
+}
+
+export interface FullDraft {
+  title: string;
+  titles: string[];
+  description: string;
+  chapters: FullChapter[];
+  hashtags: string[];
+  tags: string[];
+  category: string;
+  made_for_kids: boolean;
+  language: string;
+  publish_at: string;
+  thumbnail?: string | null;
+  cover_text?: string | null;
+  use_thumbnail?: boolean;
+}
+
+export interface FullUploadView {
+  status: "wanted" | "preparing" | "review" | "uploading" | "scheduled" | "published" | "skipped" | "failed" | null;
+  draft?: FullDraft;
+  upload?: { video_id: string; url: string; studio_url: string; publish_at: string; locked: boolean };
+  error?: { message: string; hint?: string | null; step?: string } | null;
+  retries?: number;
+  connected: boolean;
+  lock: string | null;
+  next_free: string;
+  release_time: string;
+  today: number;
+  daily_limit: number;
+  needs_studio: boolean;
+  thumbnail_error?: string | null;
+}
+
+export const channelApi = {
+  view: (lang?: string) => req<ChannelStyleView>("GET", `/api/channel-style${lang ? `?lang=${lang}` : ""}`),
+  save: (e: Partial<ChannelStyleEdits>) => req<ChannelStyleView>("PUT", "/api/channel-style", e),
+  analyze: () => req<Job>("POST", "/api/channel-style/analyze"),
+  preview: () => req<Job>("POST", "/api/channel-style/preview"),
+};
+
+const FU = (pid: string) => `/api/projects/${encodeURIComponent(pid)}/full-upload`;
+export const fullApi = {
+  view: (pid: string) => req<FullUploadView>("GET", FU(pid)),
+  prepare: (pid: string, force = false) => req<Job>("POST", `${FU(pid)}/prepare`, { force }),
+  save: (pid: string, d: Partial<FullDraft>) => req<FullUploadView>("PUT", FU(pid), d),
+  upload: (pid: string, d: Partial<FullDraft>) => req<Job>("POST", FU(pid), d),
+  skip: (pid: string) => req<FullUploadView>("POST", `${FU(pid)}/skip`),
+  thumbnail: (pid: string, v: string | number) => `${FU(pid)}/thumbnail.jpg?v=${encodeURIComponent(String(v))}`,
+};
+
 /** Upload a file with progress (streamed to disk by the server). */
 export function uploadFile(
   file: File,
   mode: Mode,
   language: string,
   onProgress: (fraction: number) => void,
+  fullUpload?: boolean,
 ): { promise: Promise<Job>; abort: () => void } {
   const xhr = new XMLHttpRequest();
   const q = new URLSearchParams({ filename: file.name, mode, language });
+  if (fullUpload !== undefined) q.set("full_upload", String(fullUpload));
   const promise = guardHeavy("PUT", "/api/uploads").then(() => new Promise<Job>((resolve, reject) => {
     xhr.open("PUT", `/api/uploads?${q}`);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");

@@ -113,6 +113,12 @@ def purge(all_: bool = False, now: datetime | None = None) -> dict:
     with _lock:
         out = {"uploads": _uploads(now, all_), "calibration": _calibration(now, all_),
                "hook_tests": _hook_tests(now, all_)}
+    try:  # 1.2.51: the Channel style's fetched videos (titles, descriptions, views)
+        from . import channelstyle
+
+        out["channel_style"] = channelstyle.purge(all_, now)
+    except Exception:  # noqa: BLE001 - a purge never fails the caller
+        out["channel_style"] = 0
     if all_:
         config.update(yt_data_purged_at=now.isoformat(timespec="seconds"))
     return out

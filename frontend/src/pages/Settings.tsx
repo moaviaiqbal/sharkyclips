@@ -136,7 +136,7 @@ function UpdatesCard() {
   else if (job && isActive(job)) body = <JobLine job={job} />;
   else if (status) {
     if (status.reason === "fetch_failed") body = <p className="muted">{t("update.fetch_failed")}</p>;
-    else if (status.reason)
+    else if (status.reason && status.reason !== "not_newer")
       body = (
         <p className="muted">
           {t("update.no_git")}{" "}
@@ -722,6 +722,33 @@ export default function Settings() {
           />
 
           <PublishingCard />
+
+          <section className="card setting" id="full-video">
+            <div>
+              <h2>{t("full.settings_title")}</h2>
+              <p>{t("full.settings_desc")}</p>
+            </div>
+            <div style={{ display: "grid", gap: 12, alignContent: "start" }}>
+              <div className="toggle-line">
+                <Toggle
+                  checked={settings.full_upload_default !== false}
+                  onChange={(v) => save({ full_upload_default: v })}
+                  label={t("full.import_switch")}
+                />
+                <span>{t("full.import_switch")}</span>
+              </div>
+              <label className="field" style={{ maxWidth: 220 }}>
+                <span className="field-label">{t("full.settings_time")}</span>
+                <input
+                  className="input"
+                  type="time"
+                  value={settings.full_upload_time ?? "20:00"}
+                  onChange={(e) => e.target.value && save({ full_upload_time: e.target.value })}
+                />
+                <span className="field-hint">{t("full.settings_time_hint")}</span>
+              </label>
+            </div>
+          </section>
 
           <CoverAiCard />
 

@@ -162,7 +162,53 @@ def build(root: Path) -> str:
                          "bytes": 5_000_000_000, "outside_workspace": True} if kind == "project" else None})
     (d / "previews").mkdir()
     _video(d / "previews" / "01_s100_00-00-01.mp4", "180x320", 1.0)
+    _channel_style(home)
+    # 1.2.51: the full video waits on its confirm screen (long title / description / chapters)
+    _ff("-f", "lavfi", "-i", "testsrc2=size=1280x720:rate=1:duration=1", "-frames:v", "1", str(d / "full_thumb.jpg"))
+    _json(d / "full_upload.json", {"status": "review", "draft": {
+        "title": "TOPLAM 55 KILL & 44 REVIVE! LOBİYİ TEK BAŞIMIZA TEMİZLEDİK, KİMSE DURDURAMADI! 🚨💀 (DELTA FORCE)",
+        "titles": [TITLES[0], TITLES[3], "TOPLAM 55 KILL & 44 REVIVE! LOBİYİ TEK BAŞIMIZA TEMİZLEDİK! 🚨💀 (DELTA FORCE)"],
+        "description": "Delta Force'ta efsane bir maçla karşınızdayım!\n\n⏱️ Bölümler:\n00:00 Giriş\n01:35 İlk kill\n\n"
+                       "#DeltaForce #utkualsirr", "chapters": [{"t": 0, "label": "Giriş"}, {"t": 95, "label": "İlk kill"},
+                                                              {"t": 300, "label": "Final"}],
+        "hashtags": ["#DeltaForce", "#utkualsirr"], "tags": ["Delta Force Türkçe", "utkualsirr"], "category": "20",
+        "made_for_kids": False, "language": "tr", "publish_at": "2099-01-01T19:00:00Z",
+        "thumbnail": str(d / "full_thumb.jpg") if (d / "full_thumb.jpg").is_file() else None}})
     return PID
+
+
+def _channel_style(home: Path) -> None:
+    """1.2.51: a Channel style profile of a synthetic channel (Studio > Brand kit), analysed by the
+    real code, with a preview table of long titles."""
+    sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
+    try:
+        from sharkyclips import channelstyle as cs
+    except Exception:  # noqa: BLE001 - no backend deps here: the card shows its empty state
+        return
+    vids = []
+    for i in range(24):
+        short = i % 3 != 0
+        title = (TITLES[i % len(TITLES)] + (" 😂💀" if i % 2 else "")) if short else (
+            "DEMİR ELODA AKIL SAĞLIĞIMI KAYBETTİM! VİKTOR İLE 1v9 MAÇ TAŞIDIM! ⚡🤬 (LOL TR)")
+        vids.append({"id": f"V{i:03d}", "title": title, "description": "Kanka bu ne ya 😂 Siz olsanız? 👇\n\n"
+                     "🎮 Canlı Yayınlar & Sosyal Medya:\n🟩 Kick: https://kick.com/example\n\n#gaming #shorts #example",
+                     "tags": ["Delta Force Shorts"], "published_at": f"2026-10-{1 + i % 28:02d}T18:00:00Z",
+                     "duration_s": 25 if short else 1800, "views": 100 + (i * 137) % 1600, "likes": 3, "comments": 0,
+                     "category": "20", "privacy": "public", "game": "delta_force", "game_name": "Delta Force",
+                     "format": "short" if short else "long", "kind": "gaming"})
+    data = {"fetched_at": "2026-10-30T00:00:00+00:00", "channel": {"id": "UC0", "title": "Layout Check Channel"},
+            "videos": vids}
+    prof = cs.analyze(data)
+    prof["edits"] = cs.clean_edits({"always_hashtags": ["#example"], "notes": "Samimi ol, küfür yok.",
+                                    "extra_rules": ["Başlıkta oyunun adı geçsin"]})
+    folder = home / "style"
+    folder.mkdir(parents=True, exist_ok=True)
+    _json(folder / "channel_videos.json", data)
+    _json(folder / "style_profile.json", prof)
+    _json(folder / "style_preview.json", {"at": "2026-10-30T00:00:00+00:00", "items": [
+        {"id": v["id"], "format": v["format"], "kind": "gaming", "real": v["title"], "views": v["views"],
+         "published_at": v["published_at"], "generated": [TITLES[(k + j) % len(TITLES)] for j in range(3)]}
+        for k, v in enumerate(vids[:3])]})
 
 
 if __name__ == "__main__":

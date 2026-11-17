@@ -180,10 +180,15 @@ def submit_analyze(project_id: str, lang: str | None = None, force: bool = False
         return {"language": res["language"], "model": res["model"], "seconds": res["total_seconds"],
                 "count": len(res["candidates"]), "failed": res["failed"], "meta_only": meta_only}
 
+    def then(_job: Job):  # 1.2.51: a wanted full video gets its draft once the clips are analysed
+        from .fullvideo_api import after_analysis
+
+        after_analysis(project_id)
+
     # persistent: a pause, restart or crash must not silently lose the publish packages
     key = f"analyze:{project_id}" + (f":{','.join(map(str, ranks))}" if ranks else "") + (":meta" if meta_only else "")
     return jobs.submit("analyze", "gpu", project_id,
-                       {"lang": lang, "force": force, "ranks": ranks, "meta_only": meta_only}, run,
+                       {"lang": lang, "force": force, "ranks": ranks, "meta_only": meta_only}, run, then,
                        key=key, persist=True, job_id=job_id, attempt=attempt)
 
 
@@ -255,6 +260,12 @@ def submit_import(source: str, mode: str, language: str, title: str,
     def then(job: Job):
         pid = job.result["project_id"]
         project = get_project(pid)
+        try:  # 1.2.51: "Upload the full video to YouTube" (the import's switch, on by default)
+            from .. import fullvideo
+
+            fullvideo.request(project, (extra or {}).get("full_upload"))
+        except Exception:  # noqa: BLE001 - never stops the import
+            pass
         if not _playable(project) and not _proxy_path(project).is_file():
             submit_proxy(pid)
         if (project.load_meta().get("source") or {}).get("type") == "url":
@@ -507,6 +518,10 @@ def submit_upload(project_id: str, cid: str, body: dict, job_id: str | None = No
     lang = body.get("language") or (cand.get("publish") or {}).get("language")
     desc = brand.with_socials(str(body.get("description") or ""), lang, limit=4800,  # Brand kit socials, once
                               short=is_short_source(project, source))
+    if is_short_source(project, source):  # 1.2.51: the full video of this stream, when it is up
+        from .. import fullvideo
+
+        desc = fullvideo.with_link(desc, project, lang)
     yt = youtube.build_body(str(body.get("title") or ""),
                             youtube.with_note(desc, ai_voice["line"] if ai_voice["note"] else None),
                             [str(t) for t in body.get("tags") or []], str(body.get("privacy") or "private"),
@@ -783,6 +798,13 @@ def rebuild_job(saved: dict, attempt: int | None = None) -> Job | None:
         return submit_export(pid, p["clip_id"], p.get("request") or {}, batch, job_id=keep_id, attempt=attempt)
     if kind == "upload":
         return submit_upload(pid, p["clip_id"], p.get("body") or {}, job_id=keep_id, attempt=attempt)
+    if kind == "full_upload":  # 1.2.51: the full video continues where it stopped
+        from .fullvideo_api import submit_upload as submit_full
+
+        try:
+            return submit_full(pid, job_id=keep_id, attempt=attempt)
+        except SharkyClipsError:
+            return None
     if kind == "yt_stats":
         return submit_youtube_stats()
     if kind == "cover_burn":
@@ -991,6 +1013,8 @@ def _settings_view() -> dict:
             "glossary": [str(t) for t in glossary],
             "ui_motion": cfg.get("ui_motion") if cfg.get("ui_motion") in MOTION else "full",
             "youtube_daily_quota": int(cfg.get("youtube_daily_quota") or 10000),
+            "full_upload_default": cfg.get("full_upload_default") is not False,
+            "full_upload_time": str(cfg.get("full_upload_time") or "20:00"),
             **_perf_view(cfg)}
 
 
@@ -1085,6 +1109,13 @@ def api_settings_put(body: dict) -> dict:
         changes["llm_model"] = name
     if "auto_analyze" in body:
         changes["auto_analyze"] = bool(body["auto_analyze"])
+    if "full_upload_default" in body:  # 1.2.51: the import's "Upload the full video" switch
+        changes["full_upload_default"] = bool(body["full_upload_default"])
+    if "full_upload_time" in body:
+        t = str(body["full_upload_time"] or "").strip()
+        if not re.fullmatch(r"([01]\d|2[0-3]):[0-5]\d", t):
+            raise SharkyClipsError("Write the release time as HH:MM, e.g. 20:00.")
+        changes["full_upload_time"] = t
     if "fast_analysis" in body:
         changes["fast_analysis"] = bool(body["fast_analysis"])
     if "glossary" in body:
@@ -1489,12 +1520,14 @@ def api_create(body: dict, request: Request) -> dict:
         if not Path(source).expanduser().is_file():
             raise SharkyClipsError(f"File not found: {source}")
     title = source if is_url(source) else Path(source).name
-    return submit_import(source, mode, language, title).to_dict()
+    extra = {"full_upload": bool(body["full_upload"])} if "full_upload" in body else None
+    return submit_import(source, mode, language, title, extra=extra).to_dict()
 
 
 @app.put("/api/uploads")
 async def api_upload(request: Request, filename: str = Query(...), mode: str = Query("gaming"),
-                     language: str = Query("auto"), easy: bool = Query(False)) -> dict:
+                     language: str = Query("auto"), easy: bool = Query(False),
+                     full_upload: bool | None = Query(None)) -> dict:
     """Raw file upload (streamed straight to disk - works for multi-GB stream files).
     easy=true: an Easy mode project (mode "auto" = detect the content type)."""
     mode_auto = mode == "auto"
@@ -1528,8 +1561,10 @@ async def api_upload(request: Request, filename: str = Query(...), mode: str = Q
         part.unlink(missing_ok=True)
         raise SharkyClipsError("The uploaded file is empty.")
     part.replace(dest)
-    extra = {"easy": True, "mode_auto": mode_auto} if easy else None
-    return submit_import(str(dest), mode, language, name, cleanup=dest, extra=extra).to_dict()
+    extra = {"easy": True, "mode_auto": mode_auto} if easy else {}
+    if full_upload is not None:
+        extra["full_upload"] = bool(full_upload)
+    return submit_import(str(dest), mode, language, name, cleanup=dest, extra=extra or None).to_dict()
 
 
 @app.get("/api/projects/{project_id}")
@@ -2434,6 +2469,7 @@ from .dub_api import router as _dub_router  # noqa: E402 - my-voice dubbing (1.2
 from .multipost import router as _multipost_router  # noqa: E402 - one Publish button, 3 platforms (1.2.36)
 from .pubqueue_api import router as _pubqueue_router  # noqa: E402 - publish queue for Claude in Chrome (1.2.40)
 from .trash_api import router as _trash_router  # noqa: E402 - delete + trash + disk usage (1.2.41)
+from .fullvideo_api import router as _fullvideo_router  # noqa: E402 - full video + Channel style (1.2.51)
 
 app.include_router(_auth_router)
 app.include_router(_studio_router)
@@ -2449,6 +2485,7 @@ app.include_router(_trash_router)
 app.include_router(_pubqueue_router)
 app.include_router(_platforms_router)
 app.include_router(_dub_router)
+app.include_router(_fullvideo_router)
 
 
 @app.get("/api/{rest:path}")
