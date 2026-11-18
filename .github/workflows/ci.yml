@@ -235,7 +235,8 @@ jobs:
           echo "${GITLEAKS_SHA256}  $RUNNER_TEMP/$f" | sha256sum -c -
           tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
       - name: Scan the whole history
-        run: "$RUNNER_TEMP/gitleaks" git . --config .gitleaks.toml --redact --no-banner --exit-code 1
+        run: |
+          "$RUNNER_TEMP/gitleaks" git . --config .gitleaks.toml --redact --no-banner --exit-code 1
 
   audit:
     # Known vulnerabilities in the Python / npm dependencies. Informational: a new advisory in a
