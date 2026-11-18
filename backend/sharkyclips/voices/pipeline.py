@@ -35,6 +35,9 @@ SWEAR_HINTS = {  # decoder hints for the acoustic re-listen
     "tr": "amına koyayım, siktir, sikeyim, orospu, piç, yarrak, göt, amk, aq, kahpe, şerefsiz",
     "en": "fuck, fucking, shit, bitch, asshole, dick, motherfucker",
     "de": "Scheiße, fick, Arschloch, Hurensohn, Wichser",
+    "es": "puta, mierda, joder, cabrón, pendejo, chingada, verga, gilipollas",
+    "pt": "porra, caralho, merda, foda-se, puta, cacete, arrombado",
+    "fr": "putain, merde, connard, salope, enculé, nique",
 }
 
 

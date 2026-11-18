@@ -165,6 +165,9 @@ PHON_STEMS: dict[str, list[str]] = {
     "de": ["scheisse", "ficken", "arschloch", "hurensohn", "wichser"],
     "hu": ["kurva", "bazdmeg", "baszd", "geci", "faszom", "picsaba", "kibaszott"],
     "ru": ["блять", "блядь", "сука", "нахуй", "пиздец", "ебать", "хуйня", "мудак"],
+    "es": ["puta", "mierda", "joder", "cabron", "pendejo", "chingada", "verga", "gilipollas", "hijueputa"],
+    "pt": ["porra", "caralho", "merda", "foda", "buceta", "cacete", "arrombado", "desgraca"],
+    "fr": ["putain", "merde", "connard", "salope", "encule", "nique", "batard"],
 }
 
 

@@ -31,6 +31,18 @@ DEFAULTS: dict[str, list[str]] = {
            "عرص*", "قحب*", "متناك*", "يلعن*", "ابن الكلب"],
     "zh": ["我操", "卧槽", "操你", "操他", "操蛋", "草泥马", "肏", "他妈的", "妈的", "傻逼", "傻b", "傻屄", "屄",
            "鸡巴", "狗日", "王八蛋", "尼玛", "婊子", "贱人"],
+    # 1.2.53 Tier 1 languages (Latin America + Spain, Brazil, France, Japan)
+    "es": ["puta*", "puto*", "mierda*", "joder", "jodid*", "coño", "cabr*n*", "pendej*", "chinga*",
+           "verga*", "culer*", "maric*n*", "hijo de puta", "hijueputa*", "gilipollas", "concha*", "boludo*",
+           "pelotud*", "carajo", "malparid*", "culo", "polla", "fuck*", "shit*"],
+    "pt": ["porra*", "caralho*", "merda*", "puta*", "puto*", "foda*", "fod*", "filho da puta", "fdp", "buceta*",
+           "cacete*", "viado*", "arrombad*", "desgraça*", "vagabund*", "cuzão*", "cu", "pqp", "piranha*",
+           "otário*", "fuck*", "shit*"],
+    "fr": ["putain*", "merde*", "connard*", "connasse*", "salop*", "enculé*", "encule*", "nique*", "niqu*",
+           "bordel", "fils de pute", "pute*", "con", "conne*", "bâtard*", "batard*", "ta gueule", "pd", "fdp",
+           "chiant*", "fuck*", "shit*"],
+    "ja": ["クソ", "くそ", "糞", "死ね", "しね", "シネ", "ちくしょう", "畜生", "チクショウ", "ふざけんな", "てめえ",
+           "テメエ", "うざい", "ウザい", "殺す", "ころす", "バカ野郎", "ばかやろう", "ファック", "fuck*", "shit*"],
 }
 
 MODES = ("auto", "bleep", "mute", "off")

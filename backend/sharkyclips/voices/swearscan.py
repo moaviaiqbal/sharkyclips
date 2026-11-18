@@ -65,6 +65,10 @@ PROMPTS = {
     "ru": "Блять, сука, нахуй, пиздец, ебать, хуй, мудак, пидор.",
     "ar": "كس امك، شرموطة، منيوك، يلعن، ابن الكلب، زب، طيز.",
     "zh": "我操，卧槽，他妈的，傻逼，操你妈，妈的，鸡巴。",
+    "es": "¡Puta madre, joder, mierda! Cabrón, pendejo, chingada, verga, gilipollas, hijo de puta.",
+    "pt": "Porra, caralho, puta que pariu, merda, foda-se, filho da puta, cacete, arrombado.",
+    "fr": "Putain, merde, connard, salope, enculé, nique ta mère, bordel, fils de pute.",
+    "ja": "クソ、死ね、ちくしょう、ふざけんな、てめえ、バカ野郎、うざい。",
 }
 
 ProgressFn = Callable[[str, float], None]
