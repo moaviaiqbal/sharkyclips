@@ -18,6 +18,14 @@ from .context import AnalysisContext
 from .signals import REGISTRY, SignalResult, SignalUnavailable
 
 MIN_SHARE_FOR_AGREEMENT = 0.08  # tiny-weight signals don't count as "agreeing"
+# 1.2.53 moment quality (issue #1b): a loudness spike that nothing else backs up (no words, no
+# laughter, no game event, no chat) is usually a door slam, a sound effect or a cough: it keeps
+# only part of its weight. Long stretches without speech and with flat audio (menus, loading
+# screens, AFK) are pushed down so picks have context (setup -> payoff).
+LONELY_LOUDNESS_KEEP = 0.45
+IDLE_PENALTY = 0.55  # hype x this in an idle stretch
+IDLE_MIN_S = 20  # at least this long without a word ...
+IDLE_FLAT_DB = 2.5  # ... and the audio level barely moves (std in dB over 10 s)
 
 
 @dataclass
@@ -71,7 +79,59 @@ def compute_hype(ctx: AnalysisContext) -> HypeCurve:
         combined += shares[n] * res.scores
         if shares[n] >= MIN_SHARE_FOR_AGREEMENT:
             agreeing += res.scores >= 0.5
+    if "loudness" in results and len(results) > 1:
+        loud = results["loudness"].scores
+        others = agreeing - (loud >= 0.5)
+        near = np.convolve((others > 0).astype(float), np.ones(7), mode="same") > 0  # +-3 s
+        lonely = (loud >= 0.3) & ~near
+        combined -= shares["loudness"] * loud * (1 - LONELY_LOUDNESS_KEEP) * lonely
     combined *= 1.0 + ctx.mode.agreement_bonus * np.maximum(0, agreeing - 1)
+    idle = idle_seconds(ctx)
+    if idle is not None and idle.any():
+        game = results.get("game")
+        if game is not None:  # a game event on screen is never "idle" (a quiet clutch)
+            idle &= game.scores < 0.3
+        combined = np.where(idle, combined * IDLE_PENALTY, combined)
+        console.print(f"[dim]Context: {int(idle.sum())} s of menus / loading / AFK pushed down.[/]")
     combined = np.clip(combined, 0, 1)
     smoothed = gaussian_filter1d(combined, ctx.mode.smooth_sigma) if ctx.n > 3 else combined
     return HypeCurve(smoothed, combined, results, shares, status)
+
+
+def idle_seconds(ctx: AnalysisContext) -> np.ndarray | None:
+    """True for seconds inside a long stretch with no speech and a flat audio level: menus,
+    loading screens, queue timers, AFK. None when there is no transcript to tell."""
+    if not ctx.transcript:
+        return None
+    n = ctx.n
+    spoken = np.zeros(n, dtype=bool)
+    for w in ctx.words:
+        a, b = int(max(0, w.start)), int(min(n - 1, w.end))
+        spoken[a:b + 1] = True
+    # distance to the nearest word, both ways: a gap of >= IDLE_MIN_S seconds
+    quiet = ~spoken
+    run = np.zeros(n, dtype=int)
+    i = 0
+    while i < n:
+        if quiet[i]:
+            j = i
+            while j < n and quiet[j]:
+                j += 1
+            run[i:j] = j - i
+            i = j
+        else:
+            i += 1
+    long_quiet = run >= IDLE_MIN_S
+    if not long_quiet.any():
+        return long_quiet
+    try:
+        db = ctx.rms_db.astype(np.float64)
+    except Exception:  # noqa: BLE001 - no audio level: the silence alone decides
+        return long_quiet
+    fps = max(1, int(round(len(db) / max(1.0, ctx.duration))))
+    per_s = np.array([db[k * fps:(k + 1) * fps].mean() if k * fps < len(db) else db[-1] for k in range(n)])
+    win = 10
+    pad = np.pad(per_s, (win // 2, win // 2), mode="edge")
+    std = np.array([pad[k:k + win].std() for k in range(n)])
+    return long_quiet & (std < IDLE_FLAT_DB)
+
