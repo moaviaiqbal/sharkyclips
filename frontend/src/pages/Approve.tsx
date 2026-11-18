@@ -1,3 +1,4 @@
+import { typing } from "../editing";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiError, phoneApi, type ApproveClip } from "../api";
 import { BrandMark } from "../components/Brand";
@@ -75,7 +76,7 @@ export default function Approve() {
 
   useEffect(() => {
     const on = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
+      if (typing(e)) return;
       const rtl = document.documentElement.dir === "rtl";
       if (e.key === "ArrowRight") act(rtl ? "skip" : "upload");
       if (e.key === "ArrowLeft") act(rtl ? "upload" : "skip");

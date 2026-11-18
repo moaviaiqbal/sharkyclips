@@ -81,16 +81,33 @@ export function Modal({
   const { t } = useI18n();
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  // Issue #5: callers often pass an inline onClose and their parent re-renders on every poll.
+  // The old effect depended on onClose, so it re-ran on every render: it moved the focus to the
+  // first field (Backspace in the title box went to a radio button) and scrolled the dialog back
+  // to the top. Now the focus is set ONCE when the dialog opens, without scrolling.
+  const close = useRef(onClose);
+  close.current = onClose;
   useEffect(() => {
-    const on = (e: KeyboardEvent) => e.key === "Escape" && onClose();
+    const on = (e: KeyboardEvent) => {
+      if (e.key !== "Escape" || e.defaultPrevented) return;
+      const dialogs = document.querySelectorAll('[aria-modal="true"]');
+      if (dialogs.length && dialogs[dialogs.length - 1] !== ref.current) return; // only the top dialog closes
+      e.stopPropagation();
+      close.current();
+    };
     window.addEventListener("keydown", on);
     const prev = document.activeElement as HTMLElement | null;
-    ref.current?.querySelector<HTMLElement>("input, textarea, button:not(.modal-x)")?.focus();
+    const first =
+      ref.current?.querySelector<HTMLElement>("[autofocus], [data-autofocus]") ??
+      ref.current?.querySelector<HTMLElement>(
+        'input:not([type="radio"]):not([type="checkbox"]):not([type="range"]):not([disabled]), textarea:not([disabled]), button:not(.modal-x):not([disabled])',
+      );
+    first?.focus({ preventScroll: true });
     return () => {
       window.removeEventListener("keydown", on);
-      prev?.focus?.();
+      if (prev && document.contains(prev)) prev.focus?.({ preventScroll: true });
     };
-  }, [onClose]);
+  }, []);
   return (
     <div className={`modal-backdrop${top ? " modal-top" : ""}`} onMouseDown={(e) => e.target === e.currentTarget && onClose()}>
       <div className={`modal${wide ? " modal-wide" : ""}`} role="dialog" aria-modal="true" aria-labelledby={titleId} ref={ref}>

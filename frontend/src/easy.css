@@ -405,7 +405,7 @@
 }
 .ez-title-opt.on { border-color: var(--gold-line); background: var(--gold-soft); }
 .ez-title-opt input { accent-color: var(--gold); width: 18px; height: 18px; flex: none; }
-.ez-trim-video { width: 100%; max-height: 220px; border-radius: 12px; background: #050913; margin-bottom: 12px; }
+.ez-trim-video { width: 100%; aspect-ratio: 16 / 9; max-height: 220px; border-radius: 12px; background: #050913; margin-bottom: 12px; }
 .ez-trim { position: relative; height: 44px; }
 .ez-trim-track { position: absolute; inset-inline: 0; top: 19px; height: 6px; border-radius: 3px; background: var(--track); }
 .ez-trim-track span { position: absolute; top: 0; height: 100%; border-radius: 3px; background: var(--gold); }

@@ -31,7 +31,7 @@ export function bleepRanges(plan: EditPlanView | null): [number, number][] {
 
 /** 1.2.45: the preview's bleeps, live, whenever the video plays (not only with "Play clip"):
  * the sound ducks and the tone plays in exactly the render's ranges (previewAudio.ts). */
-export function useLiveBleeps(video: RefObject<HTMLVideoElement>, plan: EditPlanView | null) {
+export function useLiveBleeps(video: RefObject<HTMLVideoElement | null>, plan: EditPlanView | null) {
   const ranges = bleepRanges(plan);
   const key = JSON.stringify([plan?.bleep_mode ?? "off", plan?.bleep_sound ?? "", ranges, plan?.bleep_fade ?? 0.012]);
   useEffect(() => {
@@ -108,7 +108,7 @@ export function usePlan(
  * loop preview, jump from the end back to `loopStart` and keep going. Runs every frame
  * (timeupdate only fires ~4x a second). Bleeps: useLiveBleeps (always on, on the audio clock). */
 export function usePreviewPlayback(
-  video: RefObject<HTMLVideoElement>,
+  video: RefObject<HTMLVideoElement | null>,
   active: boolean,
   plan: EditPlanView | null,
   end: number | null,
@@ -176,12 +176,38 @@ export function useHistory<T>() {
   return { push, undo, redo, canUndo: past.current.length > 0, canRedo: future.current.length > 0 };
 }
 
-/** Is the keyboard event aimed at a text field (then shortcuts stay off)? */
+/** Is this element a place where the user types (or picks with the keyboard)? */
+export function isEditable(el: Element | null | undefined): boolean {
+  if (!el || !(el as HTMLElement).tagName) return false;
+  const h = el as HTMLElement;
+  const tag = h.tagName;
+  if (tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (tag === "INPUT") return (h as HTMLInputElement).type !== "button" && (h as HTMLInputElement).type !== "submit";
+  if (h.isContentEditable) return true;
+  const role = h.getAttribute?.("role");
+  return role === "textbox" || role === "combobox" || role === "searchbox" || role === "spinbutton";
+}
+
+/**
+ * Is the keyboard event aimed at a text field (then shortcuts stay off)?
+ * Issue #5: checks the whole composed path (shadow DOM, Firefox/Opera retargeting) and the
+ * focused element, and an IME composition, so Backspace / Delete always reach the field.
+ */
 export function typing(e: KeyboardEvent): boolean {
-  const el = e.target as HTMLElement | null;
-  if (!el) return false;
-  const tag = el.tagName;
-  return tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable;
+  if (e.isComposing || e.keyCode === 229) return true;
+  const path = typeof e.composedPath === "function" ? e.composedPath() : [];
+  for (const n of path) if (n instanceof Element && isEditable(n)) return true;
+  if (isEditable(e.target as Element | null)) return true;
+  return typeof document !== "undefined" && isEditable(document.activeElement);
+}
+
+/** Page-level shortcuts stay off while a dialog is open, unless the key event comes from inside it. */
+export function blockedByDialog(e: KeyboardEvent, own?: Element | null): boolean {
+  if (typeof document === "undefined") return false;
+  const open = document.querySelector('[aria-modal="true"]');
+  if (!open) return false;
+  const t = e.target as Node | null;
+  return !(own && t && own.contains(t));
 }
 
 export const SHORTCUTS: { keys: string[]; label: string }[] = [
