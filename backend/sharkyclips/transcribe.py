@@ -233,6 +233,24 @@ def _vram_need(p: BackendPlan) -> float:
     return WHISPER_VRAM_MB.get((p.model, p.compute_type), 2600) + 60 * p.batch_size
 
 
+def apply_perf(plan: BackendPlan, hw: HardwareInfo, model: str = "auto") -> BackendPlan:
+    """1.2.53 Settings > Performance: "CPU only" keeps Whisper off the GPU; the Light preset
+    (slow PCs) picks a small int8 model and tuned threads."""
+    from . import perf
+
+    k = perf.knobs()
+    if k["device"] == "cpu" and plan.device != "cpu":
+        plan = hardware.cpu_plan(hw, model, reason="Processing device: CPU only")
+    if k["light"] and plan.device == "cpu":
+        new = plan
+        if model == "auto" and k["whisper_model"]:
+            new = replace(new, model=k["whisper_model"])
+        if k["cpu_threads"]:
+            new = replace(new, cpu_threads=k["cpu_threads"])
+        plan = replace(new, reason=f"{plan.reason}; Light preset -> {new.model} int8, {new.cpu_threads} threads")
+    return plan
+
+
 def fit_to_budget(plan: BackendPlan, hw: HardwareInfo, budget_mb: float | None,
                   cpu_threads: int | None = None) -> BackendPlan:
     """The first setup in the fallback chain that leaves the governor's VRAM headroom free
@@ -356,6 +374,7 @@ def load_whisper(model: str = "auto"):
     check = model == "check"
     plan = hardware.choose_plan(hw, "auto" if check else model, cuda_ok=cuda_ok,
                                 force_cpu=bool(cfg.get("force_cpu")), force_cpu_reason=cfg.get("force_cpu_reason"))
+    plan = apply_perf(plan, hw, "auto" if check else model)
     if check and plan.device in ("cuda", "mlx") and (hw.best_nvidia is None or hw.best_nvidia.vram_gb >= 6):
         compute = plan.compute_type if plan.device == "mlx" else (
             "float16" if hw.best_nvidia and hw.best_nvidia.vram_gb >= 8 else "int8_float16")
@@ -475,6 +494,7 @@ def transcribe_project(project: Project, lang: str = "auto", model: str = "auto"
     cuda_ok = bool(hw.best_nvidia) and not cfg.get("force_cpu") and hardware.cuda_device_count() > 0
     plan = hardware.choose_plan(hw, model, cuda_ok=cuda_ok, force_cpu=bool(cfg.get("force_cpu")),
                                 force_cpu_reason=cfg.get("force_cpu_reason"))
+    plan = apply_perf(plan, hw, model)
     if plan.device == "cuda":
         plan = _verify_gpu_once(hw, plan)
     if governor.get() is not None:

@@ -582,6 +582,8 @@ class JobManager:
                     job.finished = time.time()
                     self._remove_from_lane(job)
                     self._changed(job)
+            if job.status == "done" and job.kind in ("transcribe", "highlights", "analyze") and job.project_id:
+                _learn_speed(job)
             if job.status == "done" and job.then:
                 try:
                     with (explicit() if job.explicit else automatic()):
@@ -594,3 +596,21 @@ class JobManager:
                         cb(job)
                 except Exception:  # noqa: BLE001
                     console.print(f"[red]Job listener failed:[/]\n{traceback.format_exc()}")
+
+
+def _learn_speed(job: Job) -> None:
+    """1.2.53: remember how fast this PC runs each step (for the time estimate before big jobs)."""
+    try:
+        from .. import perf
+        from ..project import get_project
+
+        if not job.started or not job.finished:
+            return
+        g = governor.get()
+        paused = (g.paused_total() - job.pause_base) if g else 0.0
+        work = max(0.0, job.finished - job.started - paused)
+        dur = float(get_project(job.project_id).load_meta().get("duration") or 0)
+        perf.learn(job.kind, dur, work)
+    except Exception:  # noqa: BLE001 - a speed note must never break the queue
+        pass
+

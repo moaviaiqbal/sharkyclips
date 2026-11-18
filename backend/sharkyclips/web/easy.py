@@ -445,7 +445,11 @@ def _mark_import(job: Job) -> None:
 
 def _voices_ok() -> bool:
     try:
+        from .. import perf
         from ..voices import models as vmodels
+
+        if not perf.knobs()["voices"]:  # 1.2.53 Light preset: voice separation off by default
+            return False
 
         return bool(vmodels.sherpa_ok())
     except Exception:  # noqa: BLE001
@@ -551,21 +555,28 @@ def _steps(project: Project, hl: dict, top: list[dict], rstates: list[dict]) -> 
         if key == "titles" and s == "todo" and has_h and not js:
             s = "done"  # the AI step ended without scores (it failed or was skipped): not blocking
         steps.append({"key": key, "status": s, "progress": prog})
-    # a rough time estimate (whatever is left of each step)
+    # a rough time estimate (whatever is left of each step), from this PC's measured speeds
+    # (1.2.53 perf.estimate: GPU / Light / slow CPU defaults until real runs were measured)
+    from .. import perf
+
     dur = float(project.load_meta().get("duration") or 0)
     speed = A.speeds.get("render")
+    try:
+        est = perf.estimate(dur, ["transcribe", "highlights", "analyze"])["steps"]
+    except Exception:  # noqa: BLE001
+        est = {"transcribe": dur * 0.12, "highlights": 40.0, "analyze": 25.0 * max(6, len(top))}
     left = 0.0
     for s in steps:
         if s["status"] == "done":
             continue
         frac = 1 - (s["progress"] or 0)
         if s["key"] == "transcribe":
-            left += max(20.0, dur * 0.12) * frac
+            left += max(20.0, est["transcribe"]) * frac
         elif s["key"] == "find":  # + the voice pass: ~1.5x the clips' length on the CPU
             voices = _voices_ok() and not (project.dir / "voices.json").is_file()
-            left += (40.0 + (1.5 * sum(float(c["duration"]) for c in top) if voices else 0)) * frac
+            left += (max(30.0, est["highlights"]) + (1.5 * sum(float(c["duration"]) for c in top) if voices else 0)) * frac
         elif s["key"] == "titles":
-            left += (25.0 * max(6, len(top))) * frac
+            left += max(20.0, est["analyze"]) * frac
         elif s["key"] == "render":
             todo = [r for r in rstates if r["status"] != "ready"] or top
             left += sum(2.0 + 30 * speed for _ in todo)
@@ -629,8 +640,9 @@ def view(project: Project) -> dict:
         cards.append({
             "id": c["id"], "rank": c["rank"],
             "title": prefs["title"] or ((items.get(key) or {}).get("meta") or {}).get("title")
-            or (pubd.get("titles") or [None])[0] or (c.get("text") or "")[:90],
-            "titles": [t for t in (pubd.get("titles") or [])][:6], "text": (c.get("text") or "")[:200],
+            or (pubd.get("titles") or [None])[0] or (_tpl_titles(project, c, lang) or [(c.get("text") or "")[:90]])[0],
+            "titles": [t for t in (pubd.get("titles") or [])][:6] or _tpl_titles(project, c, lang),
+            "text": (c.get("text") or "")[:200],
             "viral_score": pubd.get("viral_score"), "viral_label": state.viral_label(pubd.get("viral_score")),
             "start": eff["start"], "end": eff["end"], "duration": eff["duration"],
             "found": {"start": c["start"], "end": c["end"]},
@@ -654,7 +666,7 @@ def view(project: Project) -> dict:
         "id": project.id, "title": meta.get("title") or project.id, "mode": meta.get("mode") or "gaming",
         "mode_auto": data["mode_auto"], "duration": dur, "easy": data["easy"],
         "state": "working" if working else ("error" if err and not top else "ready" if top else "empty"),
-        "steps": steps, "eta_seconds": eta, "error": err,
+        "steps": steps, "eta_seconds": eta, "error": err, "pc": _pc_note(),
         "clips": cards, "total": len(allc), "shown": data["shown"], "music_available": music_ok,
         "youtube": {"connected": st["connected"], "lock": st["lock"]["state"], "channel": st["channel"]},
         "settings": E.settings(), "daily_limit": P.effective_limit(), "smart": data["v2"],
@@ -1105,4 +1117,30 @@ def api_library() -> dict:
             tabs["ready"].append(row)
     tabs["live"].sort(key=lambda r: r.get("date") or "", reverse=True)
     return {"tabs": tabs, "youtube": lib["youtube"]}
+
+
+def _tpl_titles(project: Project, c: dict, lang: str | None) -> list[str]:
+    """1.2.53: titles without the LLM (slow PC / LLM off / not analysed yet), never raw text only."""
+    try:
+        from .. import languages
+        from ..titles import banks, templates
+
+        game = banks.project_game(project)
+        return templates.titles(c, game.get("name") if game.get("known") else None,
+                                languages.content_language(None, project))
+    except Exception:  # noqa: BLE001 - a title idea must never break the clip grid
+        return []
+
+
+def _pc_note() -> dict | None:
+    """1.2.53: "This PC is a bit slow, clips will take longer." (+ is the Light preset on)."""
+    try:
+        from .. import perf
+
+        m = perf.machine()
+        if not perf.is_weak(m):
+            return None
+        return {"slow": True, "light": perf.light(m), "reasons": perf.weak_reasons(m)}
+    except Exception:  # noqa: BLE001
+        return None
 

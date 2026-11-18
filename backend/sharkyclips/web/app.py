@@ -165,6 +165,10 @@ def submit_highlights(project_id: str, mode: str | None = None, force: bool = Fa
 def llm_available() -> bool:
     from .. import llm
 
+    from .. import perf
+
+    if perf.knobs()["template_titles"]:  # 1.2.53: too little RAM for any LLM -> template titles
+        return False
     return config.get("llm_enabled") is not False and (llm.ollama_exe() is not None
                                                         or llm.server_version(0.3) is not None)
 
@@ -533,8 +537,8 @@ def submit_upload(project_id: str, cid: str, body: dict, job_id: str | None = No
                             [str(t) for t in body.get("tags") or []], str(body.get("privacy") or "private"),
                             body.get("publish_at") or None, bool(body.get("made_for_kids")),
                             str(body.get("category")) if str(body.get("category") or "") in youtube.CATEGORIES
-                            else youtube.CATEGORY.get(mode, "20"), body.get("language") or None,
-                            synthetic=bool(ai_voice["synthetic"]))
+                            else youtube.CATEGORY.get(mode, "20"), lang or languages.content_language(None, project),
+                            synthetic=bool(ai_voice["synthetic"]), audio_language=_spoken(project))
     thumb = str(body.get("thumbnail") or "none")  # none | auto | custom
     plan_key = body.get("plan_key")  # a clip of the publishing plan (Library / scheduler)
 
@@ -1011,7 +1015,8 @@ def _settings_view() -> dict:
     return {"ui_language": cfg.get("ui_language") or languages.DEFAULT_UI_LANGUAGE,
             "default_mode": cfg.get("default_mode") or "gaming",
             "video_encoder": cfg.get("video_encoder") or "auto",
-            "output_language": cfg.get("output_language") or languages.DEFAULT_OUTPUT_LANGUAGE,
+            "output_language": languages.content_language(),
+            "spanish_variant": languages.spanish_variant(),
             "custom_triggers": triggers,
             "llm_model": str(cfg.get("llm_model") or "auto"),
             "auto_analyze": cfg.get("auto_analyze") is not False,
@@ -1041,6 +1046,15 @@ def _perf_view(cfg: dict) -> dict:
            "perf_games_default": governor.DEFAULT_GAMES}
     for k in PERF_BOOLS:
         out[k] = bool(cfg.get(k, config.DEFAULTS[k]))
+    from .. import perf  # 1.2.53: processing device + Light preset
+
+    out["processing_device"] = str(cfg.get("processing_device") or "auto")
+    out["performance_preset"] = str(cfg.get("performance_preset") or "auto")
+    out["voices_on_light"] = bool(cfg.get("voices_on_light"))
+    try:
+        out["perf"] = perf.status()
+    except Exception:  # noqa: BLE001 - hardware detection must never break Settings
+        out["perf"] = None
     return out
 
 
@@ -1062,6 +1076,19 @@ def _perf_changes(body: dict) -> dict:
             changes[k] = bool(body[k])
     if "ollama_autostart" in body:
         changes["ollama_autostart"] = bool(body["ollama_autostart"])
+    from .. import perf
+
+    if "processing_device" in body:
+        if body["processing_device"] not in perf.DEVICES:
+            raise SharkyClipsError(f"Unknown processing device '{body['processing_device']}'.",
+                                   "Use auto, cpu or gpu.")
+        changes["processing_device"] = body["processing_device"]
+    if "performance_preset" in body:
+        if body["performance_preset"] not in perf.PRESETS:
+            raise SharkyClipsError(f"Unknown preset '{body['performance_preset']}'.", "Use auto, light or normal.")
+        changes["performance_preset"] = body["performance_preset"]
+    if "voices_on_light" in body:
+        changes["voices_on_light"] = bool(body["voices_on_light"])
     if "perf_games" in body:
         names: list[str] = []
         for n in body["perf_games"] if isinstance(body["perf_games"], list) else []:
@@ -1082,8 +1109,16 @@ def api_settings_put(body: dict) -> dict:
     changes: dict[str, Any] = {}
     if "ui_language" in body:
         changes["ui_language"] = languages.require(str(body["ui_language"])).code
+    if "content_language" in body and "output_language" not in body:  # same setting, new name
+        body = {**body, "output_language": body["content_language"]}
     if "output_language" in body:
         changes["output_language"] = languages.require(str(body["output_language"])).code
+        changes["content_language"] = changes["output_language"]
+    if "spanish_variant" in body:
+        if body["spanish_variant"] not in languages.SPANISH_VARIANTS:
+            raise SharkyClipsError(f"Unknown Spanish variant '{body['spanish_variant']}'.",
+                                   "Use es-419 (Latin America) or es-ES (Spain).")
+        changes["spanish_variant"] = body["spanish_variant"]
     if "default_mode" in body:
         if body["default_mode"] not in MODES:
             raise SharkyClipsError(f"Unknown mode '{body['default_mode']}'.")
@@ -1189,6 +1224,16 @@ def api_governor_put(body: dict) -> dict:
     if g is not None:
         g.tick()
     return _governor_view()
+
+
+@app.get("/api/perf/estimate")
+def api_perf_estimate(seconds: float = 0, project_id: str | None = None, clips: int = 6) -> dict:
+    """1.2.53: about how long a big job takes on this PC (shown before it starts)."""
+    from .. import perf
+
+    if project_id and not seconds:
+        seconds = float(_project(project_id).load_meta().get("duration") or 0)
+    return perf.estimate(max(0.0, float(seconds)), clips=max(1, min(30, int(clips))))
 
 
 @app.post("/api/quit")
@@ -1637,11 +1682,19 @@ def api_project(project_id: str) -> dict:
         "game": _game_summary(project),
         "metadata_game": _metadata_game_summary(project),
         "analysis": (hl or {}).get("analysis"),
-        "output_language": ((hl or {}).get("analysis") or {}).get("language")
-                           or config.get("output_language") or languages.DEFAULT_OUTPUT_LANGUAGE,
+        "output_language": languages.content_language(None, project),
+        "analysis_language": ((hl or {}).get("analysis") or {}).get("language"),
         "jobs": [j.to_dict() for j in jobs.for_project(project.id)][-10:],
     }
 
+
+
+def _spoken(project) -> str | None:
+    """The language spoken in the project (the transcript's), for YouTube defaultAudioLanguage."""
+    try:
+        return (project.load_transcript() or {}).get("language") if project.transcript_path.is_file() else None
+    except Exception:  # noqa: BLE001
+        return None
 
 @app.get("/api/projects/{project_id}/hype")
 def api_hype(project_id: str):
@@ -1695,7 +1748,7 @@ def api_highlights(project_id: str, body: dict | None = None) -> dict:
 def api_game(project_id: str, reads: bool = False) -> dict:
     """Which game, its HUD regions, and what the last scan found (debug / calibration view)."""
     from .. import game as game_mod
-    from ..game import presets
+    from ..game import gameprofiles, presets
 
     project = _project(project_id)
     info = game_mod.resolve(project)
@@ -1716,6 +1769,8 @@ def api_game(project_id: str, reads: bool = False) -> dict:
         "events": (ev or {}).get("events", []),
         "sounds": (ev or {}).get("sounds") or _sounds_info(gid),
         "event_codes": game_mod.known_codes(),
+        # 1.2.53: every game profile (name, beta badge) for the one-tap game picker
+        "profiles": {gid: gameprofiles.summary(gid) for gid in gameprofiles.all_profiles()},
     }
     if reads and sc:
         out["reads"] = sc.get("reads", [])[-4000:]
@@ -2567,6 +2622,12 @@ def _restore_queue() -> None:
     from .security import token
 
     token()  # 1.2.52: <settings>/api_token exists as soon as the server runs (tray, launcher)
+    try:  # 1.2.53: a slow PC gets the Light preset on the first run
+        from .. import perf
+
+        perf.first_run_pick()
+    except Exception:  # noqa: BLE001
+        pass
     speeds.load(config.workspace_dir() / "_speeds.json")
     if os.environ.get("SHARKYCLIPS_NO_GOVERNOR") != "1":
         startup.apply_ollama_autostart()  # Ollama's updater puts its Startup shortcut back

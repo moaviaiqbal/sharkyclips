@@ -23,6 +23,9 @@ DEFAULTS: dict[str, Any] = {
     "workspace_dir": None,  # None -> <repo>/workspace
     "ui_language": languages.DEFAULT_UI_LANGUAGE,
     "output_language": languages.DEFAULT_OUTPUT_LANGUAGE,
+    # 1.2.53: the "content language" (= output_language, kept under both names) drives AI titles,
+    # descriptions, hashtags, captions and YouTube metadata; UI language stays separate.
+    "spanish_variant": "es-419",  # es-419 (Latin America) | es-ES (Spain)
     "default_mode": "gaming",
     "transcribe_language": "auto",
     "transcribe_model": "auto",
@@ -110,6 +113,12 @@ DEFAULTS: dict[str, Any] = {
     # {"gaming": {"min": 30, "max": 45}}. Empty = the built-in targets until enough published
     # clips have views; then the learned target wins.
     "length_targets": {},
+    # 1.2.53 Settings > Performance (perf.py): where the AI runs and the Light preset for slow PCs
+    "processing_device": "auto",  # auto | cpu | gpu (auto never uses a weak integrated GPU)
+    "performance_preset": "auto",  # auto (Light on a weak PC) | light | normal
+    "voices_on_light": False,  # voice separation also with the Light preset
+    "light_checked": False,
+    "light_auto_picked": False,
     # Set by `doctor` when the GPU smoke test fails even after upgrading libraries.
     "force_cpu": False,
     "force_cpu_reason": None,

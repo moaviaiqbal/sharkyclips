@@ -28,7 +28,7 @@ from .ui import console
 
 DEFAULT_MODEL = "qwen3.5:9b"
 SMALL_MODEL = "qwen3.5:4b"
-MODEL_SIZES_GB = {"qwen3.5:9b": 6.6, "qwen3.5:4b": 3.3, "qwen3:8b": 5.2, "qwen3:4b": 2.5}
+MODEL_SIZES_GB = {"qwen3.5:9b": 6.6, "qwen3.5:4b": 3.3, "qwen3.5:2b": 2.7, "qwen3:8b": 5.2, "qwen3:4b": 2.5}
 BATCH_KEEP_ALIVE = "3m"  # while a batch runs; unloaded explicitly afterwards (and on pause)
 
 
@@ -125,11 +125,14 @@ def fast_model() -> str:
 def choose_model(ignore_fast: bool = False) -> str:
     """config llm_model ("auto" = by hardware); "Fast analysis" always uses the small model,
     and so does Silent mode while you're using the PC (governor)."""
-    from . import governor
+    from . import governor, perf
 
+    wanted = str(config.get("llm_model") or "auto")
+    k = perf.knobs()
+    if k["light"] and k["llm_model"] and wanted == "auto":
+        return k["llm_model"]  # 1.2.53 Light preset: a 2B model that fits next to Whisper in 8 GB
     if (fast_analysis() or governor.prefer_small_llm()) and not ignore_fast:
         return fast_model()
-    wanted = str(config.get("llm_model") or "auto")
     if wanted != "auto":
         return wanted
     hw = hardware.detect_hardware()
@@ -146,7 +149,11 @@ def metadata_boost() -> bool:
     is idle or in Turbo mode: quality over speed. Config "metadata_quality": auto | best | normal."""
     from . import governor
 
+    from . import perf
+
     q = str(config.get("metadata_quality") or "auto")
+    if perf.light() and q != "best":  # a slow PC never loads the big model by itself
+        return False
     if q == "best":
         return True
     if q == "normal":
@@ -525,10 +532,23 @@ def placement(name: str, num_ctx: int) -> dict:
     fit the budget, only part of its layers go on the GPU (the rest runs on the CPU, slower)."""
     from . import governor
 
+    from . import perf
+
+    k = perf.knobs()
+    base: dict = {}
+    if k["device"] == "cpu":
+        # 1.2.53: CPU only / no usable GPU: num_gpu 0 keeps Ollama off a weak integrated GPU
+        # (Vulkan on Intel UHD is slower than the CPU and eats the shared RAM)
+        base["num_gpu"] = 0
+        if k["cpu_threads"]:
+            base["num_thread"] = k["cpu_threads"]
     g = governor.get()
     if g is None:
-        return {}
-    opts: dict = {} if g.full_speed() else {"num_thread": max(1, governor.cpu_threads())}
+        return base
+    opts: dict = dict(base) if g.full_speed() else {**base, "num_thread": max(1, min(
+        governor.cpu_threads(), base.get("num_thread") or 999))}
+    if k["device"] == "cpu":
+        return opts
     budget = governor.vram_budget_mb()
     if budget is None or not hardware.detect_hardware().best_nvidia:
         return opts
@@ -551,8 +571,19 @@ def session(model: str | None = None, auto: bool | None = None) -> Iterator[LLM]
     ensure_server()
     name = model or choose_model()
     auto = model is None if auto is None else auto
-    ensure_model(name)
+    from . import perf
+
+    try:
+        ensure_model(name)
+    except Exception:
+        # Light model not downloadable (offline / unknown tag): the normal small model
+        if name != perf.LIGHT_LLM:
+            raise
+        name = str(config.get("llm_fallback_model") or SMALL_MODEL)
+        ensure_model(name)
     num_ctx = int(config.get("llm_num_ctx") or 8192)
+    if perf.light():
+        num_ctx = min(num_ctx, perf.LIGHT_CTX)
 
     def load() -> LLM:
         llm = LLM(name, num_ctx, auto=auto)
