@@ -1,0 +1,137 @@
+{
+  "id": "gta6",
+  "name": "GTA 6",
+  "status": "preview",
+  "engine": "banners",
+  "kind": "open_world",
+  "aliases": [
+    "gta 6",
+    "gta6",
+    "gta vi",
+    "gtavi",
+    "grand theft auto vi",
+    "grand theft auto 6"
+  ],
+  "hints": [
+    "vice city",
+    "leonida",
+    "jason",
+    "lucia",
+    "polis",
+    "police",
+    "heist",
+    "soygun",
+    "wanted",
+    "chase",
+    "kovalamaca"
+  ],
+  "regions": {
+    "center": {
+      "box": [
+        260,
+        330,
+        1400,
+        300
+      ],
+      "label": "Big centre text (verify after launch)"
+    }
+  },
+  "ocr": {
+    "center": {
+      "gta_wasted": [
+        "wasted"
+      ],
+      "gta_busted": [
+        "busted"
+      ],
+      "gta_passed": [
+        "mission passed"
+      ],
+      "gta_failed": [
+        "mission failed"
+      ]
+    }
+  },
+  "events": {
+    "gta_wasted": {
+      "strength": 0.5,
+      "label": "Wasted",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "gta_busted": {
+      "strength": 0.45,
+      "label": "Busted",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "gta_passed": {
+      "strength": 0.4,
+      "label": "Mission passed",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "gta_failed": {
+      "strength": 0.3,
+      "label": "Mission failed",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [],
+  "vocabulary": {
+    "en": [
+      "first day",
+      "no way"
+    ],
+    "tr": [
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Vice City",
+    "Leonida",
+    "Jason",
+    "Lucia"
+  ],
+  "hashtags": {
+    "all": [
+      "#gta6",
+      "#gtavi",
+      "#grandtheftauto6",
+      "#vicecity"
+    ],
+    "tr": [
+      "#gta6tr",
+      "#gta6türkiye"
+    ],
+    "es": [
+      "#gta6español"
+    ],
+    "pt": [
+      "#gta6br"
+    ]
+  },
+  "title_style": {
+    "en": "Launch week: first reactions sell. 'My FIRST chase in GTA 6'.",
+    "tr": "Çıkış haftası: ilk tepkiler satar. 'GTA 6'da İLK kovalamaca'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "Console only (PS5 / Xbox Series), out 2026-11-19. HUD texts are a guess from older GTA games: a generic open-world profile until real footage is checked.",
+  "tr_hud": "verify"
+}

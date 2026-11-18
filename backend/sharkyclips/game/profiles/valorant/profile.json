@@ -1,0 +1,280 @@
+{
+  "id": "valorant",
+  "name": "VALORANT",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "tactical_shooter",
+  "aliases": [
+    "valorant"
+  ],
+  "hints": [
+    "vandal",
+    "phantom",
+    "operator",
+    "spike",
+    "jett",
+    "reyna",
+    "sage",
+    "sova",
+    "raze",
+    "omen",
+    "ascent",
+    "bind",
+    "haven",
+    "lotus",
+    "ulti"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        560,
+        110,
+        800,
+        220
+      ],
+      "label": "Top banner"
+    },
+    "kills": {
+      "box": [
+        760,
+        760,
+        400,
+        200
+      ],
+      "label": "Kill banner"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "val_ace": [
+        "ace",
+        "-team"
+      ],
+      "val_team_ace": [
+        "team ace",
+        "takim ace"
+      ],
+      "val_clutch": [
+        "clutch"
+      ],
+      "val_flawless": [
+        "flawless",
+        "kusursuz"
+      ],
+      "val_thrifty": [
+        "thrifty",
+        "tutumlu"
+      ],
+      "val_planted": [
+        "spike planted",
+        "spike kuruldu"
+      ],
+      "val_defused": [
+        "spike defused",
+        "spike imha edildi",
+        "spike etkisiz"
+      ],
+      "val_round_won": [
+        "round won",
+        "raund kazanildi"
+      ],
+      "val_round_lost": [
+        "round lost",
+        "raund kaybedildi"
+      ]
+    },
+    "center": {
+      "val_victory": [
+        "victory",
+        "zafer"
+      ],
+      "val_defeat": [
+        "defeat",
+        "bozgun",
+        "yenilgi"
+      ]
+    }
+  },
+  "events": {
+    "val_ace": {
+      "strength": 1.0,
+      "label": "ACE",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "val_team_ace": {
+      "strength": 0.6,
+      "label": "Team ace",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "val_clutch": {
+      "strength": 0.85,
+      "label": "Clutch",
+      "dedupe": 20,
+      "pre": 10,
+      "post": 3
+    },
+    "val_flawless": {
+      "strength": 0.5,
+      "label": "Flawless",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "val_thrifty": {
+      "strength": 0.45,
+      "label": "Thrifty",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "val_planted": {
+      "strength": 0.2,
+      "label": "Spike planted",
+      "dedupe": 30,
+      "pre": 7,
+      "post": 3
+    },
+    "val_defused": {
+      "strength": 0.55,
+      "label": "Spike defused",
+      "dedupe": 30,
+      "pre": 9,
+      "post": 3
+    },
+    "val_round_won": {
+      "strength": 0.25,
+      "label": "Round won",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "val_round_lost": {
+      "strength": 0.1,
+      "label": "Round lost",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "val_victory": {
+      "strength": 0.6,
+      "label": "Victory",
+      "dedupe": 120,
+      "pre": 7,
+      "post": 3
+    },
+    "val_defeat": {
+      "strength": 0.3,
+      "label": "Defeat",
+      "dedupe": 120,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "kill banner sound rising per kill",
+    "spike plant / defuse sound"
+  ],
+  "vocabulary": {
+    "en": [
+      "ace",
+      "clutch",
+      "one tap",
+      "op shot"
+    ],
+    "tr": [
+      "aceee",
+      "tek mermi",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Jett",
+    "Phoenix",
+    "Sage",
+    "Sova",
+    "Reyna",
+    "Raze",
+    "Omen",
+    "Brimstone",
+    "Viper",
+    "Cypher",
+    "Killjoy",
+    "Breach",
+    "Skye",
+    "Yoru",
+    "Astra",
+    "KAY/O",
+    "Chamber",
+    "Neon",
+    "Fade",
+    "Harbor",
+    "Gekko",
+    "Deadlock",
+    "Iso",
+    "Clove",
+    "Vandal",
+    "Phantom",
+    "Operator",
+    "Sheriff",
+    "Ascent",
+    "Bind",
+    "Haven",
+    "Split",
+    "Icebox",
+    "Lotus",
+    "Sunset",
+    "Abyss"
+  ],
+  "hashtags": {
+    "all": [
+      "#valorant",
+      "#valorantclips",
+      "#valorantace",
+      "#riotgames"
+    ],
+    "tr": [
+      "#valoranttr",
+      "#valoranttürkiye"
+    ],
+    "es": [
+      "#valorantespañol"
+    ],
+    "pt": [
+      "#valorantbr"
+    ],
+    "ja": [
+      "#ヴァロラント"
+    ]
+  },
+  "title_style": {
+    "en": "Lead with the result: 'ACE with Jett', '1v3 CLUTCH on Bind'.",
+    "tr": "Sonuçla başla: 'Jett ile ACE', 'Bind'da 1v3 CLUTCH'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

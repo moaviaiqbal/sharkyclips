@@ -1,0 +1,181 @@
+{
+  "id": "apex",
+  "name": "Apex Legends",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "battle_royale",
+  "aliases": [
+    "apex legends",
+    "apex"
+  ],
+  "hints": [
+    "wraith",
+    "octane",
+    "bloodhound",
+    "lifeline",
+    "pathfinder",
+    "horizon",
+    "knock",
+    "kalkan",
+    "ring",
+    "kill leader",
+    "respawn beacon"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        560,
+        160,
+        800,
+        220
+      ],
+      "label": "Center pop-ups"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "apex_squad_wipe": [
+        "squad eliminated",
+        "squad wiped",
+        "takim elendi",
+        "tim yok edildi"
+      ],
+      "apex_kill_leader": [
+        "you are the kill leader",
+        "kill leader",
+        "lider sensin"
+      ],
+      "apex_knock": [
+        "knocked down",
+        "yere serildi",
+        "-squad"
+      ],
+      "apex_elim": [
+        "eliminated",
+        "elendi",
+        "-squad"
+      ]
+    },
+    "center": {
+      "apex_champion": [
+        "champion",
+        "apex champions",
+        "sampiyon"
+      ]
+    }
+  },
+  "events": {
+    "apex_squad_wipe": {
+      "strength": 0.85,
+      "label": "Squad eliminated",
+      "dedupe": 20,
+      "pre": 10,
+      "post": 3
+    },
+    "apex_kill_leader": {
+      "strength": 0.5,
+      "label": "Kill leader",
+      "dedupe": 120,
+      "pre": 7,
+      "post": 3
+    },
+    "apex_knock": {
+      "strength": 0.2,
+      "label": "Knock",
+      "dedupe": 4,
+      "pre": 7,
+      "post": 3
+    },
+    "apex_elim": {
+      "strength": 0.35,
+      "label": "Kill",
+      "dedupe": 4,
+      "pre": 7,
+      "post": 3
+    },
+    "apex_champion": {
+      "strength": 1.0,
+      "label": "Champion",
+      "dedupe": 300,
+      "pre": 12,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "knock sound",
+    "announcer: champion"
+  ],
+  "vocabulary": {
+    "en": [
+      "squad wipe",
+      "third party"
+    ],
+    "tr": [
+      "ucunu de sildim",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Wraith",
+    "Bloodhound",
+    "Pathfinder",
+    "Octane",
+    "Lifeline",
+    "Wattson",
+    "Caustic",
+    "Gibraltar",
+    "Horizon",
+    "Valkyrie",
+    "Kings Canyon",
+    "World's Edge",
+    "Olympus",
+    "Storm Point"
+  ],
+  "hashtags": {
+    "all": [
+      "#apexlegends",
+      "#apex",
+      "#apexclips",
+      "#apexpredator"
+    ],
+    "tr": [
+      "#apextr"
+    ],
+    "es": [
+      "#apexespañol"
+    ],
+    "pt": [
+      "#apexbr"
+    ],
+    "ja": [
+      "#エーペックス"
+    ]
+  },
+  "title_style": {
+    "en": "Lead with the play: 'SQUAD WIPE with Wraith'.",
+    "tr": "Oyunla başla: 'Wraith ile SQUAD WIPE'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

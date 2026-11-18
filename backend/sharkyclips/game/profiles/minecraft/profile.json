@@ -1,0 +1,161 @@
+{
+  "id": "minecraft",
+  "name": "Minecraft",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "sandbox",
+  "aliases": [
+    "minecraft"
+  ],
+  "hints": [
+    "creeper",
+    "enderman",
+    "nether",
+    "elmas",
+    "diamond",
+    "redstone",
+    "ender dragon",
+    "wither",
+    "elytra",
+    "hardcore",
+    "village",
+    "lava"
+  ],
+  "regions": {
+    "center": {
+      "box": [
+        460,
+        260,
+        1000,
+        240
+      ],
+      "label": "Death screen"
+    },
+    "toast": {
+      "box": [
+        1480,
+        0,
+        440,
+        150
+      ],
+      "label": "Advancement toast"
+    }
+  },
+  "ocr": {
+    "center": {
+      "mc_died": [
+        "you died",
+        "oldun",
+        "game over"
+      ]
+    },
+    "toast": {
+      "mc_advancement": [
+        "advancement made",
+        "ilerleme kaydedildi"
+      ],
+      "mc_challenge": [
+        "challenge complete",
+        "meydan okuma tamamlandi"
+      ],
+      "mc_goal": [
+        "goal reached",
+        "hedefe ulasildi"
+      ]
+    }
+  },
+  "events": {
+    "mc_died": {
+      "strength": 0.5,
+      "label": "Died",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "mc_advancement": {
+      "strength": 0.25,
+      "label": "Advancement",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "mc_challenge": {
+      "strength": 0.6,
+      "label": "Challenge complete",
+      "dedupe": 30,
+      "pre": 7,
+      "post": 3
+    },
+    "mc_goal": {
+      "strength": 0.4,
+      "label": "Goal reached",
+      "dedupe": 30,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "creeper hiss",
+    "explosion",
+    "damage"
+  ],
+  "vocabulary": {
+    "en": [
+      "creeper",
+      "diamonds"
+    ],
+    "tr": [
+      "elmas buldum",
+      "creeper geldi",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Creeper",
+    "Enderman",
+    "Nether",
+    "Ender Dragon",
+    "Redstone",
+    "Wither",
+    "Elytra",
+    "Netherite"
+  ],
+  "hashtags": {
+    "all": [
+      "#minecraft",
+      "#minecraftclips",
+      "#minecraftshorts"
+    ],
+    "tr": [
+      "#minecrafttr",
+      "#minecrafttürkiye"
+    ],
+    "es": [
+      "#minecraftespañol"
+    ],
+    "pt": [
+      "#minecraftbr"
+    ],
+    "ja": [
+      "#マイクラ"
+    ]
+  },
+  "title_style": {
+    "en": "Funny fails and big finds: 'A creeper ended my hardcore run'.",
+    "tr": "Komik ölümler ve büyük buluntular: 'Creeper hardcore dünyamı bitirdi'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

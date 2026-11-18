@@ -1,0 +1,126 @@
+{
+  "id": "arc_raiders",
+  "name": "ARC Raiders",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "extraction_shooter",
+  "aliases": [
+    "arc raiders",
+    "arcraiders"
+  ],
+  "hints": [
+    "extract",
+    "tahliye",
+    "loot",
+    "ganimet",
+    "raider",
+    "speranza",
+    "elevator",
+    "ambush",
+    "pusu"
+  ],
+  "regions": {
+    "center": {
+      "box": [
+        360,
+        280,
+        1200,
+        320
+      ],
+      "label": "Extraction result"
+    }
+  },
+  "ocr": {
+    "center": {
+      "arc_extracted": [
+        "extracted",
+        "extraction successful",
+        "tahliye edildi",
+        "tahliye basarili"
+      ],
+      "arc_failed": [
+        "extraction failed",
+        "you died",
+        "tahliye basarisiz",
+        "oldun"
+      ],
+      "arc_downed": [
+        "downed",
+        "yere dustun"
+      ]
+    }
+  },
+  "events": {
+    "arc_extracted": {
+      "strength": 0.8,
+      "label": "Extracted",
+      "dedupe": 120,
+      "pre": 12,
+      "post": 3
+    },
+    "arc_failed": {
+      "strength": 0.5,
+      "label": "Lost the loot",
+      "dedupe": 120,
+      "pre": 10,
+      "post": 3
+    },
+    "arc_downed": {
+      "strength": 0.3,
+      "label": "Downed",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [],
+  "vocabulary": {
+    "en": [
+      "extract",
+      "betrayed"
+    ],
+    "tr": [
+      "ihanet",
+      "tahliye",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Speranza",
+    "ARC"
+  ],
+  "hashtags": {
+    "all": [
+      "#arcraiders",
+      "#arcraidersclips",
+      "#extractionshooter"
+    ],
+    "tr": [
+      "#arcraiderstr"
+    ],
+    "es": [
+      "#arcraidersespañol"
+    ],
+    "pt": [
+      "#arcraidersbr"
+    ]
+  },
+  "title_style": {
+    "en": "Tension, then relief: 'Extracted with 1 HP'.",
+    "tr": "Gerilim, sonra rahatlama: '1 can ile tahliye'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

@@ -77,9 +77,40 @@ def _user_all() -> dict:
     return {k: v for k, v in data.items() if isinstance(v, dict)} if isinstance(data, dict) else {}
 
 
+def _profiles() -> dict:
+    from ..game import gameprofiles
+
+    return gameprofiles.all_profiles()
+
+
+def _from_profile(gid: str) -> dict:
+    """1.2.53: a metadata bank made from a game profile (game/profiles/<id>) when there is no
+    hand-written bank for the game yet."""
+    p = _profiles().get(gid)
+    if not p:
+        return {}
+    h = p.get("hashtags") or {}
+    name = p["name"]
+    short = re.sub(r"[^a-z0-9]", "", name.casefold())[:20]
+    events = {}
+    for code, ev in (p.get("events") or {}).items():
+        label = str(ev.get("label") or code)
+        if float(ev.get("strength", 0)) >= 0.5:
+            word = label.upper()
+            events[code] = {"word": word, "label": label, "hashtags": ["#" + re.sub(r"\W", "", label.casefold())],
+                            "tags": [f"{short} {label.casefold()}"], "say": [label.casefold()]}
+    return {"id": gid, "name": name, "short": short, "aliases": list(p.get("aliases") or []),
+            "hashtags": list(h.get("all") or []), "tags": [name.casefold(), f"{name.casefold()} clips",
+                                                          f"{name.casefold()} highlights", f"{short} shorts"],
+            "terms": {"terms": list(p.get("terms") or [])}, "hints": list(p.get("hints") or []),
+            "events": events, "vocab": {k: list(v) for k, v in (p.get("vocabulary") or {}).items()},
+            "keywords": [e["word"] for e in events.values()], "profile": True}
+
+
 def ids() -> list[str]:
-    extra = [k for k in _user_all() if k not in BUILTIN and re.fullmatch(r"[a-z0-9_]{2,24}", k)]
-    return list(BUILTIN) + extra
+    prof = [k for k in _profiles() if k not in BUILTIN]
+    extra = [k for k in _user_all() if k not in BUILTIN and k not in prof and re.fullmatch(r"[a-z0-9_]{2,24}", k)]
+    return list(BUILTIN) + prof + extra
 
 
 def merge(base: dict, over: dict) -> dict:
@@ -99,8 +130,13 @@ def get(gid: str | None, user: bool = True) -> dict:
     user=False: the built-in bank only."""
     gid = gid if gid in ids() else GENERIC
     mine = _user_all() if user else {}
-    bank = merge(_builtin(gid), mine.get(gid) or {})
+    bank = merge(_builtin(gid) or _from_profile(gid), mine.get(gid) or {})
     bank["id"] = gid
+    prof = _profiles().get(gid) or {}
+    if prof.get("hashtags"):  # per-language hashtag sets (#cs2español, #valorantbr, ...)
+        bank["hashtags_lang"] = {k: list(v) for k, v in prof["hashtags"].items() if k != "all"}
+    if prof.get("title_style"):
+        bank["title_style"] = dict(prof["title_style"])
     bank.setdefault("name", "")
     if gid != GENERIC:  # generic events and moments are every game's fallback
         g = merge(_builtin(GENERIC), mine.get(GENERIC) or {})
@@ -489,6 +525,12 @@ def build_hashtags(bank: dict, facts: dict, moment: str | None, lang: str, *, ch
         if spec_n() < spec_max:
             add(h)
     rest = tags[1:]
+    lang_tags = list((bank.get("hashtags_lang") or {}).get((lang or "")[:2]) or [])
+    if lang_tags and lang != "tr" and len(out) < cap:  # 1.2.53: one tag of the audience's language
+        add(lang_tags[0])
+    rest = lang_tags[1:] + rest
+    if lang != "tr":  # #cs2tr / #loltürkiye only for a Turkish audience
+        rest = [h for h in rest if not re.search(r"tr$|turkiye|türkiye", h.casefold())]
     local = re.compile(r"tr$|turkiye|türkiye") if lang == "tr" else None
     if local:  # Turkish audience: one Turkish game tag (#loltr), the rest is international
         rest.sort(key=lambda h: 0 if local.search(h.casefold()) else 1)

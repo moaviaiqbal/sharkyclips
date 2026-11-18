@@ -17,12 +17,17 @@ from typing import Callable
 
 from ..project import Project, read_json, write_json_atomic
 from . import events as events_mod
-from . import presets
+from . import gameprofiles, presets
 
 SCAN_VERSION = 6
-DETECT_VERSION = 2  # bump when detect() changes (results are remembered per project)
-CHOICES = ("auto", "delta_force", "lol", "other")
+DETECT_VERSION = 3  # bump when detect() changes (results are remembered per project)
+gameprofiles.install(presets, events_mod)  # 1.2.53: one folder per game (game/profiles/<id>)
+# games with a HUD scanner: the two built-in ones + every "banners" profile
+SCANNABLE = ("delta_force", "lol", *sorted(gameprofiles.banner_games()))
+CHOICES = ("auto", *SCANNABLE, *sorted(set(gameprofiles.all_profiles()) - set(SCANNABLE)), "other")
 _GLOSSARY_NAMES = {"Delta Force": "delta_force", "League of Legends": "lol"}
+_GLOSSARY_NAMES.update({p["name"]: gid for gid, p in gameprofiles.all_profiles().items()})
+_GLOSSARY_NAMES.update({"Valorant": "valorant", "Counter-Strike 2": "cs2", "PUBG": "pubg"})  # games.json names
 # Words streamers say while playing (EN + TR), used only to recognize the game (not for titles).
 # Matched as word starts, so Turkish suffixes still count ("minyonlari", "kuleye").
 HINTS = {
@@ -32,6 +37,8 @@ HINTS = {
     "delta_force": ["operator", "operasyon", "tahliye", "extract", "warfare", "havoc", "zero dam",
                     "layali", "space city", "brakkesh", "revive", "kurtar", "zirh", "armor", "dron"],
 }
+for _gid, _p in gameprofiles.all_profiles().items():
+    HINTS[_gid] = list(dict.fromkeys(HINTS.get(_gid, []) + list(_p.get("hints") or [])))
 
 
 # ------------------------------------------------------------------ which game
@@ -49,7 +56,7 @@ def detect(title: str, transcript: dict | None) -> tuple[str | None, str]:
     if g in _GLOSSARY_NAMES:
         return _GLOSSARY_NAMES[g], f"title: {g}"
     if g:
-        return None, f"title: {g} (no HUD preset)"
+        return None, f"title: {g} (no game profile)"
     text = " ".join(s.get("text", "") for s in (transcript or {}).get("segments", []))
     words = _norm_words(title) + _norm_words(text)
     vocab = set(words)
@@ -57,7 +64,10 @@ def detect(title: str, transcript: dict | None) -> tuple[str | None, str]:
     counts: dict[str, set[str]] = {}
     for name, gid in _GLOSSARY_NAMES.items():
         hits = set()
-        for term in games.get(name, {}).get("terms", []) + games.get(name, {}).get("aliases", []) + HINTS[gid]:
+        prof = gameprofiles.get(gid) or {}
+        terms = (games.get(name, {}).get("terms", []) + games.get(name, {}).get("aliases", [])
+                 + list(prof.get("terms") or []) + list(prof.get("aliases") or []) + HINTS.get(gid, []))
+        for term in terms:
             t = presets.normalize(term)
             if len(t) < 4 or " " in t:
                 if " " in t and f" {t} " in f" {' '.join(words)} ":
@@ -115,11 +125,21 @@ def _cache_path(project: Project) -> Path:
     return project.cache_dir / "game" / "scan.json"
 
 
+def _light() -> bool:
+    try:
+        from .. import perf
+
+        return perf.light()
+    except Exception:  # noqa: BLE001
+        return False
+
+
 def scan_key(project: Project, game: str) -> str:
     if project.source_path is None:
         raise RuntimeError("the project has no video file")
     st = project.source_path.stat()
-    return f"{SCAN_VERSION}|{game}|{st.st_size}|{presets.digest(game)}"
+    light = "|light" if game not in ("lol", "delta_force") and _light() else ""
+    return f"{SCAN_VERSION}|{game}|{st.st_size}|{presets.digest(game)}{light}"
 
 
 def load_scan(project: Project) -> dict | None:
@@ -151,6 +171,7 @@ def scan(project: Project, game: str, on_progress: Callable[[float, float], None
     if not (width and height and duration):
         raise RuntimeError("video size unknown")
     w, h = frames.out_size(width, height)
+    frames.LIGHT_OK["on"] = game not in ("lol", "delta_force")  # their scanners are tuned to 2 fps
     boxes = presets.scaled_boxes(game, w, h)
     templates = presets.load_templates(game, h)
 

@@ -216,9 +216,43 @@ def df_events(obs: list[dict], game_name: str = "delta_force") -> list[dict]:
     return sorted(rest + _dedupe(screen, 60) + _dedupe(deaths, 15), key=lambda e: e["t"])
 
 
+def profile_events(game: str, obs: list[dict]) -> list[dict]:
+    """Events of a 'banners' profile game: OCR texts matched against the profile's phrases.
+    Each event carries the profile's clip padding (pre / post: build-up before, reaction after)."""
+    from . import gameprofiles
+
+    prof = gameprofiles.get(game) or {}
+    evdefs = prof.get("events") or {}
+    out: list[dict] = []
+    for o in sorted(obs, key=lambda o: o["t"]):
+        if o.get("kind") != "text":
+            continue
+        for code in match_rules(game, o["region"], o["text"]):
+            d = evdefs.get(code) or {}
+            t = float(o["t"])
+            e = _ev(t, code, value=o["text"][:60], source="banner",
+                    strength=float(d.get("strength", STRENGTH.get(code, 0.3))))
+            e["pre"], e["post"] = float(d.get("pre", 7)), float(d.get("post", 3))
+            out.append(e)
+    # the same banner stays on screen for seconds: one event per code per its dedupe window
+    kept: list[dict] = []
+    last: dict[str, float] = {}
+    for e in out:
+        win = float((evdefs.get(e["code"]) or {}).get("dedupe", 10))
+        if e["t"] - last.get(e["code"], -1e9) < win:
+            continue
+        last[e["code"]] = e["t"]
+        kept.append(e)
+    return kept
+
+
 def build_events(game: str, obs: list[dict]) -> list[dict]:
     if game == "lol":
         return lol_events(obs)
     if game == "delta_force":
         return df_events(obs)
+    from .presets import TEXT_RULES
+
+    if game in TEXT_RULES:
+        return profile_events(game, obs)
     return []

@@ -11,10 +11,13 @@ runs when that test fires.
 
 from __future__ import annotations
 
+import os
+
 import re
 import cv2
 import numpy as np
 
+from . import presets
 from .frames import Frame
 from .ocr import Reader
 from .presets import Box
@@ -182,6 +185,48 @@ class Scanner:
             self._lol(fr)
         elif self.game == "delta_force":
             self._df(fr)
+        elif self.game in presets.TEXT_RULES:
+            self._banners(fr)
+
+    # ------------------------------------------------------------ profile games (1.2.53)
+
+    BANNER_EVERY = 1.0  # at most one OCR per region per second
+    BANNER_IDLE = 8.0  # ... and one every 8 s even when nothing seemed to change
+
+    def _banners(self, fr: Frame) -> None:
+        """Generic scanner for profile games: OCR a HUD region only when text-like bright strokes
+        appear or change in it (banners pop up), so gameplay behind the box costs nothing."""
+        if not hasattr(self, "_bn_mask"):
+            self._bn_mask: dict[str, np.ndarray] = {}
+            self._bn_last: dict[str, float] = {}
+            self._bn_every = self.BANNER_EVERY * float(os.environ.get("SHARKYCLIPS_OCR_SPACING") or 1.0)
+        for name in presets.TEXT_RULES.get(self.game, {}):
+            box = self.boxes.get(name)
+            if box is None:
+                continue
+            t = fr.t
+            if t - self._bn_last.get(name, -99.0) < self._bn_every:
+                continue
+            crop = box.crop(fr.y)
+            if crop.shape[0] > 120:  # big banner text: half size reads as well and is 4x cheaper
+                crop = cv2.resize(crop, (crop.shape[1] // 2, crop.shape[0] // 2), interpolation=cv2.INTER_AREA)
+            k = max(9, crop.shape[0] // 5) | 1
+            hat = cv2.morphologyEx(crop, cv2.MORPH_TOPHAT, cv2.getStructuringElement(cv2.MORPH_RECT, (k, k)))
+            mask = hat > 45
+            frac = float(mask.mean())
+            prev = self._bn_mask.get(name)
+            self._bn_mask[name] = mask
+            texty = 0.003 <= frac <= 0.3
+            changed = prev is None or float(np.logical_xor(prev, mask).mean()) > max(0.002, frac * 0.3)
+            idle = t - self._bn_last.get(name, -99.0) >= self.BANNER_IDLE
+            if not texty or not (changed or idle):
+                continue
+            self._bn_last[name] = t
+            texts = self.reader.area(crop, min_score=0.6)
+            joined = " ".join(texts)
+            self._read(t, name, joined, "banner")
+            if joined.strip():
+                self.obs.append({"t": t, "kind": "text", "region": name, "text": joined})
 
     # ------------------------------------------------------------ League of Legends
 

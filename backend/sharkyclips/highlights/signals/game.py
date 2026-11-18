@@ -29,7 +29,7 @@ class GameSignal(Signal):
     version = 1
 
     def check(self, ctx) -> None:
-        from ...game import ocr, resolve
+        from ...game import SCANNABLE, ocr, resolve
 
         info = resolve(ctx.project)
         ctx.game_info = info
@@ -37,6 +37,8 @@ class GameSignal(Signal):
             if info["choice"] == "other":
                 raise SignalUnavailable("game set to Other")
             raise SignalUnavailable(f"game not recognized ({info['why']})")
+        if info["game"] not in SCANNABLE:
+            raise SignalUnavailable(f"no HUD scanner for {info['game']} (game profile without HUD rules)")
         if not ocr.installed():
             raise SignalUnavailable("OCR not installed (python -m pip install rapidocr)")
         if ctx.project.source_path is None:
@@ -63,14 +65,16 @@ class GameSignal(Signal):
         for e in events:
             s = float(e["strength"])
             a, b = float(e["start"]), float(e["end"])
-            lo, hi = max(0, int(a - BUILD_UP)), min(n - 1, int(np.ceil(b + TAIL)))
+            # 1.2.53: a game profile sets its own build-up / reaction time per event
+            pre, post = max(1.0, float(e.get("pre", BUILD_UP))), max(1.0, float(e.get("post", TAIL)))
+            lo, hi = max(0, int(a - pre)), min(n - 1, int(np.ceil(b + post)))
             for i in range(lo, hi + 1):
                 if i < a:
-                    w = 0.45 + 0.55 * (1 - (a - i) / BUILD_UP)
+                    w = 0.45 + 0.55 * (1 - (a - i) / pre)
                 elif i <= b + 1:
                     w = 1.0
                 else:
-                    w = max(0.0, 1 - (i - b - 1) / TAIL)
+                    w = max(0.0, 1 - (i - b - 1) / post)
                 scores[i] = max(scores[i], s * w)
             if s >= MIN_STRENGTH_FOR_SPAN:
                 spans.append([round(a, 2), round(b, 2), round(s, 3)])

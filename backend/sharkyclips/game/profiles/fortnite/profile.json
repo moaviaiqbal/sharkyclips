@@ -1,0 +1,140 @@
+{
+  "id": "fortnite",
+  "name": "Fortnite",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "battle_royale",
+  "aliases": [
+    "fortnite"
+  ],
+  "hints": [
+    "build",
+    "storm",
+    "firtina",
+    "victory royale",
+    "battle bus",
+    "zero build",
+    "pompali"
+  ],
+  "regions": {
+    "elims": {
+      "box": [
+        560,
+        640,
+        800,
+        140
+      ],
+      "label": "Elimination text"
+    },
+    "banner": {
+      "box": [
+        360,
+        100,
+        1200,
+        260
+      ],
+      "label": "Victory banner"
+    }
+  },
+  "ocr": {
+    "elims": {
+      "fn_elim": [
+        "eliminated",
+        "elendi",
+        "you eliminated",
+        "sen eledin"
+      ]
+    },
+    "banner": {
+      "fn_victory": [
+        "victory royale",
+        "zafer royale",
+        "#1 victory"
+      ],
+      "fn_placed": [
+        "you placed",
+        "siralaman"
+      ]
+    }
+  },
+  "events": {
+    "fn_elim": {
+      "strength": 0.35,
+      "label": "Elimination",
+      "dedupe": 4,
+      "pre": 7,
+      "post": 3
+    },
+    "fn_victory": {
+      "strength": 1.0,
+      "label": "Victory Royale",
+      "dedupe": 300,
+      "pre": 12,
+      "post": 3
+    },
+    "fn_placed": {
+      "strength": 0.15,
+      "label": "Placed",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "victory music",
+    "elimination sound"
+  ],
+  "vocabulary": {
+    "en": [
+      "victory royale",
+      "box fight",
+      "crank"
+    ],
+    "tr": [
+      "kazandik",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Victory Royale",
+    "Battle Bus",
+    "Zero Build",
+    "Storm"
+  ],
+  "hashtags": {
+    "all": [
+      "#fortnite",
+      "#fortniteclips",
+      "#victoryroyale",
+      "#epicgames"
+    ],
+    "tr": [
+      "#fortnitetr",
+      "#fortnitetürkiye"
+    ],
+    "es": [
+      "#fortniteespañol"
+    ],
+    "pt": [
+      "#fortnitebr"
+    ]
+  },
+  "title_style": {
+    "en": "Short and loud: 'VICTORY ROYALE with 12 kills'.",
+    "tr": "Kısa ve net: '12 kill ile VICTORY ROYALE'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

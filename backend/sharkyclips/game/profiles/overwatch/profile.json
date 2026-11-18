@@ -1,0 +1,191 @@
+{
+  "id": "overwatch",
+  "name": "Overwatch",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "hero_shooter",
+  "aliases": [
+    "overwatch",
+    "overwatch 2"
+  ],
+  "hints": [
+    "payload",
+    "tank",
+    "support",
+    "ulti",
+    "genji",
+    "tracer",
+    "mercy",
+    "reinhardt",
+    "kiriko",
+    "potg",
+    "overtime"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        460,
+        100,
+        1000,
+        220
+      ],
+      "label": "Top banner"
+    },
+    "elims": {
+      "box": [
+        760,
+        690,
+        400,
+        140
+      ],
+      "label": "Elimination text"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "ow_team_kill": [
+        "team kill",
+        "takim oldurmesi"
+      ],
+      "ow_potg": [
+        "play of the game",
+        "macin oyunu"
+      ],
+      "ow_overtime": [
+        "overtime",
+        "uzatma"
+      ]
+    },
+    "elims": {
+      "ow_elim": [
+        "eliminated",
+        "etkisiz",
+        "elendi"
+      ]
+    },
+    "center": {
+      "ow_victory": [
+        "victory",
+        "zafer"
+      ],
+      "ow_defeat": [
+        "defeat",
+        "yenilgi",
+        "bozgun"
+      ]
+    }
+  },
+  "events": {
+    "ow_team_kill": {
+      "strength": 0.85,
+      "label": "Team kill",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "ow_potg": {
+      "strength": 0.7,
+      "label": "Play of the game",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "ow_overtime": {
+      "strength": 0.3,
+      "label": "Overtime",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "ow_elim": {
+      "strength": 0.25,
+      "label": "Elimination",
+      "dedupe": 3,
+      "pre": 7,
+      "post": 3
+    },
+    "ow_victory": {
+      "strength": 0.6,
+      "label": "Victory",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "ow_defeat": {
+      "strength": 0.3,
+      "label": "Defeat",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "ult voice lines"
+  ],
+  "vocabulary": {
+    "en": [
+      "team kill",
+      "nano",
+      "potg"
+    ],
+    "tr": [
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Genji",
+    "Tracer",
+    "Mercy",
+    "Reinhardt",
+    "Ana",
+    "Kiriko",
+    "D.Va",
+    "Widowmaker",
+    "Lucio",
+    "Zarya"
+  ],
+  "hashtags": {
+    "all": [
+      "#overwatch",
+      "#overwatchclips",
+      "#potg",
+      "#blizzard"
+    ],
+    "tr": [
+      "#overwatchtr"
+    ],
+    "es": [
+      "#overwatchespañol"
+    ],
+    "pt": [
+      "#overwatchbr"
+    ]
+  },
+  "title_style": {
+    "en": "Hero + result: 'Genji TEAM KILL with Dragonblade'.",
+    "tr": "Kahraman + sonuç: 'Genji ile TEAM KILL'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

@@ -1,0 +1,152 @@
+{
+  "id": "gta5",
+  "name": "GTA V / GTA Online / GTA RP",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "open_world",
+  "aliases": [
+    "gta v",
+    "gta 5",
+    "gta5",
+    "gtav",
+    "gta online",
+    "grand theft auto v",
+    "fivem",
+    "gta rp",
+    "gtarp"
+  ],
+  "hints": [
+    "polis",
+    "police",
+    "cops",
+    "heist",
+    "soygun",
+    "wanted",
+    "aranma",
+    "los santos",
+    "karakter",
+    "sunucu",
+    "chase",
+    "kovalamaca"
+  ],
+  "regions": {
+    "center": {
+      "box": [
+        260,
+        330,
+        1400,
+        300
+      ],
+      "label": "Big centre text"
+    }
+  },
+  "ocr": {
+    "center": {
+      "gta_wasted": [
+        "wasted"
+      ],
+      "gta_busted": [
+        "busted"
+      ],
+      "gta_passed": [
+        "mission passed",
+        "heist passed"
+      ],
+      "gta_failed": [
+        "mission failed"
+      ]
+    }
+  },
+  "events": {
+    "gta_wasted": {
+      "strength": 0.55,
+      "label": "Wasted",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "gta_busted": {
+      "strength": 0.5,
+      "label": "Busted",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    },
+    "gta_passed": {
+      "strength": 0.45,
+      "label": "Mission passed",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "gta_failed": {
+      "strength": 0.35,
+      "label": "Mission failed",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "police siren",
+    "explosion",
+    "crash"
+  ],
+  "vocabulary": {
+    "en": [
+      "chase",
+      "lmao"
+    ],
+    "tr": [
+      "polis geldi",
+      "kacalim",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Los Santos",
+    "Blaine County",
+    "Vinewood",
+    "Franklin",
+    "Michael",
+    "Trevor",
+    "Lester"
+  ],
+  "hashtags": {
+    "all": [
+      "#gta5",
+      "#gtav",
+      "#gtaonline",
+      "#gtarp",
+      "#fivem"
+    ],
+    "tr": [
+      "#gtatr",
+      "#gta5türkiye"
+    ],
+    "es": [
+      "#gtaespañol"
+    ],
+    "pt": [
+      "#gtarpbr"
+    ]
+  },
+  "title_style": {
+    "en": "RP is about people: quote the funniest line or the drama.",
+    "tr": "RP insanlarla ilgili: en komik cümleyi ya da dramı yaz."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "no Turkish UI: English texts"
+}

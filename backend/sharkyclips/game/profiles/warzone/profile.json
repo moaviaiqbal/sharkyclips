@@ -1,0 +1,215 @@
+{
+  "id": "warzone",
+  "name": "Call of Duty: Warzone / MW4",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "battle_royale",
+  "aliases": [
+    "warzone",
+    "call of duty",
+    "modern warfare 4",
+    "mw4",
+    "verdansk",
+    "rebirth island"
+  ],
+  "hints": [
+    "gulag",
+    "loadout",
+    "plates",
+    "plaka",
+    "squad",
+    "redeploy",
+    "uav",
+    "buy station",
+    "circle",
+    "third party"
+  ],
+  "regions": {
+    "medals": {
+      "box": [
+        660,
+        180,
+        600,
+        220
+      ],
+      "label": "Medals / pop-ups"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "medals": {
+      "wz_double": [
+        "double kill",
+        "cifte oldurme"
+      ],
+      "wz_triple": [
+        "triple kill",
+        "uclu oldurme"
+      ],
+      "wz_multi": [
+        "fury kill",
+        "frenzy kill",
+        "super kill",
+        "mega kill",
+        "ultra kill",
+        "kill chain"
+      ],
+      "wz_squad_wipe": [
+        "squad wiped",
+        "squad wipe",
+        "takim yok edildi",
+        "tim yok edildi"
+      ],
+      "wz_eliminated": [
+        "eliminated",
+        "elendin",
+        "-squad"
+      ]
+    },
+    "center": {
+      "wz_victory": [
+        "victory",
+        "warzone victory",
+        "zafer"
+      ],
+      "wz_gulag_win": [
+        "gulag winner",
+        "you won the gulag",
+        "gulagi kazandin"
+      ],
+      "wz_gulag_lost": [
+        "gulag lost",
+        "gulagi kaybettin"
+      ]
+    }
+  },
+  "events": {
+    "wz_double": {
+      "strength": 0.55,
+      "label": "Double kill",
+      "dedupe": 8,
+      "pre": 7,
+      "post": 3
+    },
+    "wz_triple": {
+      "strength": 0.75,
+      "label": "Triple kill",
+      "dedupe": 8,
+      "pre": 7,
+      "post": 3
+    },
+    "wz_multi": {
+      "strength": 0.9,
+      "label": "Multi-kill",
+      "dedupe": 8,
+      "pre": 7,
+      "post": 3
+    },
+    "wz_squad_wipe": {
+      "strength": 0.85,
+      "label": "Squad wiped",
+      "dedupe": 20,
+      "pre": 10,
+      "post": 3
+    },
+    "wz_eliminated": {
+      "strength": 0.25,
+      "label": "Eliminated",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "wz_victory": {
+      "strength": 1.0,
+      "label": "Victory",
+      "dedupe": 300,
+      "pre": 12,
+      "post": 3
+    },
+    "wz_gulag_win": {
+      "strength": 0.5,
+      "label": "Gulag won",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "wz_gulag_lost": {
+      "strength": 0.2,
+      "label": "Gulag lost",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "hit marker",
+    "armor break",
+    "final-circle music"
+  ],
+  "vocabulary": {
+    "en": [
+      "squad wipe",
+      "third party",
+      "gulag"
+    ],
+    "tr": [
+      "bitti bitti",
+      "uclu yaptim",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Gulag",
+    "Verdansk",
+    "Rebirth Island",
+    "UAV",
+    "Buy Station",
+    "Loadout Drop"
+  ],
+  "hashtags": {
+    "all": [
+      "#warzone",
+      "#callofduty",
+      "#cod",
+      "#mw4",
+      "#modernwarfare4",
+      "#warzoneclips"
+    ],
+    "tr": [
+      "#codtr",
+      "#warzonetr"
+    ],
+    "es": [
+      "#warzoneespañol"
+    ],
+    "pt": [
+      "#warzonebr"
+    ]
+  },
+  "title_style": {
+    "en": "Say what happened: 'SQUAD WIPE in the final circle'.",
+    "tr": "Ne olduğunu yaz: 'Son çemberde SQUAD WIPE'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

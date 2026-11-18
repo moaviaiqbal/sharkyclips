@@ -1,0 +1,162 @@
+{
+  "id": "pubg",
+  "name": "PUBG: Battlegrounds",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "battle_royale",
+  "aliases": [
+    "pubg",
+    "battlegrounds",
+    "pubg battlegrounds"
+  ],
+  "hints": [
+    "erangel",
+    "miramar",
+    "sanhok",
+    "vikendi",
+    "taego",
+    "chicken dinner",
+    "airdrop",
+    "blue zone",
+    "mavi alan",
+    "tava",
+    "kar98",
+    "awm",
+    "m416"
+  ],
+  "regions": {
+    "kills": {
+      "box": [
+        560,
+        680,
+        800,
+        140
+      ],
+      "label": "Kill message"
+    },
+    "banner": {
+      "box": [
+        40,
+        60,
+        1200,
+        240
+      ],
+      "label": "Result banner"
+    }
+  },
+  "ocr": {
+    "kills": {
+      "pubg_kill": [
+        "you killed",
+        "oldurdun"
+      ],
+      "pubg_knock": [
+        "you knocked out",
+        "bayilttin",
+        "yere serdin"
+      ]
+    },
+    "banner": {
+      "pubg_win": [
+        "winner winner chicken dinner",
+        "chicken dinner",
+        "kazanan kazanan"
+      ],
+      "pubg_lose": [
+        "better luck next time",
+        "bir dahaki sefere"
+      ]
+    }
+  },
+  "events": {
+    "pubg_kill": {
+      "strength": 0.35,
+      "label": "Kill",
+      "dedupe": 4,
+      "pre": 7,
+      "post": 3
+    },
+    "pubg_knock": {
+      "strength": 0.2,
+      "label": "Knock",
+      "dedupe": 4,
+      "pre": 7,
+      "post": 3
+    },
+    "pubg_win": {
+      "strength": 1.0,
+      "label": "Chicken dinner",
+      "dedupe": 300,
+      "pre": 12,
+      "post": 3
+    },
+    "pubg_lose": {
+      "strength": 0.15,
+      "label": "Game over",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "sniper crack",
+    "vehicle"
+  ],
+  "vocabulary": {
+    "en": [
+      "chicken dinner",
+      "frying pan"
+    ],
+    "tr": [
+      "tavuk yedik",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Erangel",
+    "Miramar",
+    "Sanhok",
+    "Vikendi",
+    "Taego",
+    "Chicken Dinner",
+    "AWM",
+    "Kar98k",
+    "M416"
+  ],
+  "hashtags": {
+    "all": [
+      "#pubg",
+      "#pubgclips",
+      "#chickendinner",
+      "#battlegrounds"
+    ],
+    "tr": [
+      "#pubgtr",
+      "#pubgtürkiye"
+    ],
+    "es": [
+      "#pubgespañol"
+    ],
+    "pt": [
+      "#pubgbr"
+    ]
+  },
+  "title_style": {
+    "en": "Use the classic: 'CHICKEN DINNER with a frying pan kill'.",
+    "tr": "Klasik: 'Tava ile kill, CHICKEN DINNER'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

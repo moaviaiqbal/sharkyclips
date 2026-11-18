@@ -1,0 +1,191 @@
+{
+  "id": "marvel_rivals",
+  "name": "Marvel Rivals",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "hero_shooter",
+  "aliases": [
+    "marvel rivals"
+  ],
+  "hints": [
+    "team-up",
+    "ulti",
+    "spider-man",
+    "iron man",
+    "hulk",
+    "loki",
+    "magneto",
+    "svp",
+    "convoy"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        460,
+        140,
+        1000,
+        220
+      ],
+      "label": "Streak banner"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "mr_double": [
+        "double kill"
+      ],
+      "mr_triple": [
+        "triple kill"
+      ],
+      "mr_quad": [
+        "quad kill",
+        "quadruple"
+      ],
+      "mr_penta": [
+        "penta kill",
+        "pentakill"
+      ],
+      "mr_hexa": [
+        "hexa kill",
+        "hexakill"
+      ]
+    },
+    "center": {
+      "mr_victory": [
+        "victory",
+        "zafer"
+      ],
+      "mr_defeat": [
+        "defeat",
+        "yenilgi"
+      ],
+      "mr_mvp": [
+        "mvp",
+        "svp"
+      ]
+    }
+  },
+  "events": {
+    "mr_double": {
+      "strength": 0.5,
+      "label": "Double",
+      "dedupe": 10,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_triple": {
+      "strength": 0.7,
+      "label": "Triple",
+      "dedupe": 10,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_quad": {
+      "strength": 0.85,
+      "label": "Quad",
+      "dedupe": 12,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_penta": {
+      "strength": 0.95,
+      "label": "Penta",
+      "dedupe": 15,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_hexa": {
+      "strength": 1.0,
+      "label": "Hexa",
+      "dedupe": 20,
+      "pre": 12,
+      "post": 3
+    },
+    "mr_victory": {
+      "strength": 0.55,
+      "label": "Victory",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_defeat": {
+      "strength": 0.25,
+      "label": "Defeat",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "mr_mvp": {
+      "strength": 0.4,
+      "label": "MVP",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [],
+  "vocabulary": {
+    "en": [
+      "team-up",
+      "hexa"
+    ],
+    "tr": [
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Spider-Man",
+    "Iron Man",
+    "Hulk",
+    "Loki",
+    "Magneto",
+    "Storm",
+    "Groot",
+    "Rocket Raccoon",
+    "Black Panther",
+    "Psylocke"
+  ],
+  "hashtags": {
+    "all": [
+      "#marvelrivals",
+      "#marvelrivalsclips",
+      "#marvel"
+    ],
+    "tr": [
+      "#marvelrivalstr"
+    ],
+    "es": [
+      "#marvelrivalsespañol"
+    ],
+    "pt": [
+      "#marvelrivalsbr"
+    ]
+  },
+  "title_style": {
+    "en": "Hero + streak: 'Psylocke HEXA KILL'.",
+    "tr": "Kahraman + seri: 'Psylocke HEXA KILL'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

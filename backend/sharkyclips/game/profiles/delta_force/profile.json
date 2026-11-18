@@ -1,0 +1,53 @@
+{
+  "id": "delta_force",
+  "name": "Delta Force",
+  "status": "verified",
+  "engine": "builtin",
+  "kind": "extraction_shooter",
+  "aliases": [
+    "delta force",
+    "deltaforce"
+  ],
+  "hints": [],
+  "regions": {},
+  "ocr": {},
+  "events": {},
+  "audio_cues": [],
+  "vocabulary": {
+    "en": [
+      "extract",
+      "revive"
+    ],
+    "tr": [
+      "tahliye",
+      "kurtardim",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [],
+  "hashtags": {
+    "all": [
+      "#deltaforce",
+      "#deltaforcegame",
+      "#deltaforceclips"
+    ],
+    "tr": [
+      "#deltaforcetr"
+    ]
+  },
+  "title_style": {},
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "Built-in scanner (skull / revive / assist icons, score lines). Tested on real footage.",
+  "tr_hud": "checked on a Turkish client"
+}

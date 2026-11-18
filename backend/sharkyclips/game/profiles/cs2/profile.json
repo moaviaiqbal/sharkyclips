@@ -1,0 +1,230 @@
+{
+  "id": "cs2",
+  "name": "Counter-Strike 2",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "tactical_shooter",
+  "aliases": [
+    "counter-strike 2",
+    "counter strike 2",
+    "counter-strike",
+    "counter strike",
+    "cs2",
+    "csgo",
+    "cs:go"
+  ],
+  "hints": [
+    "awp",
+    "deagle",
+    "mirage",
+    "inferno",
+    "dust",
+    "nuke",
+    "ancient",
+    "anubis",
+    "bomba",
+    "bomb",
+    "defuse",
+    "plant",
+    "eco",
+    "clutch",
+    "headshot",
+    "kafadan"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        460,
+        100,
+        1000,
+        200
+      ],
+      "label": "Top banner"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "cs2_ct_win": [
+        "counter terrorists win",
+        "counter-terrorists win",
+        "terorle mucadele kazandi"
+      ],
+      "cs2_t_win": [
+        "terrorists win",
+        "-counter",
+        "teroristler kazandi"
+      ],
+      "cs2_planted": [
+        "bomb has been planted",
+        "bomba kuruldu",
+        "bomba yerlestirildi"
+      ],
+      "cs2_defused": [
+        "bomb has been defused",
+        "bomba imha edildi",
+        "bomba etkisiz"
+      ]
+    },
+    "center": {
+      "cs2_victory": [
+        "victory",
+        "match won",
+        "zafer",
+        "mac kazanildi"
+      ],
+      "cs2_defeat": [
+        "defeat",
+        "match lost",
+        "yenilgi",
+        "maglubiyet"
+      ],
+      "cs2_mvp": [
+        "round mvp",
+        "mvp",
+        "raundun en degerli"
+      ]
+    }
+  },
+  "events": {
+    "cs2_ct_win": {
+      "strength": 0.35,
+      "label": "Round won (CT)",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_t_win": {
+      "strength": 0.35,
+      "label": "Round won (T)",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_planted": {
+      "strength": 0.25,
+      "label": "Bomb planted",
+      "dedupe": 30,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_defused": {
+      "strength": 0.6,
+      "label": "Bomb defused",
+      "dedupe": 30,
+      "pre": 9,
+      "post": 3
+    },
+    "cs2_victory": {
+      "strength": 0.6,
+      "label": "Match won",
+      "dedupe": 120,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_defeat": {
+      "strength": 0.3,
+      "label": "Match lost",
+      "dedupe": 120,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_mvp": {
+      "strength": 0.45,
+      "label": "Round MVP",
+      "dedupe": 20,
+      "pre": 9,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "bomb beep speeding up",
+    "defuse sound",
+    "round-end music",
+    "headshot ding"
+  ],
+  "vocabulary": {
+    "en": [
+      "ace",
+      "clutch",
+      "one tap",
+      "headshot",
+      "ninja defuse",
+      "eco"
+    ],
+    "tr": [
+      "1 kaldi",
+      "kafadan",
+      "ace attim",
+      "clutch",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "AWP",
+    "AK-47",
+    "M4A4",
+    "M4A1-S",
+    "Desert Eagle",
+    "USP-S",
+    "Glock",
+    "Mirage",
+    "Inferno",
+    "Dust II",
+    "Nuke",
+    "Overpass",
+    "Vertigo",
+    "Ancient",
+    "Anubis",
+    "Train"
+  ],
+  "hashtags": {
+    "all": [
+      "#CS2",
+      "#counterstrike",
+      "#counterstrike2",
+      "#cs2clips",
+      "#clutch",
+      "#ace"
+    ],
+    "tr": [
+      "#cs2tr",
+      "#csgotürkiye"
+    ],
+    "es": [
+      "#cs2español"
+    ],
+    "pt": [
+      "#cs2brasil"
+    ],
+    "ru": [
+      "#кс2"
+    ]
+  },
+  "title_style": {
+    "en": "Name the kill count and the situation: '1v4 CLUTCH on Mirage', 'ACE with the AWP'.",
+    "tr": "Kill sayısını ve durumu yaz: '1v4 CLUTCH Mirage'da', 'AWP ile ACE'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

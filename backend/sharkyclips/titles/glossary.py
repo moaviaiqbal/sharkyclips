@@ -72,7 +72,15 @@ class Glossary:
 @functools.lru_cache(maxsize=1)
 def _games() -> dict:
     data = json.loads(GAMES_FILE.read_text(encoding="utf-8"))
-    return {k: v for k, v in data.items() if not k.startswith("_")}
+    out = {k: v for k, v in data.items() if not k.startswith("_")}
+    # 1.2.53: game profiles (game/profiles/<id>) add their names and terms
+    from ..game import gameprofiles
+
+    for p in gameprofiles.all_profiles().values():
+        cur = out.setdefault(p["name"], {"aliases": [], "terms": []})
+        cur["aliases"] = list(dict.fromkeys(list(cur.get("aliases") or []) + list(p.get("aliases") or [])))
+        cur["terms"] = list(dict.fromkeys(list(cur.get("terms") or []) + list(p.get("terms") or [])))
+    return out
 
 
 def _common_word(term: str, lang: str) -> bool:

@@ -1,0 +1,184 @@
+{
+  "id": "eafc",
+  "name": "EA Sports FC 27",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "sports",
+  "aliases": [
+    "ea sports fc",
+    "ea fc",
+    "fc 27",
+    "fc27",
+    "eafc",
+    "fifa",
+    "ultimate team"
+  ],
+  "hints": [
+    "gol",
+    "goal",
+    "penalti",
+    "penalty",
+    "ofsayt",
+    "offside",
+    "walkout",
+    "paket",
+    "ultimate team",
+    "division",
+    "rivals",
+    "frikik"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        460,
+        120,
+        1000,
+        220
+      ],
+      "label": "Goal / replay banner"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "fc_goal": [
+        "goal",
+        "gol",
+        "-kick"
+      ],
+      "fc_red": [
+        "red card",
+        "kirmizi kart"
+      ],
+      "fc_penalty": [
+        "penalty",
+        "penalti"
+      ]
+    },
+    "center": {
+      "fc_full_time": [
+        "full time",
+        "mac sonu",
+        "mac bitti"
+      ],
+      "fc_half_time": [
+        "half time",
+        "devre arasi"
+      ],
+      "fc_walkout": [
+        "walkout"
+      ]
+    }
+  },
+  "events": {
+    "fc_goal": {
+      "strength": 0.7,
+      "label": "Goal",
+      "dedupe": 30,
+      "pre": 10,
+      "post": 4
+    },
+    "fc_red": {
+      "strength": 0.4,
+      "label": "Red card",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "fc_penalty": {
+      "strength": 0.45,
+      "label": "Penalty",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "fc_full_time": {
+      "strength": 0.3,
+      "label": "Full time",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "fc_half_time": {
+      "strength": 0.05,
+      "label": "Half time",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "fc_walkout": {
+      "strength": 0.9,
+      "label": "Walkout",
+      "dedupe": 120,
+      "pre": 10,
+      "post": 6
+    }
+  },
+  "audio_cues": [
+    "crowd roar",
+    "commentator volume spike"
+  ],
+  "vocabulary": {
+    "en": [
+      "goal",
+      "walkout",
+      "what a goal"
+    ],
+    "tr": [
+      "goool",
+      "paket acilimi",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Ultimate Team",
+    "Division Rivals",
+    "Champions",
+    "Squad Battles",
+    "Walkout"
+  ],
+  "hashtags": {
+    "all": [
+      "#eafc27",
+      "#fc27",
+      "#fifa",
+      "#ultimateteam"
+    ],
+    "tr": [
+      "#fc27tr",
+      "#fifatr"
+    ],
+    "es": [
+      "#fc27español"
+    ],
+    "pt": [
+      "#fc27br"
+    ]
+  },
+  "title_style": {
+    "en": "The moment: 'Last-minute BICYCLE KICK', 'My best WALKOUT'.",
+    "tr": "An: 'Son dakika RÖVEŞATA', 'En iyi WALKOUT'um'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "verify"
+}

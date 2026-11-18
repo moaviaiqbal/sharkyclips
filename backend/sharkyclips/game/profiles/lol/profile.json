@@ -1,0 +1,68 @@
+{
+  "id": "lol",
+  "name": "League of Legends",
+  "status": "verified",
+  "engine": "builtin",
+  "kind": "moba",
+  "aliases": [
+    "league of legends",
+    "lol"
+  ],
+  "hints": [],
+  "regions": {},
+  "ocr": {},
+  "events": {},
+  "audio_cues": [
+    "announcer: double kill ... pentakill",
+    "baron / dragon kill"
+  ],
+  "vocabulary": {
+    "en": [
+      "penta",
+      "outplay",
+      "steal"
+    ],
+    "tr": [
+      "pentaa",
+      "caldim",
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [],
+  "hashtags": {
+    "all": [
+      "#leagueoflegends",
+      "#lol",
+      "#lolclips",
+      "#pentakill"
+    ],
+    "tr": [
+      "#loltr",
+      "#leagueoflegendstr"
+    ],
+    "es": [
+      "#lolespañol"
+    ],
+    "pt": [
+      "#lolbr"
+    ]
+  },
+  "title_style": {
+    "en": "Champion + feat: 'Yasuo PENTAKILL', 'Baron STEAL with Smite'.",
+    "tr": "Şampiyon + olay: 'Yasuo PENTAKILL', 'Smite ile BARON ÇALMA'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "Built-in scanner (scoreboard K/D/A, announcer banners, champion portrait). Tested on real footage.",
+  "tr_hud": "checked on a Turkish client"
+}

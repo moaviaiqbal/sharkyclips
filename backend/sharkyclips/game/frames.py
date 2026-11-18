@@ -20,7 +20,21 @@ import numpy as np
 
 from .. import hardware, procs
 
-FPS = 2.0
+FPS = 2.0  # normal; the Light preset reads 1 frame a second (perf.knobs()["ocr_fps"])
+
+
+LIGHT_OK = {"on": False}  # set by game.scan(): profile games may use the Light rate; LoL / DF stay at 2
+
+
+def fps() -> float:
+    if not LIGHT_OK["on"]:
+        return FPS
+    try:
+        from .. import perf
+
+        return float(perf.knobs()["ocr_fps"])
+    except Exception:  # noqa: BLE001
+        return FPS
 PREFETCH = 12  # decoded frames buffered per segment (~37 MB at 1080p)
 MAX_HEIGHT = 1080  # bigger videos are scaled down to 1080p (HUD presets are made for it)
 
@@ -66,10 +80,10 @@ def _cmd(src: str, start: float, length: float, w: int, h: int, cuda: bool) -> l
     head = ["ffmpeg", "-hide_banner", "-loglevel", "error", "-nostdin", "-skip_frame", "noref"]
     if cuda:
         head += ["-hwaccel", "cuda", "-hwaccel_output_format", "cuda"]
-        vf = f"fps={FPS},scale_cuda={w}:{h},hwdownload,format=nv12"
+        vf = f"fps={fps()},scale_cuda={w}:{h},hwdownload,format=nv12"
     else:
         head += ["-threads", "4"]
-        vf = f"fps={FPS},scale={w}:{h}:flags=fast_bilinear,format=nv12"
+        vf = f"fps={fps()},scale={w}:{h}:flags=fast_bilinear,format=nv12"
     return head + ["-ss", f"{start:.3f}", "-t", f"{length:.3f}", "-i", src, "-an", "-sn", "-vf", vf,
                    "-f", "rawvideo", "-pix_fmt", "nv12", "-"]
 
@@ -77,6 +91,7 @@ def _cmd(src: str, start: float, length: float, w: int, h: int, cuda: bool) -> l
 def read_segment(src: str, start: float, length: float, width: int, height: int,
                  cuda: bool, stop: threading.Event | None = None) -> Iterator[Frame]:
     w, h = out_size(width, height)
+    rate = fps()
     size = w * h * 3 // 2
     proc = subprocess.Popen(_cmd(src, start, length, w, h, cuda), stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE, bufsize=size * 2, **procs.no_window())
@@ -104,7 +119,7 @@ def read_segment(src: str, start: float, length: float, width: int, height: int,
             if buf is None:
                 break
             a = np.frombuffer(buf, np.uint8)
-            yield Frame(start + i / FPS, a[: w * h].reshape(h, w), a[w * h:].reshape(h // 2, w // 2, 2))
+            yield Frame(start + i / rate, a[: w * h].reshape(h, w), a[w * h:].reshape(h // 2, w // 2, 2))
             i += 1
     finally:
         done.set()

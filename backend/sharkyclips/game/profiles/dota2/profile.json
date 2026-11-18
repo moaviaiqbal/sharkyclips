@@ -1,0 +1,194 @@
+{
+  "id": "dota2",
+  "name": "Dota 2",
+  "status": "beta",
+  "engine": "banners",
+  "kind": "moba",
+  "aliases": [
+    "dota 2",
+    "dota2"
+  ],
+  "hints": [
+    "roshan",
+    "aegis",
+    "rampage",
+    "radiant",
+    "dire",
+    "courier",
+    "buyback",
+    "pudge",
+    "invoker"
+  ],
+  "regions": {
+    "banner": {
+      "box": [
+        460,
+        120,
+        1000,
+        160
+      ],
+      "label": "Announcer banner"
+    },
+    "center": {
+      "box": [
+        460,
+        330,
+        1000,
+        260
+      ],
+      "label": "Result screen"
+    }
+  },
+  "ocr": {
+    "banner": {
+      "dota_first_blood": [
+        "first blood",
+        "ilk kan"
+      ],
+      "dota_double": [
+        "double kill"
+      ],
+      "dota_triple": [
+        "triple kill"
+      ],
+      "dota_ultra": [
+        "ultra kill"
+      ],
+      "dota_rampage": [
+        "rampage"
+      ],
+      "dota_godlike": [
+        "godlike",
+        "beyond godlike"
+      ],
+      "dota_roshan": [
+        "roshan",
+        "aegis"
+      ]
+    },
+    "center": {
+      "dota_victory": [
+        "radiant victory",
+        "dire victory",
+        "victory",
+        "zafer"
+      ]
+    }
+  },
+  "events": {
+    "dota_first_blood": {
+      "strength": 0.5,
+      "label": "First blood",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_double": {
+      "strength": 0.55,
+      "label": "Double kill",
+      "dedupe": 10,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_triple": {
+      "strength": 0.75,
+      "label": "Triple kill",
+      "dedupe": 10,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_ultra": {
+      "strength": 0.9,
+      "label": "Ultra kill",
+      "dedupe": 15,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_rampage": {
+      "strength": 1.0,
+      "label": "Rampage",
+      "dedupe": 20,
+      "pre": 12,
+      "post": 3
+    },
+    "dota_godlike": {
+      "strength": 0.6,
+      "label": "Godlike",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_roshan": {
+      "strength": 0.5,
+      "label": "Roshan",
+      "dedupe": 60,
+      "pre": 7,
+      "post": 3
+    },
+    "dota_victory": {
+      "strength": 0.6,
+      "label": "Victory",
+      "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    }
+  },
+  "audio_cues": [
+    "announcer lines"
+  ],
+  "vocabulary": {
+    "en": [
+      "rampage",
+      "buyback"
+    ],
+    "tr": [
+      "ohaa",
+      "yesss",
+      "lets go",
+      "kanka",
+      "nasil ya",
+      "yok artik",
+      "allahim",
+      "bitti bitti",
+      "inanmiyorum"
+    ]
+  },
+  "terms": [
+    "Roshan",
+    "Aegis",
+    "Radiant",
+    "Dire",
+    "Pudge",
+    "Invoker",
+    "Juggernaut",
+    "Phantom Assassin",
+    "Anti-Mage"
+  ],
+  "hashtags": {
+    "all": [
+      "#dota2",
+      "#dota",
+      "#dota2clips",
+      "#rampage"
+    ],
+    "tr": [
+      "#dota2tr"
+    ],
+    "ru": [
+      "#дота2"
+    ],
+    "pt": [
+      "#dota2br"
+    ]
+  },
+  "title_style": {
+    "en": "Hero + feat: 'Invoker RAMPAGE'.",
+    "tr": "Kahraman + olay: 'Invoker RAMPAGE'."
+  },
+  "clip": {
+    "pre": 7,
+    "post": 3
+  },
+  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
+  "tr_hud": "mostly English"
+}
