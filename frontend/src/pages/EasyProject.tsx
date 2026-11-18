@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ApiError,
+  api,
   easyApi,
   urls,
   type EasyClip,
@@ -11,6 +12,7 @@ import {
 } from "../api";
 import { BleepBadge, BleepCheckedButton } from "../components/BleepReport";
 import { EasyProgress, ModeChip } from "../components/Easy";
+import { GameChip } from "../components/GameChip";
 import { CaptionFixer, CutRow, ReasonChips, SmartBanner, TasteButtons } from "../components/EasyCut";
 import { ConnectionPill, ShortsOverlay, usePhonePreview } from "../components/EasyAuto";
 import { CoverStudio } from "../components/CoverStudio";
@@ -278,6 +280,7 @@ export default function EasyProject({ id }: { id: string }) {
           </h1>
           <div className="ez-head-meta">
             <ModeChip value={view.mode} onChange={changeMode} auto={view.mode_auto} disabled={working} />
+            {view.mode === "gaming" && <GameChip pid={id} disabled={working} />}
             {view.duration > 0 && <span className="muted">{fmtTime(view.duration)}</span>}
             <ConnectionPill />
           </div>
@@ -291,6 +294,7 @@ export default function EasyProject({ id }: { id: string }) {
       </div>
 
       {working && <EasyProgress steps={view.steps} eta={view.eta_seconds} compact={view.clips.length > 0} />}
+      {working && view.pc?.slow && <SlowPcNote light={view.pc.light} />}
 
       {view.state === "error" && view.error && (
         <div className="notice notice-danger ez-error" role="alert">
@@ -551,7 +555,7 @@ function ClipCard({
           </button>
         </div>
         <div className="ez-card-foot">
-          <button className="link-btn" onClick={onEdit} disabled={up.status === "published" || uploading}>
+          <button className="link-btn" data-testid="ez-edit" onClick={onEdit} disabled={up.status === "published" || uploading}>
             <Icon name="wand" size={14} /> {t("easy.edit")}
           </button>
           <TasteButtons pid={pid} c={c} need={tasteNeed} onView={onView} onDiscard={onDiscard} />
@@ -628,6 +632,8 @@ function EditSheet({
   const [saving, setSaving] = useState(false);
   const [srcOk, setSrcOk] = useState(true);
   const vid = useRef<HTMLVideoElement>(null);
+  // a fixed src: changing it on every trim move reloaded the video and made the sheet jump (#5)
+  const [vidSrc] = useState(() => `${urls.source(pid)}#t=${clip.start.toFixed(1)}`);
   const lo = clip.bounds.start;
   const hi = clip.bounds.end;
   const len = end - start;
@@ -692,7 +698,7 @@ function EditSheet({
         </div>
         <label className="field" style={{ marginTop: 10 }}>
           <span className="field-label">{t("easy.edit_own_title")}</span>
-          <input className="input" dir="auto" value={title} maxLength={100} onChange={(e) => setTitle(e.target.value)} />
+          <input className="input" data-testid="ez-title-input" dir="auto" value={title} maxLength={100} onChange={(e) => setTitle(e.target.value)} />
         </label>
       </fieldset>
 
@@ -702,7 +708,7 @@ function EditSheet({
           <video
             ref={vid}
             className="ez-trim-video"
-            src={`${urls.source(pid)}#t=${start.toFixed(1)}`}
+            src={vidSrc}
             preload="metadata"
             muted
             playsInline
@@ -814,3 +820,34 @@ function EditSheet({
     </Modal>
   );
 }
+
+/** 1.2.53: a friendly note on slow PCs, with a one-click fix (Light mode). */
+function SlowPcNote({ light }: { light: boolean }) {
+  const { t } = useI18n();
+  const [on, setOn] = useState(light);
+  const [busy, setBusy] = useState(false);
+  return (
+    <div className={`notice perf-note${on ? "" : " notice-warn"}`} role="status" style={{ marginTop: 12 }}>
+      <span>
+        {t("perf.slow_pc")} {on && t("perf.slow_pc_light")}
+      </span>
+      {!on && (
+        <button
+          className="btn btn-sm"
+          disabled={busy}
+          onClick={() => {
+            setBusy(true);
+            api
+              .saveSettings({ performance_preset: "light" })
+              .then(() => setOn(true))
+              .catch(() => {})
+              .finally(() => setBusy(false));
+          }}
+        >
+          {busy && <span className="spinner" />} {t("perf.use_light")}
+        </button>
+      )}
+    </div>
+  );
+}
+

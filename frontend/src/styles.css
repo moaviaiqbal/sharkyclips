@@ -853,7 +853,10 @@ h3.section-title {
 .modal {
   width: min(560px, 100%);
   max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow: auto;
+  overscroll-behavior: contain;
+  overflow-anchor: none;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
@@ -4735,3 +4738,30 @@ a.edit-note:hover { text-decoration: underline; }
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
+
+/* 1.2.53 language switcher (top bar + Easy home): flag + language name */
+.flag { display: inline-block; flex: none; border-radius: 2px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18); vertical-align: middle; }
+.lang-switch { position: relative; display: inline-flex; }
+.lang-btn { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+.lang-caret { font-size: 10px; opacity: 0.7; }
+.lang-menu {
+  position: absolute; top: calc(100% + 6px); inset-inline-end: 0; z-index: 70; margin: 0; padding: 6px; list-style: none;
+  min-width: 220px; max-height: min(70vh, 460px); overflow: auto; background: var(--surface);
+  border: 1px solid var(--border); border-radius: var(--r-lg, 12px); box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+.lang-menu button {
+  display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border: 0; border-radius: 8px;
+  background: transparent; color: var(--text); font: inherit; text-align: start; cursor: pointer;
+}
+.lang-menu button:hover, .lang-menu button:focus-visible { background: var(--hover, rgba(127, 127, 127, 0.14)); outline: none; }
+.lang-menu button[aria-current="true"] { font-weight: 600; }
+.lang-check { margin-inline-start: auto; color: var(--gold, currentColor); }
+.lang-switch-big .lang-menu { inset-inline-end: auto; inset-inline-start: 50%; transform: translateX(-50%); }
+[dir="rtl"] .lang-switch-big .lang-menu { transform: translateX(50%); }
+.ez-lang { display: flex; justify-content: center; margin-top: 12px; }
+@media (max-width: 560px) { .lang-menu { min-width: 200px; } }
+.perf-note { align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+/* 1.2.53 game picker */
+.game-chip { display: inline-flex; align-items: center; gap: 6px; }
+.chip-beta { background: var(--warn-soft); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }

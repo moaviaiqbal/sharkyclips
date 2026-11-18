@@ -806,7 +806,8 @@ export interface ProjectDetail extends Omit<ProjectSummary, "clips"> {
   output_language: string;
 }
 
-export type GameId = "delta_force" | "lol";
+// 1.2.53: any game profile id (game/profiles/<id>); these two have their own HUD scanners
+export type GameId = "delta_force" | "lol" | (string & {});
 export type GameChoice = "auto" | GameId | "other";
 
 export interface GameSummary {
@@ -817,6 +818,15 @@ export interface GameSummary {
   name: string | null;
   scanned?: boolean;
   champion?: string | null;
+}
+
+export interface GameProfileSummary {
+  id: string;
+  name: string;
+  status: "verified" | "beta" | "preview";
+  beta: boolean;
+  kind: string;
+  notes: string;
 }
 
 export interface GameEvent {
@@ -858,6 +868,8 @@ export interface GameView extends GameSummary {
   };
   events: GameEvent[];
   sounds: { folder?: string; clips?: string[]; ignored?: string[] };
+  /** 1.2.53 game profiles: name + beta badge per id */
+  profiles?: Record<string, GameProfileSummary>;
   event_codes: string[];
   reads?: GameRead[];
 }
@@ -912,6 +924,25 @@ export interface Settings {
   ui_motion: "full" | "reduced" | "off";
   ui_theme?: "dark" | "light";
   youtube_daily_quota: number;
+  /** 1.2.53: es-419 (Latin America) | es-ES (Spain) */
+  spanish_variant?: "es-419" | "es-ES";
+  /** 1.2.53 Settings > Performance */
+  processing_device?: "auto" | "cpu" | "gpu";
+  performance_preset?: "auto" | "light" | "normal";
+  voices_on_light?: boolean;
+  perf?: PerfStatus | null;
+}
+
+export interface PerfStatus {
+  machine: { ram_gb: number; threads: number; cores: number; nvidia_vram_gb: number | null; nvidia_name: string | null; apple_silicon: boolean; igpu: string[] };
+  weak: boolean;
+  weak_reasons: string[];
+  gpu_usable: boolean;
+  device: "cpu" | "gpu";
+  light: boolean;
+  processing_device: string;
+  performance_preset: string;
+  first_run_light: boolean;
 }
 
 // ------------------------------------------------------------------ export + YouTube (1.2.2)
@@ -2236,6 +2267,8 @@ export interface EasyView {
   state: "working" | "ready" | "error" | "empty";
   steps: EasyStep[];
   eta_seconds: number | null;
+  /** 1.2.53: a slow PC ("clips will take longer") and whether the Light preset is on */
+  pc?: { slow: boolean; light: boolean; reasons: string[] } | null;
   error: { kind: string; message: string; hint: string | null } | null;
   clips: EasyClip[];
   total: number;

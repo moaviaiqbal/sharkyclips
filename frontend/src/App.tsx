@@ -10,9 +10,9 @@ import { YoutubeSignedOutBanner } from "./components/YoutubeConnect";
 import Launch from "./components/Launch";
 import { Onboarding } from "./components/Welcome";
 import { jobLabel } from "./components/ui";
-import { UI_LANGUAGES, useI18n } from "./i18n";
+import { useI18n } from "./i18n";
+import { LanguageSwitcher } from "./components/LanguageSwitcher";
 import { isActive, useJobs } from "./jobs";
-import { chooseLanguage } from "./meta";
 import Library from "./pages/Library";
 import ProjectPage from "./pages/Project";
 import EasyHome from "./pages/EasyHome";
@@ -40,7 +40,7 @@ import { useTheme } from "./theme";
 /** Easy mode: three places, the Pro switch, language and theme. Nothing else. */
 function EasyTopBar() {
   const route = useRoute();
-  const { t, lang, setLang } = useI18n();
+  const { t } = useI18n();
   const [theme, , toggle] = useTheme();
   const { connected } = useJobs();
   return (
@@ -74,19 +74,7 @@ function EasyTopBar() {
           </span>
         )}
         <ProSwitch />
-        <select
-          className="select select-sm"
-          style={{ width: "auto" }}
-          value={lang}
-          aria-label={t("lang.label")}
-          onChange={(e) => chooseLanguage(e.target.value, setLang)}
-        >
-          {UI_LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.name}
-            </option>
-          ))}
-        </select>
+        <LanguageSwitcher />
         <button
           className="btn btn-ghost icon-btn"
           onClick={toggle}
@@ -102,7 +90,7 @@ function EasyTopBar() {
 
 function TopBar() {
   const route = useRoute();
-  const { t, lang, setLang, num } = useI18n();
+  const { t, num } = useI18n();
   const [theme, , toggle] = useTheme();
   const { jobs, connected } = useJobs();
   const active = jobs.filter(isActive);
@@ -164,19 +152,7 @@ function TopBar() {
             {active.length > 1 && <span>+{active.length - 1}</span>}
           </a>
         )}
-        <select
-          className="select select-sm"
-          style={{ width: "auto" }}
-          value={lang}
-          aria-label={t("lang.label")}
-          onChange={(e) => chooseLanguage(e.target.value, setLang)}
-        >
-          {UI_LANGUAGES.map((l) => (
-            <option key={l.code} value={l.code}>
-              {l.name}
-            </option>
-          ))}
-        </select>
+        <LanguageSwitcher />
         <button
           className="btn btn-ghost icon-btn"
           onClick={toggle}

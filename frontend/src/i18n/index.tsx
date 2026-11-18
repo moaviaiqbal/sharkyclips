@@ -6,11 +6,15 @@ type Catalog = Record<string, string>;
 // that load on demand, so the app only downloads the one it shows (~60 KB each).
 const LOADERS: Record<string, () => Promise<{ default: Catalog }>> = {
   tr: () => import("./locales/tr"),
+  es: () => import("./locales/es"),
+  pt: () => import("./locales/pt"),
   ru: () => import("./locales/ru"),
-  hu: () => import("./locales/hu"),
   de: () => import("./locales/de"),
+  fr: () => import("./locales/fr"),
   ar: () => import("./locales/ar"),
   zh: () => import("./locales/zh"),
+  ja: () => import("./locales/ja"),
+  hu: () => import("./locales/hu"),
 };
 const loaded: Record<string, Catalog> = { en };
 const SUPPORTED = new Set(["en", ...Object.keys(LOADERS)]);
@@ -21,17 +25,23 @@ function loadCatalog(code: string): Promise<Catalog> {
     .then((m) => (loaded[code] = m.default))
     .catch(() => en); // offline / old cached page: English keeps the app usable
 }
+/** 1.2.53 Tier 1 languages (UI + content). `flag` = the Flag component's country code. */
 export const UI_LANGUAGES = [
-  { code: "tr", name: "Türkçe" },
-  { code: "en", name: "English" },
-  { code: "ru", name: "Русский" },
-  { code: "hu", name: "Magyar" },
-  { code: "de", name: "Deutsch" },
-  { code: "ar", name: "العربية" },
-  { code: "zh", name: "中文" },
+  { code: "en", name: "English", flag: "gb" },
+  { code: "tr", name: "Türkçe", flag: "tr" },
+  { code: "es", name: "Español", flag: "es" },
+  { code: "pt", name: "Português (Brasil)", flag: "br" },
+  { code: "ru", name: "Русский", flag: "ru" },
+  { code: "de", name: "Deutsch", flag: "de" },
+  { code: "fr", name: "Français", flag: "fr" },
+  { code: "ar", name: "العربية", flag: "sa" },
+  { code: "zh", name: "中文", flag: "cn" },
+  { code: "ja", name: "日本語", flag: "jp" },
+  { code: "hu", name: "Magyar", flag: "hu" },
 ];
 export const RTL = new Set(["ar"]);
-const DEFAULT = "tr";
+// First launch: English, unless a language was already chosen (1.2.53).
+const DEFAULT = "en";
 
 type Vars = Record<string, string | number>;
 export type T = (key: string, vars?: Vars) => string;

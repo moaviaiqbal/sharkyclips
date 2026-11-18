@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { LanguageSwitcher } from "../components/LanguageSwitcher";
 import { ConnectionPill } from "../components/EasyAuto";
 import { ApiError, easyApi, uploadEasyFile, urls, type EasyProjectRow, type Mode } from "../api";
 import { EasyProgress, ModeChip } from "../components/Easy";
@@ -46,7 +47,7 @@ export default function EasyHome() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const undoDelete = useUndoToast();
   const input = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<() => void>();
+  const abortRef = useRef<(() => void) | undefined>(undefined);
 
   const load = useCallback(() => {
     easyApi.projects().then(setRecent).catch(() => setRecent([]));
@@ -141,6 +142,9 @@ export default function EasyHome() {
         <ConnectionPill />
         <h1 className="display">{t("easy.create_title")}</h1>
         <p className="lede">{t("easy.create_lede")}</p>
+        <div className="ez-lang">
+          <LanguageSwitcher big />
+        </div>
       </div>
 
       {working ? (

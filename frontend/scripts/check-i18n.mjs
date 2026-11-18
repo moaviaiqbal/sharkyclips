@@ -2,8 +2,9 @@
 // keys that exist.  Run: node scripts/check-i18n.mjs
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = new URL("../src/", import.meta.url).pathname.replace(/^\/([A-Z]:)/, "$1");
+const root = fileURLToPath(new URL("../src/", import.meta.url));
 const PLURAL = /_(zero|one|two|few|many|other)$/;
 const keysOf = (file) =>
   new Set([...readFileSync(join(root, "i18n/locales", file), "utf8").matchAll(/^\s*"([^"]+)":/gm)].map((m) =>
