@@ -35,7 +35,7 @@ from collections import Counter
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from . import config
+from . import config, languages
 
 VERSION = 1
 SHORT_MAX_S = 60          # Shorts: up to 60 s, or up to 3 min with #shorts
@@ -220,7 +220,9 @@ def save_edits(data: dict) -> dict:
 
 
 def _lang() -> str:
-    return str(config.get("ui_language") or config.get("output_language") or "tr")[:5]
+    # the profile summary is for the user to read: the UI language (then the content language)
+    ui = languages.get(config.get("ui_language"))
+    return ui.code if ui else languages.content_language()
 
 
 _sig = {"v": 0}

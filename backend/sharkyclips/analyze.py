@@ -169,7 +169,7 @@ TRANSLATE_SCHEMA = {
 
 # Characters that prove a text is written in the right script.
 SCRIPT = {"ar": re.compile(r"[؀-ۿ]"), "ru": re.compile(r"[Ѐ-ӿ]"),
-          "zh": re.compile(r"[一-鿿]")}
+          "zh": re.compile(r"[一-鿿]"), "ja": re.compile(r"[぀-ヿ一-鿿]")}
 
 
 # ------------------------------------------------------------------ helpers
@@ -333,7 +333,13 @@ def _cache_key(model: str, out_lang: str, c: dict, mode: str, transcript: dict, 
 
 
 def _context(transcript: dict, start: float, end: float) -> str:
-    lines = sentences(transcript, max(0, start - 25), end + 15)
+    # 1.2.53 (#1b): more of the story around the clip (what led to it, what came after), so the
+    # judge can tell a real payoff from a random shout. At most ~30 context lines.
+    lines = sentences(transcript, max(0, start - 60), end + 25)
+    inside = [x for x in lines if start <= (x["start"] + x["end"]) / 2 <= end]
+    before = [x for x in lines if (x["start"] + x["end"]) / 2 < start][-20:]
+    after = [x for x in lines if (x["start"] + x["end"]) / 2 > end][:10]
+    lines = before + inside + after
     out = []
     for x in lines:
         mid = (x["start"] + x["end"]) / 2
@@ -411,7 +417,7 @@ def _prompt(meta: dict, mode: str, c: dict, transcript: dict, out_lang: str, gam
 TASK: judge this clip and write its publish package.
 {topic}
 2. what_happens (English): what actually happens in the CLIP lines, 1-2 sentences. Not the whole video. Mention names, places and items only as they are said.
-3. Judge it: self_contained (understandable without the rest of the video?), moment_type, funny/exciting/useful 0-10.
+3. Judge it: self_contained (understandable without the rest of the video?), moment_type, funny/exciting/useful 0-10. Read the ctx lines: a good clip has a setup and a payoff. A shout or a loud noise with no reason, a menu, a loading screen or waiting is NOT a highlight: score it low.
 4. hook_score: how strong the first 3 seconds are. retention_score: will people watch to the end. trend_fit_score: how well it fits what does well on Shorts/TikTok for this game/topic right now. Use the full 0-100 range honestly.
 5. start_shift_s / end_shift_s (-10..10): move the start earlier (negative) to include needed setup, or later to cut dead air; move the end so the clip ends right after the payoff/reaction. 0 if the cut is already good.
 6. hashtags: 6-10 hashtags about what happens in THIS clip (moment, event, character, map); mix {lang_name(out_lang)} and universal English tags. Never another game, no channel or person names, no #viral / #fyp.
@@ -446,6 +452,8 @@ DESCRIPTION_QUESTIONS = {
     "en": "\"What would you have done?\", \"Who was right here?\"",
     "de": "\"Was hättest du gemacht?\"", "hu": "\"Te mit csináltál volna?\"", "ru": "\"А ты бы что сделал?\"",
     "ar": "\"ماذا كنت ستفعل؟\"", "zh": "\"换你会怎么做？\"",
+    "es": "\"¿Tú qué habrías hecho?\"", "pt": "\"E você, o que teria feito?\"",
+    "fr": "\"Et toi, t'aurais fait quoi ?\"", "ja": "\"あなたならどうした？\"",
 }
 
 
@@ -684,9 +692,9 @@ def analyze_project(project: Project, out_lang: str | None = None, force: bool =
     if not project.transcript_path.is_file():
         raise SharkyClipsError("No transcript yet.", f"Run: python cli.py transcribe {project.id}")
     hl = read_json(hl_path)
-    if meta_only:
-        out_lang = out_lang or (hl.get("analysis") or {}).get("language")
-    out_lang = languages.require(out_lang or config.get("output_language") or "tr").code
+    # #5c: the content-language setting (or this run's explicit choice) always wins over the
+    # language an older analysis used, also for "titles again" (meta_only)
+    out_lang = languages.content_language(out_lang, project)
     transcript = project.load_transcript()
     meta = project.load_meta()
     mode = hl.get("mode") or meta.get("mode") or "gaming"
@@ -1125,7 +1133,7 @@ def regenerate_titles(project: Project, cid: str) -> dict:
     if c is None or not (c.get("publish") or {}).get("available") or not c.get("llm"):
         raise SharkyClipsError("Analyze this clip with the LLM first.", f"python cli.py analyze {project.id}")
     pub = c["publish"]
-    out_lang = pub["language"]
+    out_lang = languages.content_language(None, project)  # #5c: not the clip's old language
     transcript = project.load_transcript()
     meta = project.load_meta()
     mode = hl.get("mode") or meta.get("mode") or "gaming"
@@ -1199,7 +1207,7 @@ def benchmark(project: Project, on_progress: Callable[[str, int, int], None] | N
     transcript = project.load_transcript()
     meta = project.load_meta()
     mode = hl.get("mode") or meta.get("mode") or "gaming"
-    out_lang = languages.require(config.get("output_language") or "tr").code
+    out_lang = languages.content_language(None, project)
     c = dict(min(hl["candidates"], key=lambda x: x["rank"]))
     orig = (c.get("llm") or {}).get("original") or {"start": c["start"], "end": c["end"]}
     c["start"], c["end"] = orig["start"], orig["end"]

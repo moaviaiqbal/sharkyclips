@@ -50,7 +50,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
-from . import config, secretstore
+from . import config, languages, secretstore
 from .errors import SharkyClipsError
 from .project import read_json, write_json_atomic
 
@@ -817,7 +817,7 @@ def censor_text(text: str, lang: str | None) -> str:
     whatever wrote it (the AI, the user, an old saved text). Links are left alone."""
     from .titles import style
 
-    lang = lang or config.get("output_language") or "tr"
+    lang = lang or languages.content_language()
     out = []
     for part in re.split(r"(https?://\S+)", text or ""):
         out.append(part if part.startswith(("http://", "https://")) else style.censor(part, lang)[0])
@@ -830,7 +830,7 @@ def _has_swear(text: str, lang: str | None) -> bool:
 
 def build_body(title: str, description: str, tags: list[str], privacy: str, publish_at: str | None,
                made_for_kids: bool, category: str = "20", language: str | None = None,
-               synthetic: bool = False) -> dict:
+               synthetic: bool = False, audio_language: str | None = None) -> dict:
     """`synthetic`: tell YouTube the video has altered / synthetic content (status.containsSyntheticMedia)."""
     if privacy not in PRIVACY:
         raise SharkyClipsError(f"Unknown privacy '{privacy}'.")
@@ -856,9 +856,15 @@ def build_body(title: str, description: str, tags: list[str], privacy: str, publ
         status["publishAt"] = when.astimezone(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
     snippet = {"title": title, "description": clean_text(description, 4900), "tags": clean_tags(tags),
                "categoryId": category}
-    if language:
-        snippet["defaultLanguage"] = language
-        snippet["defaultAudioLanguage"] = language
+    # #1c / #5c: the metadata language is the content language (never a silent default);
+    # the audio language is what is spoken in the video (the transcript), when known.
+    language = language or languages.content_language()
+    loc = languages.publish_locale(language)
+    if loc:
+        snippet["defaultLanguage"] = loc
+    audio = languages.publish_locale(audio_language) if audio_language else None
+    if audio or loc:
+        snippet["defaultAudioLanguage"] = audio or loc
     return {"snippet": snippet, "status": status}
 
 

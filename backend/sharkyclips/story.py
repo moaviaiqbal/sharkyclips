@@ -28,7 +28,6 @@ from typing import Callable
 
 import numpy as np
 
-from . import config
 from .errors import SharkyClipsError, require_tool
 from .project import Project, read_json, replace_retry, write_json_atomic
 
@@ -425,7 +424,7 @@ def propose(project: Project, model=None, lang: str | None = None,
     hl = state.load_highlights(project)
     if not hl:
         raise SharkyClipsError("Find the highlights first; stories are built from them.")
-    lang = languages.require(lang or (hl.get("analysis") or {}).get("language") or config.get("output_language") or "en").code
+    lang = languages.content_language(lang, project)
     cands = {c["id"]: c for c in hl.get("candidates", [])}
     good = good_moments(list(cands.values()))
     old = load(project)

@@ -348,9 +348,10 @@ def api_brand_channel_put(body: dict) -> dict:
 
 
 def _channel_view() -> dict:
-    from .. import config
 
-    lang = config.get("output_language") or "tr"
+    from .. import languages
+
+    lang = languages.content_language()
     return {**brand.channel_text(), "default_headings": brand.SOCIAL_HEADINGS,
             "preview": brand.socials_block(lang), "preview_lang": lang}
 

@@ -501,8 +501,7 @@ def render_montage(project: Project, clip_ids: list[str], *, lang: str | None = 
     items = [{"cand": by_id[c]} for c in clip_ids if c in by_id][:MAX_CLIPS]
     if len(items) < 2:
         raise SharkyClipsError("Pick at least two clips for a best-of video.")
-    lang = languages.require(lang or (hl.get("analysis") or {}).get("language")
-                             or config.get("output_language") or "tr").code
+    lang = languages.content_language(lang, project)
     meta = project.load_meta()
     has_audio = bool(meta.get("audio_codec")) or meta.get("audio_codec") is None
 

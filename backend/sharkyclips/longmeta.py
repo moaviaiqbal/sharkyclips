@@ -17,7 +17,7 @@ import json
 from datetime import datetime, timezone
 from typing import Callable
 
-from . import config, languages
+from . import languages
 from .errors import SharkyClipsError
 from .project import Project, read_json, write_json_atomic
 from .textutil import sentences
@@ -78,7 +78,7 @@ def write(project: Project, items: list[dict] | None = None, *, kind: str = "ful
         raise SharkyClipsError("No highlights yet for this project.")
     hl = read_json(hl_path)
     meta = project.load_meta()
-    lang = languages.require(lang or (hl.get("analysis") or {}).get("language") or config.get("output_language") or "tr").code
+    lang = languages.content_language(lang, project)
     if items is None:
         items = sorted([c for c in hl["candidates"] if (c.get("publish") or {}).get("available")],
                        key=lambda c: c["rank"])[:MAX_ITEMS]

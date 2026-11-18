@@ -31,7 +31,7 @@ from datetime import date, datetime, time as dtime, timedelta, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from . import config
+from . import config, languages
 from .errors import SharkyClipsError
 from .project import Project, read_json, write_json_atomic
 
@@ -288,7 +288,7 @@ def prepare(project: Project, on_stage=None, force: bool = False) -> dict:
         return cur
     patch(project, status="preparing", error=None)
     try:
-        lang = (config.get("output_language") or "tr")
+        lang = languages.content_language(None, project)
         meta = longmeta.write(project, kind="full", lang=lang, force=force, on_stage=on_stage)
         lang = meta.get("language") or lang
         chap = chapters(project, intro="Giriş" if lang == "tr" else "Intro")
