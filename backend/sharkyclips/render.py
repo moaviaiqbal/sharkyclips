@@ -167,7 +167,13 @@ def pick_encoder() -> tuple[Encoder, list[str]]:
     for name in order:
         ok, err = test_encoder(name)
         if ok:
-            return ENCODERS[name], notes
+            enc = ENCODERS[name]
+            if name == "libx264":
+                from . import perf
+
+                if perf.light():  # 1.2.53: a slow CPU encodes ~1.6x faster, the file is a bit bigger
+                    enc = Encoder(enc.name, enc.label, False, ("-preset", "superfast", "-crf", "23"))
+            return enc, notes
         notes.append(f"{ENCODERS[name].label} not usable: {err or 'unknown error'}")
     raise SharkyClipsError("No working H.264 encoder found in ffmpeg (" + "; ".join(notes) + ").",
                            "Install a full ffmpeg build (Windows: winget install --id Gyan.FFmpeg -e, "

@@ -115,7 +115,17 @@ def ensure_server(start_timeout: float = 30.0) -> str:
 
 
 def fast_analysis() -> bool:
-    return bool(config.get("fast_analysis"))
+    from . import perf
+
+    return bool(config.get("fast_analysis")) or perf.light()  # 1.2.53: Light = fewer title drafts
+
+
+def request_timeout() -> float:
+    """Seconds one LLM answer may take. On the CPU a long prompt + answer can pass 10 minutes on a
+    4-thread laptop (1.2.53 low-end profile): give it 30 minutes there instead of failing."""
+    from . import perf
+
+    return 600.0 if perf.device() == "gpu" else 1800.0
 
 
 def fast_model() -> str:
@@ -450,7 +460,11 @@ class LLM:
                     "think": False, "keep_alive": BATCH_KEEP_ALIVE,
                     "options": {"temperature": max(0.1, temperature - 0.15 * attempt),
                                 "num_ctx": self.num_ctx, "num_predict": num_predict, **self.placement}}
-            r = _http().post(f"{base_url()}/api/chat", json=body, timeout=600)
+            try:
+                r = _http().post(f"{base_url()}/api/chat", json=body, timeout=request_timeout())
+            except _http().exceptions.Timeout as exc:  # one slow answer skips this clip, not the run
+                raise SharkyClipsError("The AI took too long to answer (this PC is busy or slow).",
+                                       "Turn on Light mode in Settings > Performance.") from exc
             self.calls += 1
             self.seconds += time.perf_counter() - t0
             if not r.ok:
@@ -586,9 +600,32 @@ def session(model: str | None = None, auto: bool | None = None) -> Iterator[LLM]
         num_ctx = min(num_ctx, perf.LIGHT_CTX)
 
     def load() -> LLM:
+        nonlocal name
         llm = LLM(name, num_ctx, auto=auto)
         console.print(f"Loading LLM [bold]{name}[/] ...")
-        llm.warm_up()
+        try:
+            llm.warm_up()
+        except SharkyClipsError as exc:
+            # 1.2.53: never crash on low memory. Ollama refuses a model that doesn't fit the free
+            # RAM: try the small Light model once, else a plain message with the fix.
+            if "memory" not in exc.message.lower():
+                raise
+            if name != perf.LIGHT_LLM:
+                console.print(f"[yellow]Not enough free memory for {name}: trying {perf.LIGHT_LLM}.[/]")
+                try:
+                    ensure_model(perf.LIGHT_LLM)
+                    name = perf.LIGHT_LLM
+                    llm = LLM(name, min(num_ctx, perf.LIGHT_CTX), auto=auto)
+                    llm.warm_up()
+                except SharkyClipsError:
+                    llm = None
+            else:
+                llm = None
+            if llm is None:
+                raise SharkyClipsError(
+                    "There isn't enough free memory for the AI right now.",
+                    "Close games and big browser tabs, or turn on Light mode in Settings > Performance. "
+                    "Your clips are found anyway; only the AI titles wait.") from exc
         share = gpu_share(name)
         if share is not None and share < 0.8 and (hardware.detect_hardware().best_nvidia
                                                    or hardware.detect_hardware().apple_silicon):
