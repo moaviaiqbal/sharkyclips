@@ -12,7 +12,7 @@ const SPLIT_TOP = OUT_SPLIT * S;
 const GOLD = "#D9B56A";
 
 interface Props {
-  video: RefObject<HTMLVideoElement>;
+  video: RefObject<HTMLVideoElement | null>;
   clip: Candidate | null;
   /** the clip's (edited) start / end */
   range?: { start: number; end: number } | null;

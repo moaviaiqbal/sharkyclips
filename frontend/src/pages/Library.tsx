@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, type JSX } from "react";
 import { api, ApiError, uploadFile, urls, type Job, type Mode, type ProjectSummary } from "../api";
 import { Icon } from "../components/Icons";
 import { DeleteDialog, useUndoToast } from "../components/Trash";
@@ -130,7 +130,7 @@ export function NewProjectModal({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState<ApiError | null>(null);
   const [drag, setDrag] = useState(false);
   const fileInput = useRef<HTMLInputElement>(null);
-  const abortRef = useRef<() => void>();
+  const abortRef = useRef<(() => void) | undefined>(undefined);
 
   useEffect(() => {
     api

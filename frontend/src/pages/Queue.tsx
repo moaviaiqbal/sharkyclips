@@ -377,7 +377,7 @@ export default function Queue() {
   const [projects, setProjects] = useState<Map<string, string>>(new Map());
   const [drag, setDrag] = useState<string | null>(null);
   const [over, setOver] = useState<string | null>(null);
-  const timer = useRef<number>();
+  const timer = useRef<number | undefined>(undefined);
   const lastFetch = useRef(0);
 
   const refresh = () => api.queue().then(setView).catch(() => {});
