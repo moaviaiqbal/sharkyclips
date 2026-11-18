@@ -9,3 +9,5 @@
 68674311919e09853512a61d778d296047d8848a:frontend/src/i18n/locales/en.ts:generic-api-key:1409
 68674311919e09853512a61d778d296047d8848a:frontend/src/i18n/locales/en.ts:generic-api-key:1415
 68674311919e09853512a61d778d296047d8848a:frontend/src/i18n/locales/en.ts:generic-api-key:1418
+# S-02: the public jwt.io sample token used by the redaction test (not a secret).
+0ef7643bd08a2065e2bf8cdf68d71c4c13c0334f:backend/tests/test_security.py:jwt:299
