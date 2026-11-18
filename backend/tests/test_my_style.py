@@ -335,6 +335,7 @@ def test_analysis_writes_shorts_metadata_in_the_creator_style(monkeypatch):
 
 
 def test_long_video_metadata(monkeypatch):
+    config.update(output_language="tr")  # 1.2.53: the content language decides, not the old analysis
     p = _project("ms-long", DF_TALK)
     cand = {"id": "c01", "rank": 1, "start": 10.0, "end": 24.0, "duration": 14.0, "hype_score": 80, "hype_raw": 0.4,
             "signal_scores": {}, "text": DF_TALK, "reasons": [],

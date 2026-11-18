@@ -107,7 +107,8 @@ def test_detect_game():
     assert detect("TOPLAM 55 KILL (DELTA FORCE)", None)[0] == "delta_force"
     transcript = {"segments": [{"text": "Darius geldi, Alistar nerede? Teemo ile baronu alalım, Jinx arkada."}]}
     assert detect("RAKİP DARİUSA OYUNU ZEHİR ETTİM", transcript)[0] == "lol"
-    assert detect("Minecraft survival", None)[0] is None
+    assert detect("Minecraft survival", None)[0] == "minecraft"  # 1.2.53: Minecraft has a game profile
+    assert detect("Elden Ring boss", None)[0] is None
 
 
 def test_sound_file_names():

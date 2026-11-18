@@ -218,13 +218,13 @@ def _blocked(gid: str, _sig: str) -> tuple[tuple[str, str], ...]:
     own = {norm(n) for n in names(bank)} | {norm(t) for t, _k in all_terms(bank)}
     own |= {n.replace(" ", "") for n in own}
     out: dict[str, str] = {}
+    for n in OTHER_FRANCHISES:  # the proper spelling ("Warzone") wins over a profile's lowercase alias
+        out.setdefault(norm(n), n)
     for other in ids():
         if other in (gid, GENERIC):
             continue
         for n in names(get(other)):
             out.setdefault(norm(n), n)
-    for n in OTHER_FRANCHISES:
-        out.setdefault(norm(n), n)
     return tuple((k, v) for k, v in out.items() if k and k not in own and k.replace(" ", "") not in own)
 
 

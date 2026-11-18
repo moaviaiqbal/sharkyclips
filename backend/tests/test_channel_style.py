@@ -81,7 +81,7 @@ def yt(monkeypatch):
     saved = {f.name: f.read_bytes() for f in cs.folder().glob("*.json")} if cs.folder().is_dir() else {}
     _clear_channel_files()
     old = {k: config.load().get(k) for k in ("pubqueue", "performance_mode", "full_upload_time", "output_language")}
-    config.update(pubqueue={"brand_hashtag": "#democreator", "timezone": "Europe/Budapest"},
+    config.update(ui_language="tr", pubqueue={"brand_hashtag": "#democreator", "timezone": "Europe/Budapest"},
                   performance_mode="turbo", output_language="tr")
     youtube.set_client({"installed": {"client_id": "1.apps.googleusercontent.com", "client_secret": "s"}})
     url = youtube.auth_url("http://127.0.0.1:8123/")
