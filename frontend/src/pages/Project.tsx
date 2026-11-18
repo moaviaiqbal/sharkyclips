@@ -346,7 +346,7 @@ export default function ProjectPage({ id }: { id: string }) {
   const video = useRef<HTMLVideoElement>(null);
   const playerBox = useRef<HTMLDivElement>(null);
   const [previewH, setPreviewH] = useState<number | null>(null);
-  const saveTimer = useRef<number>();
+  const saveTimer = useRef<number | undefined>(undefined);
   const [exportIds, setExportIds] = useState<string[] | null>(null);
   const [uploadFor, setUploadFor] = useState<{ cid: string; source?: string } | null>(null);
   const [publishFor, setPublishFor] = useState<string | null>(null);
@@ -1542,7 +1542,7 @@ export default function ProjectPage({ id }: { id: string }) {
                         </a>
                       </div>
                     ) : (
-                      <button className="btn btn-primary btn-lg btn-block" disabled={!accepted.size} onClick={render}>
+                      <button className="btn btn-primary btn-lg btn-block" data-testid="render-btn" disabled={!accepted.size} onClick={render}>
                         <Icon name="film" />
                         {accepted.size ? t("render.button", { n: accepted.size }) : t("render.none")}
                       </button>
@@ -1645,7 +1645,7 @@ export default function ProjectPage({ id }: { id: string }) {
                             <Icon name="calendar" />
                             {t("pub.publish_btn")}
                           </button>
-                          <button className="btn btn-sm btn-ghost" onClick={() => setUploadFor({ cid: c.id })}>
+                          <button className="btn btn-sm btn-ghost" data-testid="publish-btn" onClick={() => setUploadFor({ cid: c.id })}>
                             <Icon name="upload" />
                             YouTube
                           </button>

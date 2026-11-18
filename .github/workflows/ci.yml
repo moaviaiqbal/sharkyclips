@@ -122,7 +122,7 @@ jobs:
       - run: npm ci
       - name: Type check
         run: npm run typecheck
-      - name: Translations complete (7 languages)
+      - name: Translations complete (11 languages)
         run: node scripts/check-i18n.mjs
       - name: Build
         run: npm run build
@@ -160,7 +160,7 @@ jobs:
         working-directory: frontend
         run: |
           npm ci
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps chromium firefox webkit
       - name: Start SharkyClips on a synthetic project
         run: |
           PID=$(python frontend/scripts/layout-fixture.py "$RUNNER_TEMP/layout")
@@ -176,6 +176,9 @@ jobs:
       - name: Preview matches the render plan
         working-directory: frontend
         run: node scripts/preview-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID" "$RUNNER_TEMP/layout-shots"
+      - name: Browsers (Chromium, Firefox, WebKit) - title editing, scrolling, languages, render, publish
+        working-directory: frontend
+        run: BROWSERS=chromium,firefox,webkit node scripts/browser-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID"
       - name: Accessibility (axe) + delete / undo flow
         working-directory: frontend
         run: node scripts/axe-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID"
