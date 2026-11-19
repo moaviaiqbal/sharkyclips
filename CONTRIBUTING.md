@@ -78,3 +78,7 @@ node scripts/check-i18n.mjs             # every key in all 7 languages
 ## License
 
 By contributing you agree that your contribution is licensed under the [MIT License](LICENSE).
+
+## Adding or fixing a game
+
+Game profiles are plain JSON files (one folder per game). See [docs/ADDING_A_GAME.md](docs/ADDING_A_GAME.md).

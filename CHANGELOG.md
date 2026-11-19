@@ -7,6 +7,144 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.53] - 2026-11-18
+### Faster on slow PCs, 11 languages, 15 games
+- **Typing in the clip's edit window works again.** Backspace and Delete in the title field
+  did nothing, and the window jumped back to the top while you scrolled. Both are fixed, in
+  every browser (Chrome, Edge, Opera GX, Firefox). Keyboard shortcuts never run while you type.
+- **One "Content language".** Settings > Content language sets the language of AI titles,
+  descriptions, hashtags, captions and the YouTube language fields. It is separate from the app
+  language. Changing it really changes the next titles (they no longer stay Turkish).
+- **Much faster on slow PCs.** New in Settings > Performance: **Processing device** (Auto / CPU
+  only / GPU) and a **Light** speed preset. Auto never uses a weak built-in graphics chip for the
+  AI. On a slow PC (little RAM, few CPU cores) SharkyClips picks Light by itself: smaller AI
+  models, no slow voice separation, fewer screen checks, one job at a time. Before a big job you
+  see about how long it will take on your PC.
+- **11 languages.** New: Español (Latin America and Spain), Português (Brasil), Français and
+  日本語. English is the default for new users. Pick your language with the flag button on the
+  home screen or in the top bar. Swear bleeping knows all 11 languages.
+- **15 games.** SharkyClips now reads the screen of CS2, VALORANT, Warzone / MW4, Fortnite, Apex,
+  PUBG, GTA V / Online / RP, GTA 6, Minecraft, League of Legends, Dota 2, Overwatch, Marvel
+  Rivals, EA Sports FC 27 and ARC Raiders, with game hashtags per language. New games show a
+  **beta** badge until they are checked on real videos. Pick the game with one tap in Easy mode.
+- **Better clip picks.** The AI reads more of the story before and after a moment. A loud noise
+  with no reason counts less, and menus, loading screens and AFK parts are pushed down.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Yavaş bilgisayarlarda daha hızlı, 11 dil, 15 oyun
+- **Klip düzenleme penceresinde yazmak yine çalışıyor.** Başlık kutusunda Backspace ve Delete
+  hiçbir şey yapmıyordu, kaydırırken pencere en üste zıplıyordu. İkisi de düzeldi, her
+  tarayıcıda (Chrome, Edge, Opera GX, Firefox). Yazarken klavye kısayolları artık hiç çalışmaz.
+- **Tek bir "İçerik dili".** Ayarlar > İçerik dili; yapay zekâ başlıklarının, açıklamaların,
+  hashtag'lerin, altyazıların ve YouTube dil alanlarının dilini belirler. Uygulama dilinden
+  ayrıdır. Değiştirince sonraki başlıklar gerçekten değişir (artık Türkçe kalmıyor).
+- **Yavaş bilgisayarlarda çok daha hızlı.** Ayarlar > Performans'ta yeni: **İşlem cihazı**
+  (Otomatik / Sadece CPU / GPU) ve **Hafif** hız ayarı. Otomatik, yapay zekâ için zayıf dahili
+  grafik çipini asla kullanmaz. Yavaş bir bilgisayarda (az RAM, az çekirdek) SharkyClips Hafif'i
+  kendisi seçer: daha küçük yapay zekâ modelleri, yavaş ses ayırma yok, daha az ekran kontrolü,
+  aynı anda tek iş. Büyük bir işten önce bilgisayarında yaklaşık ne kadar süreceğini görürsün.
+- **11 dil.** Yeni: Español (Latin Amerika ve İspanya), Português (Brasil), Français ve 日本語.
+  Yeni kullanıcılar için varsayılan dil İngilizce. Dilini ana ekrandaki ya da üst çubuktaki
+  bayraklı düğmeden seç. Küfür bipleme 11 dilin hepsini biliyor.
+- **15 oyun.** SharkyClips artık CS2, VALORANT, Warzone / MW4, Fortnite, Apex, PUBG, GTA V /
+  Online / RP, GTA 6, Minecraft, League of Legends, Dota 2, Overwatch, Marvel Rivals, EA Sports
+  FC 27 ve ARC Raiders ekranını okuyor; her dil için oyun hashtag'leriyle. Yeni oyunlar gerçek
+  videolarda denenene kadar **beta** rozetiyle görünür. Kolay modda oyunu tek dokunuşla seç.
+- **Daha iyi klip seçimi.** Yapay zekâ bir anın öncesini ve sonrasını daha çok okuyor. Sebepsiz
+  bir gürültü daha az sayılıyor; menüler, yükleme ekranları ve AFK kısımları geri itiliyor.
+
+<details><summary>Español</summary>
+
+<!-- lang:es -->
+- **Ya puedes escribir en la ventana de edición del clip:** Retroceso y Suprimir funcionan y la ventana ya no salta arriba al desplazarte, en todos los navegadores.
+- **Un solo "Idioma del contenido"** para títulos, descripciones, hashtags, subtítulos y los campos de idioma de YouTube (estilo Latinoamérica o España).
+- **Mucho más rápido en PCs lentos:** Ajustes > Rendimiento > Dispositivo (Auto / Solo CPU / GPU) y el modo **Ligero**. Ves cuánto tardará antes de empezar.
+- **11 idiomas** (nuevos: español, portugués de Brasil, francés y japonés) y **15 juegos**, los nuevos con la etiqueta **beta**.
+
+</details>
+
+<details><summary>Português (Brasil)</summary>
+
+<!-- lang:pt -->
+- **Dá para digitar de novo na janela de edição do clipe:** Backspace e Delete funcionam e a janela não pula mais para o topo, em todos os navegadores.
+- **Um só "Idioma do conteúdo"** para títulos, descrições, hashtags, legendas e os campos de idioma do YouTube.
+- **Muito mais rápido em PCs fracos:** Configurações > Desempenho > Dispositivo (Auto / Só CPU / GPU) e o modo **Leve**. Você vê quanto tempo vai levar antes de começar.
+- **11 idiomas** (novos: espanhol, português do Brasil, francês e japonês) e **15 jogos**, os novos com o selo **beta**.
+
+</details>
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Tippen im Bearbeitungsfenster geht wieder:** Rücktaste und Entf funktionieren, und das Fenster springt beim Scrollen nicht mehr nach oben – in allen Browsern.
+- **Eine „Inhaltssprache“** für KI-Titel, Beschreibungen, Hashtags, Untertitel und die YouTube-Sprachfelder, getrennt von der App-Sprache.
+- **Viel schneller auf langsamen PCs:** Einstellungen > Leistung > Rechengerät (Auto / Nur CPU / GPU) und die Voreinstellung **Leicht**. Vor großen Aufgaben siehst du die ungefähre Dauer.
+- **11 Sprachen** (neu: Spanisch, Portugiesisch (Brasilien), Französisch, Japanisch) und **15 Spiele**, neue mit **Beta**-Hinweis.
+
+</details>
+
+<details><summary>Français</summary>
+
+<!-- lang:fr -->
+- **On peut de nouveau écrire dans la fenêtre d'édition du clip :** Retour arrière et Suppr marchent, et la fenêtre ne remonte plus quand tu fais défiler, dans tous les navigateurs.
+- **Une seule « Langue du contenu »** pour les titres, descriptions, hashtags, sous-titres et les champs de langue YouTube.
+- **Bien plus rapide sur les PC lents :** Paramètres > Performances > Appareil (Auto / CPU seul / GPU) et le mode **Léger**. Tu vois la durée prévue avant de commencer.
+- **11 langues** (nouvelles : espagnol, portugais du Brésil, français, japonais) et **15 jeux**, les nouveaux avec un badge **bêta**.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Újra lehet gépelni a klip szerkesztőablakában:** a Backspace és a Delete működik, és görgetéskor az ablak már nem ugrik a tetejére, minden böngészőben.
+- **Egyetlen „Tartalom nyelve”** az MI-címekhez, leírásokhoz, hashtagekhez, feliratokhoz és a YouTube nyelvi mezőihez.
+- **Sokkal gyorsabb lassú gépeken:** Beállítások > Teljesítmény > Feldolgozó eszköz (Auto / Csak CPU / GPU) és a **Könnyű** mód. Nagy feladat előtt látod, kb. mennyi ideig tart.
+- **11 nyelv** (új: spanyol, brazil portugál, francia, japán) és **15 játék**, az újak **béta** jelzéssel.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **В окне редактирования клипа снова можно печатать:** Backspace и Delete работают, а окно больше не прыгает вверх при прокрутке — во всех браузерах.
+- **Один «Язык контента»** для заголовков ИИ, описаний, хештегов, субтитров и языковых полей YouTube, отдельно от языка приложения.
+- **Намного быстрее на слабых ПК:** Настройки > Производительность > Устройство (Авто / Только CPU / GPU) и режим **Лёгкий**. Перед большой задачей видно, сколько она займёт.
+- **11 языков** (новые: испанский, португальский (Бразилия), французский, японский) и **15 игр**, новые с отметкой **бета**.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **عادت الكتابة في نافذة تعديل المقطع:** يعمل مفتاحا Backspace وDelete، ولم تعد النافذة تقفز إلى الأعلى أثناء التمرير، في كل المتصفحات.
+- **«لغة المحتوى» واحدة** للعناوين والأوصاف والوسوم والترجمة وحقول اللغة في YouTube، منفصلة عن لغة التطبيق.
+- **أسرع بكثير على الأجهزة البطيئة:** الإعدادات > الأداء > جهاز المعالجة (تلقائي / المعالج فقط / GPU) ووضع **خفيف**. ترى المدة التقريبية قبل البدء.
+- **11 لغة** (الجديدة: الإسبانية والبرتغالية البرازيلية والفرنسية واليابانية) و**15 لعبة**، الجديدة منها بعلامة **تجريبي**.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **剪辑编辑窗口又能正常输入了：** 退格键和删除键可用，滚动时窗口不再跳回顶部，所有浏览器都一样。
+- **统一的“内容语言”**，用于 AI 标题、简介、话题标签、字幕和 YouTube 语言字段，与界面语言分开。
+- **慢电脑上快很多：** 设置 > 性能 > 处理设备（自动 / 仅 CPU / GPU）和**轻量**模式。大任务开始前会显示大约要多久。
+- **11 种语言**（新增西班牙语、巴西葡萄牙语、法语、日语）和 **15 款游戏**，新游戏带 **beta** 标记。
+
+</details>
+
+<details><summary>日本語</summary>
+
+<!-- lang:ja -->
+- **クリップ編集画面でまた入力できます:** BackspaceとDeleteが効き、スクロールしても上に戻りません。どのブラウザでも同じです。
+- **「コンテンツの言語」を一つに:** AIのタイトル、説明、ハッシュタグ、字幕、YouTubeの言語欄に使われます。
+- **遅いPCでもずっと速く:** 設定 > パフォーマンス > 処理デバイス(自動 / CPUのみ / GPU)と**ライト**モード。大きな作業の前に目安の時間が出ます。
+- **11言語**(新: スペイン語、ブラジルポルトガル語、フランス語、日本語)と**15のゲーム**。新しいゲームには**ベータ**の印が付きます。
+
+</details>
+
 ## [1.2.52] - 2026-11-18
 ### Security update
 - **Other websites can't use SharkyClips any more.** Until now, a web page open in your browser

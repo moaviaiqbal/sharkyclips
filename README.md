@@ -19,11 +19,11 @@ No account, no cloud, no credits, no watermark.<br>
 
 <p align="center">
   <a href="https://github.com/utkualsir/sharkyclips/actions/workflows/ci.yml"><img src="https://github.com/utkualsir/sharkyclips/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="https://github.com/utkualsir/sharkyclips/releases/latest"><img src="https://img.shields.io/badge/version-1.2.52-1F6FE5" alt="Version 1.2.52"></a>
+  <a href="https://github.com/utkualsir/sharkyclips/releases/latest"><img src="https://img.shields.io/badge/version-1.2.53-1F6FE5" alt="Version 1.2.53"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-0E1A33" alt="MIT license"></a>
   <img src="https://img.shields.io/badge/Windows%20%7C%20macOS-0E1A33?logo=windows&logoColor=white" alt="Windows and macOS">
   <img src="https://img.shields.io/badge/runs-100%25%20locally-2ea043" alt="Runs 100% locally">
-  <img src="https://img.shields.io/badge/UI-7%20languages-D9B56A" alt="7 languages">
+  <img src="https://img.shields.io/badge/UI-11%20languages-D9B56A" alt="11 languages">
 </p>
 
 <p align="center">
@@ -47,11 +47,11 @@ No account, no cloud, no credits, no watermark.<br>
   <tr>
     <td width="33%" valign="top"><b>🔒 Free &amp; local</b><br>Whisper, the language model, highlight detection and rendering run on your GPU or CPU. MIT-licensed, no subscription, no telemetry. Nothing leaves your PC unless you press Publish.</td>
     <td width="33%" valign="top"><b>🎮 Game-aware clips</b><br>Loudness, laughter, reaction words, chat explosions and, for Delta Force and League of Legends, the HUD itself: kills, multikills, objectives. A pentakill is never cut in half.</td>
-    <td width="33%" valign="top"><b>🤐 Swears bleeped, checked</b><br>Swears in 7 languages are bleeped or muted, and every rendered clip is listened to again. A clip with an audible swear is held back instead of posted.</td>
+    <td width="33%" valign="top"><b>🤐 Swears bleeped, checked</b><br>Swears in 11 languages are bleeped or muted, and every rendered clip is listened to again. A clip with an audible swear is held back instead of posted.</td>
   </tr>
   <tr>
     <td valign="top"><b>📤 One Publish, three platforms</b><br>YouTube Shorts, TikTok and Instagram Reels from one button: per-platform captions and limits, planned times, retries, views coming back. TikTok's required post screen is built in.</td>
-    <td valign="top"><b>🌍 7 languages</b><br>Interface, speech recognition, titles and subtitles in English, Türkçe, Deutsch, Magyar, Русский, العربية (right-to-left) and 中文. Titles can be in another language than the one spoken.</td>
+    <td valign="top"><b>🌍 11 languages</b><br>Interface, speech recognition, titles and subtitles in English, Türkçe, Español, Português (Brasil), Русский, Deutsch, Français, العربية (right-to-left), 中文, 日本語 and Magyar. Titles can be in another language than the one spoken.</td>
     <td valign="top"><b>🦈 Stays out of your way</b><br>Silent mode pauses while you play or watch fullscreen and gives the game its VRAM back. Easy mode does everything by itself; Pro mode gives you every knob.</td>
   </tr>
 </table>
@@ -161,7 +161,7 @@ it stopped. Details: **[docs/how-it-works.md](docs/how-it-works.md)**.
 - **Ready-to-post 9:16 clips.** Facecam on top and gameplay below (detected automatically and
   adjustable), burned-in word-timed subtitles (also right-to-left Arabic), an optional hook text and
   a "peak flash" opener. Encodes on NVIDIA, Apple, Intel or AMD hardware when available.
-- **Editing tools.** Swear words bleeped or muted (7 languages, editable lists, "a**" in the
+- **Editing tools.** Swear words bleeped or muted (11 languages, editable lists, "a**" in the
   captions; on by default for Shorts-style videos), silences and filler words ("um", "ııı", "äh"...)
   cut with tiny crossfades but never inside a laugh, a subtle smart zoom on the peak moments and on
   your facecam when you react, and **edit by transcript**: delete words to cut them, drag the first
@@ -176,7 +176,7 @@ it stopped. Details: **[docs/how-it-works.md](docs/how-it-works.md)**.
   limit, MP3/M4A. One-click presets for **YouTube Shorts, TikTok, Instagram Reels, X and YouTube 16:9**
   set size, fps, bitrate and length limit and keep subtitles out of each app's buttons. The file size
   is estimated before anything renders; several clips export in one go.
-- **Subtitle files and editor timelines.** SRT/VTT in all 7 languages (translated locally when
+- **Subtitle files and editor timelines.** SRT/VTT in all 11 languages (translated locally when
   needed), FCPXML for DaVinci Resolve / Final Cut Pro and XML for Premiere Pro with the cut, captions
   and markers for the detected moments.
 - **Direct YouTube upload** (optional) through the free official API, with **your own free Google
@@ -201,7 +201,7 @@ it stopped. Details: **[docs/how-it-works.md](docs/how-it-works.md)**.
   calibrates the score to what works on *your* channel.
 - **Works with what you have.** Twitch, YouTube and Kick VODs and clips (with their chat replay), most
   other sites (via yt-dlp), or any local video file. Streams of 3-6 hours are processed in resumable chunks.
-- **A clean web UI in 7 languages**, dark and light, usable from your phone on the same Wi-Fi.
+- **A clean web UI in 11 languages**, dark and light, usable from your phone on the same Wi-Fi.
 - **One-click install, one-click update.** A desktop shortcut opens it, and Settings → Updates
   installs new versions. A short setup on the first start (language, content types, performance
   mode + a hardware check), and a "What's new" note after every update.
@@ -243,16 +243,23 @@ SharkyClips checks your hardware every time it starts and picks the fastest setu
 
 | | Interface | Speech recognition | AI titles & subtitles |
 |---|:-:|:-:|:-:|
-| Türkçe (default) | ✓ | ✓ | ✓ |
-| English | ✓ | ✓ | ✓ |
+| English (default) | ✓ | ✓ | ✓ |
+| Türkçe | ✓ | ✓ | ✓ |
+| Español (Latin America / Spain)* | ✓ | ✓ | ✓ |
+| Português (Brasil)* | ✓ | ✓ | ✓ |
 | Русский | ✓ | ✓ | ✓ |
-| Magyar | ✓ | ✓ | ✓ |
 | Deutsch | ✓ | ✓ | ✓ |
+| Français* | ✓ | ✓ | ✓ |
 | العربية (right-to-left) | ✓ | ✓ | ✓ |
 | 中文 | ✓ | ✓ | ✓ |
+| 日本語* | ✓ | ✓ | ✓ |
+| Magyar | ✓ | ✓ | ✓ |
 
-Titles can be written in another language than the one spoken; subtitles are then translated
-with their timing kept.
+\* New in 1.2.53: the interface was machine-translated locally and checked for names and
+placeholders. Fixes from native speakers are welcome.
+
+Titles can be written in another language than the one spoken (Settings > Content language);
+subtitles are then translated with their timing kept.
 
 ## Install
 
@@ -498,7 +505,7 @@ Eski adı ClipForge'du: eski bağlantılar yeni adrese yönlenir, ayarlarınız 
   DaVinci Resolve / Final Cut Pro / Premiere Pro için kurgu zaman çizelgeleri.
 - İsterseniz klipleri resmî YouTube API'siyle, tek tıkla (**Google ile bağlan**) **doğrudan YouTube'a yükler**
   (başlık, açıklama, etiketler, görünürlük, zamanlama, küçük resim).
-- Arayüzü 7 dildedir (varsayılan Türkçe), koyu ve açık tema vardır, telefondan da kullanılabilir.
+- Arayüzü 11 dildedir (yeni kullanıcılar için varsayılan İngilizce), koyu ve açık tema vardır, telefondan da kullanılabilir.
   İlk açılışta kısa bir kurulum (dil, içerik türü, performans modu + donanım kontrolü) ve her
   güncellemeden sonra "Yenilikler" penceresi gelir.
 
