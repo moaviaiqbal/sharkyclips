@@ -55,6 +55,10 @@ FALLBACK_CAPTIONS = {
     "ru": ["ЧТО?!", "брух", "НЕ МОЖЕТ БЫТЬ", "бро…"],
     "ar": ["ماذا؟!", "bruh", "مستحيل", "يا أخي…"],
     "zh": ["啊？！", "离谱", "不是吧", "绷不住了"],
+    "es": ["¿¡QUÉ?!", "bruh", "NO PUEDE SER", "bro…"],
+    "pt": ["O QUÊ?!", "bruh", "NÃO ACREDITO", "mano…"],
+    "fr": ["QUOI ?!", "bruh", "C'EST PAS VRAI", "frérot…"],
+    "ja": ["は？！", "草", "ありえない", "マジか…"],
 }
 
 

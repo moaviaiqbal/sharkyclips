@@ -1,6 +1,25 @@
 """1.2.53 issue #5c / #1c: one content language drives titles and publish metadata."""
 
+import pytest
+
 from sharkyclips import config, languages, perf, youtube
+
+KEYS = ("output_language", "content_language", "ui_language", "spanish_variant", "performance_preset",
+        "processing_device", "light_checked", "light_auto_picked", "llm_enabled")
+
+
+@pytest.fixture(autouse=True)
+def _restore_config():
+    """These tests change languages / the Light preset: later tests must not inherit them."""
+    before = config.load()
+    yield
+    cfg = config.load()
+    for k in KEYS:
+        if k in before:
+            cfg[k] = before[k]
+        else:
+            cfg.pop(k, None)
+    config.save(cfg)
 
 
 def test_tier1_languages():

@@ -26,7 +26,7 @@ def test_every_builtin_profile_is_valid():
 def test_profiles_have_english_and_turkish_texts_and_hashtags():
     for gid, p in gameprofiles.all_profiles().items():
         assert p["hashtags"].get("all"), gid
-        for region, rules in (p.get("ocr") or {}).items():
+        for _region, rules in (p.get("ocr") or {}).items():
             for code, phrases in rules.items():
                 assert phrases == [x.lower() for x in phrases], (gid, code)  # normalized form
 
@@ -78,7 +78,12 @@ def test_user_profile_folder_is_loaded(tmp_path, monkeypatch):
         "regions": {"banner": {"box": [460, 120, 1000, 220]}},
         "ocr": {"banner": {"rl_goal": ["goal"]}}, "events": {"rl_goal": {"strength": 0.7}},
         "hashtags": {"all": ["#rocketleague"]}}), encoding="utf-8")
-    p = gameprofiles.get("rocket_league")
-    assert p and p["_source"] == "user" and gameprofiles.is_beta("rocket_league")
+    try:
+        p = gameprofiles.get("rocket_league")
+        assert p and p["_source"] == "user" and gameprofiles.is_beta("rocket_league")
+    finally:  # later tests must not see this game
+        import shutil
+
+        shutil.rmtree(d, ignore_errors=True)
     bad = {"id": "x", "name": "X", "aliases": ["x"], "regions": {"r": {"box": [0, 0, 5000, 10]}}}
     assert gameprofiles.validate(bad)
