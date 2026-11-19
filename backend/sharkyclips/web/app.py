@@ -250,13 +250,14 @@ def submit_proxy(project_id: str) -> Job:
 
 
 def submit_import(source: str, mode: str, language: str, title: str,
-                  cleanup: Path | None = None, extra: dict | None = None) -> Job:
+                  cleanup: Path | None = None, extra: dict | None = None,
+                  authorization: dict | None = None) -> Job:
     def run(job: Job):
         from ..ingest import ingest
 
         jobs.update(job, stage="starting", progress=None)
         try:
-            project = ingest(source, mode=mode)
+            project = ingest(source, mode=mode, authorization=authorization)
         finally:
             if cleanup is not None:
                 cleanup.unlink(missing_ok=True)  # the project keeps its own (hard-linked) copy
@@ -1537,9 +1538,20 @@ def api_create(body: dict, request: Request) -> dict:
 @app.put("/api/uploads")
 async def api_upload(request: Request, filename: str = Query(...), mode: str = Query("gaming"),
                      language: str = Query("auto"), easy: bool = Query(False),
-                     full_upload: bool | None = Query(None)) -> dict:
+                     full_upload: bool | None = Query(None),
+                     recording_rights: bool = Query(False),
+                     game_content_rights: bool = Query(False)) -> dict:
     """Raw file upload (streamed straight to disk - works for multi-GB stream files).
     easy=true: an Easy mode project (mode "auto" = detect the content type)."""
+    if easy and not (recording_rights is True and game_content_rights is True):
+        raise SharkyClipsError(
+            "Both rights declarations are required for Easy mode imports.",
+            "Confirm that you have permission to use the recording and the included game content."
+        )
+    authorization = (
+        {"recording_rights": True, "game_content_rights": True}
+        if easy else None
+    )
     mode_auto = mode == "auto"
     if mode_auto:
         mode = config.get("default_mode") or "gaming"
@@ -1586,7 +1598,10 @@ async def api_upload(request: Request, filename: str = Query(...), mode: str = Q
     extra = {"easy": True, "mode_auto": mode_auto} if easy else {}
     if full_upload is not None:
         extra["full_upload"] = bool(full_upload)
-    return submit_import(str(dest), mode, language, name, cleanup=dest, extra=extra or None).to_dict()
+    return submit_import(
+        str(dest), mode, language, name, cleanup=dest, extra=extra or None,
+        authorization=authorization
+    ).to_dict()
 
 
 @app.get("/api/projects/{project_id}")

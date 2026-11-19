@@ -215,7 +215,7 @@ def _ingest_url(url: str) -> tuple[Project, dict]:
 # ----------------------------------------------------------------------- main
 
 
-def ingest(source: str, mode: str = "gaming") -> Project:
+def ingest(source: str, mode: str = "gaming", authorization: dict | None = None) -> Project:
     if mode not in MODES:
         raise SharkyClipsError(f"Unknown mode '{mode}'.", f"Use one of: {', '.join(MODES)}")
     project, src_info = _ingest_url(source) if is_url(source) else _ingest_file(source)
@@ -254,5 +254,16 @@ def ingest(source: str, mode: str = "gaming") -> Project:
         "updated_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "sharkyclips_version": __version__,
     }
+    if authorization is not None:
+        meta["authorization"] = {
+            "recording_rights": authorization.get("recording_rights") is True,
+            "game_content_rights": authorization.get("game_content_rights") is True,
+            "confirmed_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "declaration_version": 1,
+            "source_type": src_info.get("type"),
+        }
+    elif old.get("authorization"):
+        meta["authorization"] = old["authorization"]
+
     project.save_meta(meta)
     return project

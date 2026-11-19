@@ -236,7 +236,7 @@ def test_login_is_a_plain_browser_and_is_checked_after_the_window_closes(studio,
 
 def test_closing_the_window_without_logging_in_says_so(studio, own_root, monkeypatch):
     ch = TB._load().get("channel") or "chromium"
-    monkeypatch.setenv("SHARKYCLIPS_TT_LOGIN_CMD", _fake_cmd("--stay=1", "--no-login", f"--channel={ch}"))
+    monkeypatch.setenv("SHARKYCLIPS_TT_LOGIN_CMD", _fake_cmd("--stay=3", "--no-login", f"--channel={ch}"))
     TB._save(logged_in=False, login_at=None, profile_v=TB.PROFILE_V)
     seen = _login_and_wait()
     assert seen[-1] == "not_logged_in", (seen, TB.status()["login"])

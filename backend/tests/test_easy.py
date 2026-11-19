@@ -255,3 +255,72 @@ def test_tray_shows_new_notices_once():
     srv.shutdown()
     assert shown == [("Ready", "2 clips")]  # the notice from before the tray started isn't repeated
     assert asked[1].endswith("after=1") and asked[2].endswith("after=2")
+
+
+@pytest.mark.parametrize("authorization", [
+    None,
+    {"recording_rights": True, "game_content_rights": False},
+    {"recording_rights": False, "game_content_rights": True},
+])
+def test_easy_import_rejects_missing_or_partial_rights(authorization, monkeypatch):
+    from types import SimpleNamespace
+
+    from sharkyclips import netguard
+    from sharkyclips.web import app as A
+    from sharkyclips.web import easy as WE
+
+    submitted = []
+    monkeypatch.setattr(netguard, "check_public_url", lambda url: None)
+    monkeypatch.setattr(
+        A, "submit_import",
+        lambda *args, **kwargs: submitted.append((args, kwargs))
+    )
+
+    body = {"url": "https://www.youtube.com/watch?v=test123"}
+    if authorization is not None:
+        body["authorization"] = authorization
+
+    with _client() as c:
+        response = c.post("/api/easy/projects", json=body)
+
+    assert response.status_code == 400
+    assert "rights declarations" in response.text
+    assert submitted == []
+
+
+def test_easy_import_passes_confirmed_rights_to_ingestion(monkeypatch):
+    from sharkyclips import netguard
+    from sharkyclips.web import app as A
+
+    authorization = {
+        "recording_rights": True,
+        "game_content_rights": True,
+    }
+    submitted = []
+
+    class FakeJob:
+        def to_dict(self):
+            return {"id": "authorization-test-job"}
+
+    def fake_submit(*args, **kwargs):
+        submitted.append((args, kwargs))
+        return FakeJob()
+
+    monkeypatch.setattr(netguard, "check_public_url", lambda url: None)
+    monkeypatch.setattr(A, "submit_import", fake_submit)
+
+    with _client() as c:
+        response = c.post(
+            "/api/easy/projects",
+            json={
+                "url": "https://www.youtube.com/watch?v=test123",
+                "mode": "gaming",
+                "language": "auto",
+                "authorization": authorization,
+            },
+        )
+
+    assert response.status_code == 200
+    assert response.json()["id"] == "authorization-test-job"
+    assert len(submitted) == 1
+    assert submitted[0][1]["authorization"] == authorization

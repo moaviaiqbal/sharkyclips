@@ -2355,10 +2355,15 @@ export const bleepApi = {
 const EZ = (pid: string, cid: string) => `/api/easy/clips/${encodeURIComponent(pid)}/${encodeURIComponent(cid)}`;
 const EP = (pid: string) => `/api/easy/projects/${encodeURIComponent(pid)}`;
 
+export type ImportAuthorization = {
+  recording_rights: boolean;
+  game_content_rights: boolean;
+};
+
 export const easyApi = {
   settings: () => req<EasySettings>("GET", "/api/easy/settings"),
   saveSettings: (s: Partial<Omit<EasySettings, "downloads">>) => req<EasySettings>("PUT", "/api/easy/settings", s),
-  create: (body: { url?: string; path?: string; mode: Mode | "auto"; language: string }) =>
+  create: (body: { url?: string; path?: string; mode: Mode | "auto"; language: string; authorization: ImportAuthorization }) =>
     req<Job>("POST", "/api/easy/projects", body),
   projects: () => req<EasyProjectRow[]>("GET", "/api/easy/projects"),
   view: (pid: string) => req<EasyView>("GET", EP(pid)),
@@ -2390,10 +2395,18 @@ export const easyApi = {
 export function uploadEasyFile(
   file: File,
   mode: Mode | "auto",
+  authorization: ImportAuthorization,
   onProgress: (fraction: number) => void,
 ): { promise: Promise<Job>; abort: () => void } {
   const xhr = new XMLHttpRequest();
-  const q = new URLSearchParams({ filename: file.name, mode, language: "auto", easy: "true" });
+  const q = new URLSearchParams({
+    filename: file.name,
+    mode,
+    language: "auto",
+    easy: "true",
+    recording_rights: String(authorization.recording_rights),
+    game_content_rights: String(authorization.game_content_rights),
+  });
   const promise = guardHeavy("PUT", "/api/uploads").then(() => new Promise<Job>((resolve, reject) => {
     xhr.open("PUT", `/api/uploads?${q}`);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");

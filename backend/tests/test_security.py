@@ -749,3 +749,13 @@ def test_laughter_model_download_is_checksum_verified(tmp_path, monkeypatch):
     with pytest.raises(RuntimeError, match="checksum"):
         laughter.ensure_model(show_progress=False)
     assert not (tmp_path / "ced" / "model.int8.onnx").exists()
+
+
+def test_easy_upload_rejects_missing_rights_before_reading_body():
+    c = token_client()
+    r = c.put(
+        "/api/uploads?filename=unauthorized.mp4&easy=true",
+        content=b"this body must not be accepted",
+    )
+    assert r.status_code == 400
+    assert "rights declarations" in r.text

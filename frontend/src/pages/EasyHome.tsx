@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ConnectionPill } from "../components/EasyAuto";
-import { ApiError, easyApi, uploadEasyFile, urls, type EasyProjectRow, type Mode } from "../api";
+import { ApiError, easyApi, uploadEasyFile, urls, type EasyProjectRow, type ImportAuthorization, type Mode } from "../api";
 import { EasyProgress, ModeChip } from "../components/Easy";
 import { Icon } from "../components/Icons";
 import { DeleteDialog, useUndoToast } from "../components/Trash";
@@ -37,6 +37,8 @@ export default function EasyHome() {
   const [link, setLink] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [mode, setMode] = useState<Mode | "auto">("auto");
+  const [recordingRights, setRecordingRights] = useState(false);
+  const [gameContentRights, setGameContentRights] = useState(false);
   const [drag, setDrag] = useState(false);
   const [busy, setBusy] = useState(false);
   const [upload, setUpload] = useState<number | null>(null);
@@ -107,17 +109,22 @@ export default function EasyHome() {
   };
 
   const start = async () => {
+    if (!recordingRights || !gameContentRights) return;
     setBusy(true);
     setError(null);
     try {
+      const authorization: ImportAuthorization = {
+        recording_rights: recordingRights,
+        game_content_rights: gameContentRights,
+      };
       let j;
       if (file) {
-        const up = uploadEasyFile(file, mode, setUpload);
+        const up = uploadEasyFile(file, mode, authorization, setUpload);
         abortRef.current = up.abort;
         j = await up.promise;
       } else {
         const v = link.trim();
-        j = await easyApi.create(/^https?:\/\//i.test(v) ? { url: v, mode, language: "auto" } : { path: v, mode, language: "auto" });
+        j = await easyApi.create(/^https?:\/\//i.test(v) ? { url: v, mode, language: "auto", authorization } : { path: v, mode, language: "auto", authorization });
       }
       writePending(j.id);
       setPending(j.id);
@@ -132,7 +139,7 @@ export default function EasyHome() {
     }
   };
 
-  const can = !busy && !pending && (!!file || link.trim().length > 3);
+  const can = !busy && !pending && recordingRights && gameContentRights && (!!file || link.trim().length > 3);
   const working = !!pending;
 
   return (
@@ -217,6 +224,16 @@ export default function EasyHome() {
               </>
             )}
             <input ref={input} type="file" accept="video/*,.mkv,.flv,.ts" hidden onChange={(e) => pick(e.target.files?.[0])} />
+            <div className="ez-permissions">
+              <label>
+                <input type="checkbox" checked={recordingRights} onChange={(e) => setRecordingRights(e.target.checked)} />
+                I own this recording or have permission from its creator to use it.
+              </label>
+              <label>
+                <input type="checkbox" checked={gameContentRights} onChange={(e) => setGameContentRights(e.target.checked)} />
+                I have the necessary rights or permissions for the game footage and other included content.
+              </label>
+            </div>
             {upload != null && (
               <div className="ez-upload-bar">
                 <ProgressBar value={upload} label={t("easy.sending")} />

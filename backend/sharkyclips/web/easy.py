@@ -736,6 +736,7 @@ def api_create(body: dict, request: Request) -> dict:
     source = str(body.get("url") or body.get("path") or "").strip()
     mode = body.get("mode") or "auto"
     language = body.get("language") or "auto"
+    authorization = body.get("authorization")
     if mode != "auto" and mode not in MODES:
         raise SharkyClipsError(f"Unknown mode '{mode}'.")
     if not source:
@@ -751,9 +752,21 @@ def api_create(body: dict, request: Request) -> dict:
                                    "Drop the file instead.")
         if not Path(source).expanduser().is_file():
             raise SharkyClipsError(f"File not found: {source}")
+    if not isinstance(authorization, dict) or (
+        authorization.get("recording_rights") is not True
+        or authorization.get("game_content_rights") is not True
+    ):
+        raise SharkyClipsError(
+            "Both rights declarations are required for Easy mode imports.",
+            "Confirm that you have permission to use the recording and the included game content."
+        )
     real = mode if mode != "auto" else (config.get("default_mode") or "gaming")
     title = source if is_url(source) else Path(source).name
-    job = A.submit_import(source, real, language, title, extra={"easy": True, "mode_auto": mode == "auto"})
+    job = A.submit_import(
+        source, real, language, title,
+        extra={"easy": True, "mode_auto": mode == "auto"},
+        authorization=authorization
+    )
     return job.to_dict()
 
 
