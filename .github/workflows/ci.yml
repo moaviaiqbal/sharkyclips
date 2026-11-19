@@ -176,12 +176,13 @@ jobs:
       - name: Preview matches the render plan
         working-directory: frontend
         run: node scripts/preview-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID" "$RUNNER_TEMP/layout-shots"
-      - name: Browsers (Chromium, Firefox, WebKit) - title editing, scrolling, languages, render, publish
-        working-directory: frontend
-        run: BROWSERS=chromium,firefox,webkit node scripts/browser-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID"
       - name: Accessibility (axe) + delete / undo flow
         working-directory: frontend
         run: node scripts/axe-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID"
+      - name: Browsers (Chromium, Firefox, WebKit) - title editing, scrolling, languages, render, publish
+        # last: it starts a real render, which changes the fixture project the checks above use
+        working-directory: frontend
+        run: BROWSERS=chromium,firefox,webkit node scripts/browser-check.mjs http://127.0.0.1:8799 "$LAYOUT_PID"
       - name: Screenshots of failing views
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
