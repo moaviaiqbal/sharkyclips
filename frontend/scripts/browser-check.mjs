@@ -90,7 +90,7 @@ for (const name of wanted) {
   for (const [code, dir] of [["es", "ltr"], ["ar", "rtl"], ["ja", "ltr"], ["en", "ltr"]]) {
     await page.locator(".lang-btn").first().click();
     await page.locator(`.lang-menu button[lang="${code}"]`).click();
-    await page.waitForFunction((c) => document.documentElement.lang === c, code, { timeout: 10000 }).catch(() => {});
+    await page.waitForFunction((c) => document.documentElement.lang === c, code, { timeout: 30000 }).catch(() => {});
     const got = await page.evaluate(() => [document.documentElement.lang, document.documentElement.dir]);
     if (got[0] !== code || got[1] !== dir) fail(name, `language ${code}: html lang/dir = ${got.join("/")}`);
   }
@@ -108,23 +108,23 @@ for (const name of wanted) {
   if (s.ui_language === "es") fail(name, "changing the content language changed the UI language");
   await page.request.put(`${base}/api/settings`, { data: { output_language: "en" }, headers: H });
 
-  // 5. render: the button starts a job (Pro mode)
+  // 5. render: the button starts a job (Pro mode). Only in the first browser, and the job is
+  //    cancelled right away: real renders on a small CI runner slow every later check down.
   await setMode(page.request, "pro");
   await page.goto(`${base}/#/p/${P}`);
   await page.reload();
   await page.waitForSelector(".side-tabs", { timeout: 30000 });
   const renderBtn = page.locator('[data-testid="render-btn"]').first();
-  if ((await renderBtn.count()) && (await renderBtn.isEnabled())) {
+  if (name === wanted[0] && (await renderBtn.count()) && (await renderBtn.isEnabled())) {
     await renderBtn.click();
-    const ok = await page
-      .waitForFunction(async ([b, p]) => {
-        const r = await fetch(`${b}/api/jobs`);
-        const j = await r.json();
-        return (j.jobs || j).some((x) => x.kind === "render" && x.project_id === p);
-      }, [base, pid], { timeout: 20000 })
-      .then(() => true)
-      .catch(() => false);
-    if (!ok) fail(name, "the render button started no render job");
+    let job = null;
+    for (let i = 0; i < 40 && !job; i++) {
+      const j = await (await page.request.get(`${base}/api/jobs`)).json();
+      job = (j.jobs || j).find((x) => x.kind === "render" && x.project_id === pid && ["queued", "running"].includes(x.status));
+      if (!job) await page.waitForTimeout(500);
+    }
+    if (!job) fail(name, "the render button started no render job");
+    else await page.request.post(`${base}/api/jobs/${job.id}/cancel`, { headers: H });
   }
 
   // 6. publish dialog: the title field takes Backspace too
