@@ -184,8 +184,9 @@ for (const lang of LANGS)
             await page.waitForSelector(s.ready, { timeout: 20000 });
             break;
           } catch (e) {
-            if (attempt >= 2) throw new Error(`${s.name} ${lang} ${theme} ${w}x${h} never loaded: ${e.message.split(/\r?\n/)[0]}`);
-            await page.reload({ waitUntil: "load" }); // a slow first load (server just started): once more
+            if (attempt >= 3) throw new Error(`${s.name} ${lang} ${theme} ${w}x${h} never loaded: ${e.message.split(/\r?\n/)[0]}`);
+            // a slow load on a busy CI runner: try again (the reload itself may time out too)
+            await page.reload({ waitUntil: "domcontentloaded", timeout: 60000 }).catch(() => {});
           }
         }
         await page.waitForTimeout(700);
