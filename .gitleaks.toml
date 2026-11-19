@@ -4,7 +4,7 @@ title = "SharkyClips gitleaks config"
 [extend]
 useDefault = true
 
-[allowlist]
+[[allowlists]]
 description = "Reviewed false positives"
 paths = [
   '''^frontend/dist/''',          # minified build output (the sources in frontend/src are scanned)
@@ -16,3 +16,12 @@ regexes = [
   '''[0-9a-f]{64}''',                     # SHA-256 checksums of model downloads
   '''FAKE[A-Za-z0-9_\-]*''',               # test placeholders
 ]
+
+[[allowlists]]
+# 1.2.53: UI text "Turn on the YouTube API" in the es / pt / fr locales reads like "API = <value>"
+# to the generic-api-key rule. Only these phrases, only in the locale files.
+description = "UI text about the YouTube API in the translations"
+condition = "AND"
+paths = ['''^frontend/src/i18n/locales/[a-z]{2}\.ts$''']
+regexTarget = "match"
+regexes = ['''(?i)API (de |do )?YouTube''', '''(?i)l'API YouTube''']
