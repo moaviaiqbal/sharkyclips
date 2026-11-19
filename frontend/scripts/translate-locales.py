@@ -94,10 +94,8 @@ def write(lang: str, keys: list[str], en: dict[str, str], cur: dict[str, str], m
         if not add:
             return
         i = text.rindex("};")
-        lines = "".join(f"  {json.dumps(k, ensure_ascii=False)}: {json.dumps(cur[k], ensure_ascii=False)},
-" for k in add)
-        path.write_text(text[:i] + lines + text[i:], encoding="utf-8", newline="
-")
+        lines = "".join(f"  {json.dumps(k, ensure_ascii=False)}: {json.dumps(cur[k], ensure_ascii=False)},\n" for k in add)
+        path.write_text(text[:i] + lines + text[i:], encoding="utf-8", newline="\n")
         return
     head = []
     if machine:
@@ -108,9 +106,7 @@ def write(lang: str, keys: list[str], en: dict[str, str], cur: dict[str, str], m
         if k in cur:
             lines.append(f"  {json.dumps(k, ensure_ascii=False)}: {json.dumps(cur[k], ensure_ascii=False)},")
     lines += ["};", "", f"export default {lang};", ""]
-    path.write_text("
-".join(lines), encoding="utf-8", newline="
-")
+    path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
 def run(lang: str) -> list[str]:

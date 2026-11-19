@@ -85,7 +85,9 @@
       ],
       "val_round_won": [
         "round won",
-        "raund kazanildi"
+        "won",
+        "raund kazanildi",
+        "-lost"
       ],
       "val_round_lost": [
         "round lost",
@@ -275,6 +277,15 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "ACE, CLUTCH, SPIKE PLANTED and round WON were read correctly on real footage. VICTORY / DEFEAT, team ace, flawless, thrifty and defuse are not checked yet; the Turkish client texts are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "val_ace",
+      "val_clutch",
+      "val_planted",
+      "val_round_won"
+    ],
+    "on": "2026-11-19, two public 1080p English-client videos (an aces compilation, the end of a ranked match)"
+  }
 }
