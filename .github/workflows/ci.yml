@@ -133,7 +133,7 @@ jobs:
     # sideways (frontend/scripts/layout-check.mjs). Runs against the committed frontend/dist.
     name: Layout (no overlapping panels, preview = render)
     runs-on: ubuntu-24.04  # Playwright 1.55 can't install Chromium on ubuntu-latest (26.04) yet
-    timeout-minutes: 25
+    timeout-minutes: 45  # 1.2.53: + Firefox / WebKit and the browser check
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -239,7 +239,7 @@ jobs:
           tar -xzf "$RUNNER_TEMP/$f" -C "$RUNNER_TEMP" gitleaks
       - name: Scan the whole history
         run: |
-          "$RUNNER_TEMP/gitleaks" git . --config .gitleaks.toml --redact --no-banner --exit-code 1
+          "$RUNNER_TEMP/gitleaks" git . --config .gitleaks.toml --redact --no-banner --exit-code 1 -v  # -v: list the (redacted) findings
 
   audit:
     # Known vulnerabilities in the Python / npm dependencies. Informational: a new advisory in a
