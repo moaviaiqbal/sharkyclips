@@ -65,8 +65,9 @@ for (const name of wanted) {
   await page.waitForTimeout(4500); // the Easy page polls every few seconds: focus and text must stay
   const focused = await page.evaluate(() => document.activeElement?.getAttribute("data-testid"));
   if (focused !== "ez-title-input") fail(name, `focus moved away from the title field while typing (now: ${focused})`);
+  await input.press("End");
   await input.type("!");
-  if ((await input.inputValue()) !== "ello worl!") fail(name, "typing after a poll went elsewhere");
+  if ((await input.inputValue()) !== "ello worl!") fail(name, `typing after a poll went elsewhere ("${await input.inputValue()}")`);
 
   // 2. scroll the edit window: it must stay where the user scrolled
   const modal = page.locator(".modal").last();
@@ -95,8 +96,9 @@ for (const name of wanted) {
   }
 
   // 4. content language is separate from the UI language and reaches the server
-  await setMode(page.request, "pro");
+  // (Easy mode's Settings has the same card: the default UI must reach it too)
   await page.goto(`${base}/#/settings`);
+  await page.reload();
   const sel = page.locator('#content-language select');
   await sel.waitFor();
   await sel.selectOption("es");
@@ -106,8 +108,10 @@ for (const name of wanted) {
   if (s.ui_language === "es") fail(name, "changing the content language changed the UI language");
   await page.request.put(`${base}/api/settings`, { data: { output_language: "en" }, headers: H });
 
-  // 5. render: the button starts a job
+  // 5. render: the button starts a job (Pro mode)
+  await setMode(page.request, "pro");
   await page.goto(`${base}/#/p/${P}`);
+  await page.reload();
   await page.waitForSelector(".side-tabs", { timeout: 30000 });
   const renderBtn = page.locator('[data-testid="render-btn"]').first();
   if ((await renderBtn.count()) && (await renderBtn.isEnabled())) {

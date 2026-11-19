@@ -4765,3 +4765,7 @@ a.edit-note:hover { text-decoration: underline; }
 /* 1.2.53 game picker */
 .game-chip { display: inline-flex; align-items: center; gap: 6px; }
 .chip-beta { background: var(--warn-soft); color: var(--warn); border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
+/* 1.2.53: on small screens the top bar's language switcher shows only the flag (the name stays in aria-label) */
+@media (max-width: 1100px) { header .lang-btn > span[lang] { display: none; } }
+/* 1.2.53: long labels (es / pt / fr) wrap to a second row instead of being cut off */
+.segmented { flex-wrap: wrap; }

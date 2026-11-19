@@ -750,3 +750,14 @@
 .ez-menu-pop button.danger { color: var(--danger); }
 .ez-trash-link { margin-top: 18px; text-align: center; }
 .ez-settings .ez-hero { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+
+/* 1.2.53: longer texts in es / pt / fr wrap instead of being cut off */
+.ez-viral { max-width: 100%; white-space: normal; }
+.ez-settings .segmented { flex-wrap: wrap; overflow-x: visible; }
+.ez-settings .segmented button { height: auto; min-height: 30px; white-space: normal; }
+.ez-when { min-width: 0; }
+.ez-when button { white-space: normal; line-height: 1.2; min-width: 0; }
+.mp-block, .mp-go, .mp-switches { min-width: 0; flex-wrap: wrap; }
+.ez-settings .btn { white-space: normal; height: auto; min-height: 40px; text-align: center; }
+.ez-card-body { min-width: 0; }
+.ez-card .ez-big { white-space: normal; height: auto; min-height: 44px; line-height: 1.2; min-width: 0; }

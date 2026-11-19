@@ -18,6 +18,7 @@ import { useToast } from "../toast";
 import { CoverAiCard, MyVoiceCard } from "../components/ExtrasSettings";
 import { AccountsSection } from "../components/Accounts";
 import { AboutCard } from "../components/Licenses";
+import { DeviceSettings } from "../components/SpeedSettings";
 import { TrashCard } from "../components/Trash";
 
 function SpeedCompare({ info, fast }: { info: LlmInfo; fast: boolean }) {
@@ -227,65 +228,6 @@ function parseWords(text: string): string[] {
     if (w && !out.includes(w)) out.push(w);
   }
   return out;
-}
-
-/** 1.2.53: where the AI runs + the Light preset for slow PCs. */
-function DeviceSettings({ settings, save }: { settings: SettingsT; save: (p: Partial<SettingsT>) => Promise<void> }) {
-  const { t, num } = useI18n();
-  const st = settings.perf;
-  const m = st?.machine;
-  const gpu = m?.nvidia_name ? `${m.nvidia_name} (${num(m.nvidia_vram_gb ?? 0, 0)} GB)` : m?.apple_silicon ? "Apple Silicon" : t("perf.no_gpu");
-  return (
-    <div style={{ display: "grid", gap: 14 }}>
-      {st?.weak && (
-        <div className={`notice perf-note${st.light ? "" : " notice-warn"}`} role="status">
-          <span>
-            {t("perf.slow_pc")} {st.light && t("perf.slow_pc_light")}
-          </span>
-          {!st.light && (
-            <button className="btn btn-sm" onClick={() => save({ performance_preset: "light" })}>
-              {t("perf.use_light")}
-            </button>
-          )}
-        </div>
-      )}
-      <div>
-        <Segmented<"auto" | "cpu" | "gpu">
-          block
-          label={t("perf.device")}
-          value={settings.processing_device ?? "auto"}
-          options={(["auto", "cpu", "gpu"] as const).map((v) => ({ value: v, label: t(`perf.device.${v}`) }))}
-          onChange={(v) => save({ processing_device: v })}
-        />
-        <div className="field-hint" style={{ marginTop: 6 }}>
-          {t("perf.device_desc")} {st && t("perf.device_now", { where: t(`perf.where.${st.device}`) })}
-        </div>
-      </div>
-      <div>
-        <Segmented<"auto" | "light" | "normal">
-          block
-          label={t("perf.preset")}
-          value={settings.performance_preset ?? "auto"}
-          options={(["auto", "light", "normal"] as const).map((v) => ({ value: v, label: t(`perf.preset.${v}`) }))}
-          onChange={(v) => save({ performance_preset: v })}
-        />
-        <div className="field-hint" style={{ marginTop: 6 }}>
-          {t("perf.preset_desc")}
-        </div>
-      </div>
-      {st?.light && (
-        <div className="toggle-line">
-          <Toggle checked={!!settings.voices_on_light} onChange={(v) => save({ voices_on_light: v })} label={t("perf.voices_on_light")} />
-          <span>{t("perf.voices_on_light")}</span>
-        </div>
-      )}
-      {m && (
-        <div className="field-hint mono">
-          {t("perf.machine", { threads: num(m.threads), ram: num(m.ram_gb, 0), gpu })}
-        </div>
-      )}
-    </div>
-  );
 }
 
 function PerformanceCard({ settings, save }: { settings: SettingsT; save: (p: Partial<SettingsT>) => Promise<void> }) {

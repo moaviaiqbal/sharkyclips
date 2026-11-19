@@ -13,6 +13,7 @@ import { chooseLanguage, useMeta } from "../meta";
 import { useTheme } from "../theme";
 import { useUiMode } from "../uimode";
 import { TrashCard } from "../components/Trash";
+import { LanguageSpeedCard } from "../components/SpeedSettings";
 
 /** Easy mode settings: only what a beginner needs. Everything else lives in Pro mode. */
 export default function EasySettings() {
@@ -62,6 +63,8 @@ export default function EasySettings() {
         <p className="muted" style={{ marginTop: 0 }}>{t("acc.lede")}</p>
         <AccountsGrid />
       </section>
+
+      <LanguageSpeedCard />
 
       <section className="card ez-set-card" aria-labelledby="ez-set-pub">
         <h2 id="ez-set-pub">{t("easy.set_publishing")}</h2>
