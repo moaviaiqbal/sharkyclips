@@ -3037,6 +3037,7 @@ const ja: Record<string, string> = {
   "game.pick_auto": "私が探します",
   "game.pick_another": "別のゲーム",
   "game.detected": "発見：{game}",
+  "game.checked_hint": "実際の動画で確認済み：{events}。",
 };
 
 export default ja;

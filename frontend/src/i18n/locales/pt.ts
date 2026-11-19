@@ -3037,6 +3037,7 @@ const pt: Record<string, string> = {
   "game.pick_auto": "Encontrar por mim",
   "game.pick_another": "Outro jogo",
   "game.detected": "Encontrado: {game}",
+  "game.checked_hint": "Já verificado em vídeos reais: {events}.",
 };
 
 export default pt;

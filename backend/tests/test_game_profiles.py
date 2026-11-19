@@ -87,3 +87,19 @@ def test_user_profile_folder_is_loaded(tmp_path, monkeypatch):
         shutil.rmtree(d, ignore_errors=True)
     bad = {"id": "x", "name": "X", "aliases": ["x"], "regions": {"r": {"box": [0, 0, 5000, 10]}}}
     assert gameprofiles.validate(bad)
+
+
+def test_ocr_fragments_dont_invent_events():
+    """Real footage (1.2.53): the fading 'WASTED' banner read as 'sted' must not become BUSTED."""
+    obs = [{"t": 13, "kind": "text", "region": "center", "text": "wasted"},
+           {"t": 15, "kind": "text", "region": "center", "text": "sted"},
+           {"t": 40, "kind": "text", "region": "center", "text": "BUSTED"}]
+    assert [e["code"] for e in events.build_events("gta5", obs)] == ["gta_wasted", "gta_busted"]
+
+
+def test_overwatch_death_is_not_a_kill_and_checked_moments_are_listed():
+    obs = [{"t": 11, "kind": "text", "region": "elims", "text": "ELIMINATED PEGROEG'S MECH"},
+           {"t": 40, "kind": "text", "region": "elims", "text": "YOU WERE ELIMINATED BY EIDEX14"}]
+    assert [e["code"] for e in events.build_events("overwatch", obs)] == ["ow_elim", "ow_death"]
+    s = gameprofiles.summary("valorant")
+    assert s["beta"] and "ACE" in s["checked"]

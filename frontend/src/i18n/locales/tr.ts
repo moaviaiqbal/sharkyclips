@@ -2805,6 +2805,7 @@ const tr: Record<string, string> = {
   "game.pick_auto": "Benim için bul",
   "game.pick_another": "Başka bir oyun",
   "game.detected": "Bulunan: {game}",
+  "game.checked_hint": "Gerçek videolarda denenenler: {events}.",
 };
 
 export default tr;

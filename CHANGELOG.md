@@ -7,6 +7,107 @@ All notable changes to SharkyClips (called ClipForge before 1.2.1). The format f
 Each entry is in English, then Turkish; short summaries in the other UI languages follow in
 `<!-- lang:xx -->` blocks. The app's "What's new" window shows the block of the UI language.
 
+## [1.2.54] - 2026-11-19
+### Game detection checked on real videos
+- **New game profiles were tested on real gameplay videos.** SharkyClips now reliably reads ACE,
+  CLUTCH, SPIKE PLANTED and round wins in VALORANT, Victory Royale and eliminations in Fortnite,
+  kills and knocks in PUBG, WASTED in GTA V, deaths in Minecraft hardcore, the kill leader in Apex,
+  double kills in Warzone, eliminations and VICTORY in Overwatch, RAMPAGE in Dota 2 and round
+  results in CS2. Hover over the **beta** badge to see which moments were checked.
+- **Fewer wrong moments.** In Overwatch, "You were eliminated" no longer counts as your kill. A half-read
+  word on screen no longer turns into a different event (GTA "WASTED" was sometimes read as
+  "BUSTED"). The same PUBG kill message is counted once.
+- **Better French and Spanish.** French now always uses "tu", like other gaming apps. Spanish uses
+  "PC", which people in Latin America and in Spain both say.
+
+<!-- lang:tr -->
+**Türkçe**
+
+### Oyun algılama gerçek videolarda denendi
+- **Yeni oyun profilleri gerçek oyun videolarında test edildi.** SharkyClips artık VALORANT'ta ACE,
+  CLUTCH, SPIKE PLANTED ve raund galibiyetlerini, Fortnite'ta Victory Royale ve elemeleri, PUBG'de
+  kill ve yere sermeleri, GTA V'te WASTED'i, Minecraft hardcore'da ölümleri, Apex'te kill liderini,
+  Warzone'da double kill'i, Overwatch'ta elemeleri ve VICTORY'yi, Dota 2'de RAMPAGE'ı ve CS2'de raund
+  sonuçlarını güvenilir şekilde okuyor. Hangi anların denendiğini görmek için **beta** rozetinin
+  üzerine gel.
+- **Daha az yanlış an.** Overwatch'ta "You were eliminated" artık senin kill'in sayılmıyor. Ekranda
+  yarım okunan bir kelime artık başka bir olaya dönüşmüyor (GTA'daki "WASTED" bazen "BUSTED"
+  okunuyordu). Aynı PUBG kill mesajı bir kez sayılıyor.
+- **Daha iyi Fransızca ve İspanyolca.** Fransızca artık oyun uygulamaları gibi hep "tu" kullanıyor.
+  İspanyolca, hem Latin Amerika'da hem İspanya'da söylenen "PC" kelimesini kullanıyor.
+
+<details><summary>Español</summary>
+
+<!-- lang:es -->
+- **Los nuevos perfiles de juego se probaron con videos reales:** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 y CS2. Pasa el ratón sobre la etiqueta **beta** para ver qué momentos se comprobaron.
+- **Menos momentos falsos:** en Overwatch, "You were eliminated" ya no cuenta como tu kill, y una palabra leída a medias ya no se convierte en otro evento.
+
+</details>
+
+<details><summary>Português (Brasil)</summary>
+
+<!-- lang:pt -->
+- **Os novos perfis de jogo foram testados em vídeos reais:** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 e CS2. Passe o mouse sobre o selo **beta** para ver quais momentos foram verificados.
+- **Menos momentos errados:** no Overwatch, "You were eliminated" não conta mais como seu abate, e uma palavra lida pela metade não vira outro evento.
+
+</details>
+
+<details><summary>Deutsch</summary>
+
+<!-- lang:de -->
+- **Die neuen Spielprofile wurden an echten Videos getestet:** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 und CS2. Fahre über das **Beta**-Abzeichen, um zu sehen, welche Momente geprüft sind.
+- **Weniger falsche Momente:** In Overwatch zählt „You were eliminated“ nicht mehr als dein Kill, und ein halb gelesenes Wort wird kein anderes Ereignis mehr.
+
+</details>
+
+<details><summary>Français</summary>
+
+<!-- lang:fr -->
+- **Les nouveaux profils de jeu ont été testés sur de vraies vidéos :** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 et CS2. Survole le badge **bêta** pour voir quels moments sont vérifiés.
+- **Moins de faux moments :** dans Overwatch, « You were eliminated » ne compte plus comme ton kill. L'appli te tutoie maintenant partout.
+
+</details>
+
+<details><summary>Magyar</summary>
+
+<!-- lang:hu -->
+- **Az új játékprofilokat valódi videókon teszteltük:** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 és CS2. Vidd az egeret a **béta** jelzésre, és látod, mely pillanatok ellenőrzöttek.
+- **Kevesebb hibás pillanat:** az Overwatchban a „You were eliminated” már nem számít a te ölésednek.
+
+</details>
+
+<details><summary>Русский</summary>
+
+<!-- lang:ru -->
+- **Новые профили игр проверены на настоящих видео:** VALORANT, Fortnite, PUBG, GTA V, Minecraft, Apex, Warzone, Overwatch, Dota 2 и CS2. Наведите на значок **бета**, чтобы увидеть, какие моменты проверены.
+- **Меньше ложных моментов:** в Overwatch «You were eliminated» больше не считается вашим убийством.
+
+</details>
+
+<details><summary>العربية</summary>
+
+<!-- lang:ar -->
+- **تم اختبار ملفات الألعاب الجديدة على فيديوهات حقيقية:** VALORANT وFortnite وPUBG وGTA V وMinecraft وApex وWarzone وOverwatch وDota 2 وCS2. مرّر المؤشر فوق شارة **تجريبي** لترى اللحظات التي تم التحقق منها.
+- **لحظات خاطئة أقل:** في Overwatch لم تعد عبارة "You were eliminated" تُحسب كقتل لك.
+
+</details>
+
+<details><summary>中文</summary>
+
+<!-- lang:zh -->
+- **新的游戏配置已在真实视频上测试：** VALORANT、Fortnite、PUBG、GTA V、Minecraft、Apex、Warzone、Overwatch、Dota 2 和 CS2。把鼠标移到 **beta** 标记上即可查看已验证的时刻。
+- **误判更少：** 在 Overwatch 中，“You were eliminated” 不再算作你的击杀。
+
+</details>
+
+<details><summary>日本語</summary>
+
+<!-- lang:ja -->
+- **新しいゲームプロファイルを実際の動画でテストしました：** VALORANT、Fortnite、PUBG、GTA V、Minecraft、Apex、Warzone、Overwatch、Dota 2、CS2。**ベータ**の印にマウスを乗せると、確認済みの場面が表示されます。
+- **誤検出が減りました：** Overwatch の「You were eliminated」は自分のキルとして数えなくなりました。
+
+</details>
+
 ## [1.2.53] - 2026-11-18
 ### Faster on slow PCs, 11 languages, 15 games
 - **Typing in the clip's edit window works again.** Backspace and Delete in the title field

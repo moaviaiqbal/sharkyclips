@@ -2883,6 +2883,7 @@ const ru: Record<string, string> = {
   "game.pick_auto": "Найти за меня",
   "game.pick_another": "Другая игра",
   "game.detected": "Найдено: {game}",
+  "game.checked_hint": "Уже проверено на реальных видео: {events}.",
 };
 
 export default ru;

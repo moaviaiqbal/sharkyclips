@@ -2808,6 +2808,7 @@ const hu: Record<string, string> = {
   "game.pick_auto": "Találja meg nekem",
   "game.pick_another": "Másik játék",
   "game.detected": "Megtalált: {game}",
+  "game.checked_hint": "Már ellenőrizve valós videókra: {events}.",
 };
 
 export default hu;

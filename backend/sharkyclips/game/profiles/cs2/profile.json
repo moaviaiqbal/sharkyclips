@@ -72,6 +72,15 @@
         "bomb has been defused",
         "bomba imha edildi",
         "bomba etkisiz"
+      ],
+      "cs2_round_won": [
+        "round won",
+        "raund kazanildi",
+        "-lost"
+      ],
+      "cs2_round_lost": [
+        "round lost",
+        "raund kaybedildi"
       ]
     },
     "center": {
@@ -142,6 +151,20 @@
       "label": "Round MVP",
       "dedupe": 20,
       "pre": 9,
+      "post": 3
+    },
+    "cs2_round_won": {
+      "strength": 0.3,
+      "label": "Round won",
+      "dedupe": 20,
+      "pre": 7,
+      "post": 3
+    },
+    "cs2_round_lost": {
+      "strength": 0.05,
+      "label": "Round lost",
+      "dedupe": 20,
+      "pre": 7,
       "post": 3
     }
   },
@@ -225,6 +248,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "ROUND LOST was read on real footage (the round banner says ROUND WON / ROUND LOST). Bomb, MVP and match result texts are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "cs2_round_lost"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

@@ -19,6 +19,8 @@ export function GameChip({ pid, disabled, onChanged }: { pid: string; disabled?:
   if (!view?.profiles) return null;
   const profiles = Object.values(view.profiles).sort((a, b) => a.name.localeCompare(b.name));
   const cur = view.game ? view.profiles[view.game] : undefined;
+  const hint = !cur ? "" : cur.status === "preview" ? t("game.preview_hint")
+    : cur.checked?.length ? `${t("game.beta_hint")} ${t("game.checked_hint", { events: cur.checked.join(", ") })}` : t("game.beta_hint");
   const pick = async (choice: GameChoice) => {
     setBusy(true);
     try {
@@ -56,9 +58,9 @@ export function GameChip({ pid, disabled, onChanged }: { pid: string; disabled?:
         <option value="other">{t("game.pick_another")}</option>
       </select>
       {cur?.beta && (
-        <span className="chip chip-beta" title={cur.status === "preview" ? t("game.preview_hint") : t("game.beta_hint")}>
+        <span className="chip chip-beta" title={hint}>
           {t("game.beta")}
-          <span className="sr-only"> · {cur.status === "preview" ? t("game.preview_hint") : t("game.beta_hint")}</span>
+          <span className="sr-only"> · {hint}</span>
         </span>
       )}
     </span>

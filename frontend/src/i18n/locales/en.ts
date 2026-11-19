@@ -2849,6 +2849,7 @@ const en: Record<string, string> = {
   "game.pick_auto": "Find it for me",
   "game.pick_another": "Another game",
   "game.detected": "Found: {game}",
+  "game.checked_hint": "Already checked on real videos: {events}.",
 };
 
 export default en;

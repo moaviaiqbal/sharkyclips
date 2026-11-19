@@ -827,6 +827,8 @@ export interface GameProfileSummary {
   beta: boolean;
   kind: string;
   notes: string;
+  /** labels of the moments already checked on real videos */
+  checked?: string[];
 }
 
 export interface GameEvent {

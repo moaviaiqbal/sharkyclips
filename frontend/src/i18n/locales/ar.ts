@@ -2784,6 +2784,7 @@ const ar: Record<string, string> = {
   "game.pick_auto": "ابحث عنها لي",
   "game.pick_another": "لعبة أخرى",
   "game.detected": "تم العثور على: {game}",
+  "game.checked_hint": "تم التحقق بالفعل من مقاطع الفيديو الحقيقية: {events}.",
 };
 
 export default ar;

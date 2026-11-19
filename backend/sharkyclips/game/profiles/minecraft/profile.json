@@ -45,8 +45,8 @@
     "center": {
       "mc_died": [
         "you died",
-        "oldun",
-        "game over"
+        "game over",
+        "oldun"
       ]
     },
     "toast": {
@@ -156,6 +156,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "The hardcore death screen ('Game over!') was read on real footage. Advancement toasts are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "mc_died"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

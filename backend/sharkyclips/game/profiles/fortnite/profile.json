@@ -135,6 +135,13 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "ELIMINATED and #1 VICTORY ROYALE were read on real footage (OCR typos like 'ROVALE' still match).",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "fn_elim",
+      "fn_victory"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

@@ -147,6 +147,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "no Turkish UI: English texts"
+  "notes": "WASTED was read on real footage (big centre text). BUSTED / MISSION PASSED are not checked yet; RP servers show their own texts.",
+  "tr_hud": "no Turkish UI: English texts",
+  "checked": {
+    "events": [
+      "gta_wasted"
+    ],
+    "on": "2026-11-19, a public 1080p GTA V compilation"
+  }
 }

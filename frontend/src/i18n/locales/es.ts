@@ -2901,6 +2901,7 @@ const es: Record<string, string> = {
   "game.pick_auto": "Busquelo por mí",
   "game.pick_another": "Otro juego",
   "game.detected": "Encontrado: {game}",
+  "game.checked_hint": "Ya revisado en videos reales: {events}.",
 };
 
 export default es;

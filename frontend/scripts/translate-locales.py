@@ -115,8 +115,10 @@ def run(lang: str) -> list[str]:
     cur = parse(path) if path.is_file() else {}
     machine = not path.is_file() or "machine-translated" in path.read_text(encoding="utf-8")[:300]
     no_one = lang in ("zh", "ja")  # Intl.PluralRules: only "other"
+    plural = re.compile(r"_(zero|one|two|few|many|other)$")
+    have_base = {plural.sub("", k) for k in cur}  # a locale's own plural forms cover the key already
     todo = [k for k in en if k not in cur and not k.endswith(("_zero", "_two", "_few", "_many"))
-            and not (no_one and k.endswith("_one"))]
+            and not (no_one and k.endswith("_one")) and not (plural.search(k) and plural.sub("", k) in have_base)]
     failed: list[str] = []
     print(f"{lang}: {len(todo)} keys to translate", flush=True)
     t0 = time.time()

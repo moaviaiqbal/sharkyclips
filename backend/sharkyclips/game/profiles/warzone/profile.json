@@ -210,6 +210,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "The DOUBLE KILL medal was read on real footage (MW / Warzone on PS5). Squad wiped, victory and Gulag texts are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "wz_double"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

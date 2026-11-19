@@ -150,7 +150,9 @@ def summary(game_id: str) -> dict:
     return {"id": game_id, "name": p.get("name", game_id), "status": p.get("status", "beta"),
             "beta": p.get("status", "beta") != "verified", "kind": p.get("kind", "other"),
             "engine": p.get("engine", "banners"), "source": p.get("_source", "builtin"),
-            "notes": p.get("notes", ""), "events": {k: v.get("label", k) for k, v in (p.get("events") or {}).items()}}
+            "notes": p.get("notes", ""), "events": {k: v.get("label", k) for k, v in (p.get("events") or {}).items()},
+            # 1.2.53: the moments already read correctly on real videos (shown next to the beta badge)
+            "checked": [(p.get("events") or {}).get(c, {}).get("label", c) for c in ((p.get("checked") or {}).get("events") or [])]}
 
 
 def install(presets_mod, events_mod) -> None:

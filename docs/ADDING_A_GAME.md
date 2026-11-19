@@ -64,6 +64,7 @@ after you add or change one.
 | `terms` | Map, character and item names, spelled exactly. Titles only use them when they are said in the clip. |
 | `vocabulary` | Typical reactions per language (helps find the moments). |
 | `title_style` | A short hint per language for the AI title writer. |
+| `checked` | `{"events": [...], "on": "which videos"}`: the events you saw read correctly on real videos. The app lists them next to the beta badge. |
 
 ## 4. Finding the boxes and texts
 
@@ -84,4 +85,5 @@ centre texts (victory, defeat) can share one `center` region.
 
 The test loads every profile and checks the boxes, the event codes and the strengths. In your pull
 request, say which videos you checked it on (game version, language of the game client, 1080p or
-not). If you could not check it on a real video, keep `"status": "beta"`.
+not) and list the events you saw in `checked`. If you could not check it on a real video, keep
+`"status": "beta"`.

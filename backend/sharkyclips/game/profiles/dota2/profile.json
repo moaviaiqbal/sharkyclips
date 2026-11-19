@@ -72,6 +72,23 @@
         "dire victory",
         "victory",
         "zafer"
+      ],
+      "dota_rampage": [
+        "rampage",
+        "mega rampage"
+      ],
+      "dota_ultra": [
+        "ultra kill"
+      ],
+      "dota_godlike": [
+        "godlike",
+        "beyond godlike"
+      ],
+      "dota_triple": [
+        "triple kill"
+      ],
+      "dota_double": [
+        "double kill"
       ]
     }
   },
@@ -189,6 +206,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "mostly English"
+  "notes": "RAMPAGE ('is on a mega RAMPAGE!!!') was read on real footage, in the centre of the screen. Other banners are not checked yet.",
+  "tr_hud": "mostly English",
+  "checked": {
+    "events": [
+      "dota_rampage"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

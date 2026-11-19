@@ -2778,6 +2778,7 @@ const zh: Record<string, string> = {
   "game.pick_auto": "帮我找",
   "game.pick_another": "其他游戏",
   "game.detected": "已找到：{game}",
+  "game.checked_hint": "已在真实视频中检查过：{events}。",
 };
 
 export default zh;

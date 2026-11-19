@@ -227,7 +227,13 @@ def profile_events(game: str, obs: list[dict]) -> list[dict]:
     for o in sorted(obs, key=lambda o: o["t"]):
         if o.get("kind") != "text":
             continue
+        norm_text = normalize(o["text"]).replace(" ", "")
         for code in match_rules(game, o["region"], o["text"]):
+            # fuzzy matching may not invent a word from a fragment ("sted" of "wasted" is not
+            # "busted"): the first 3 letters of one of the code's phrases must really be there
+            phrases = [p for p in (prof.get("ocr") or {}).get(o["region"], {}).get(code, []) if not p.startswith("-")]
+            if phrases and not any(normalize(p).replace(" ", "")[:3] in norm_text for p in phrases):
+                continue
             d = evdefs.get(code) or {}
             t = float(o["t"])
             e = _ev(t, code, value=o["text"][:60], source="banner",

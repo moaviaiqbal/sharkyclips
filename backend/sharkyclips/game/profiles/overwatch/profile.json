@@ -69,7 +69,14 @@
       "ow_elim": [
         "eliminated",
         "etkisiz",
-        "elendi"
+        "elendi",
+        "-were",
+        "-by"
+      ],
+      "ow_death": [
+        "you were eliminated",
+        "eliminated by",
+        "seni etkisiz"
       ]
     },
     "center": {
@@ -124,6 +131,13 @@
       "strength": 0.3,
       "label": "Defeat",
       "dedupe": 300,
+      "pre": 7,
+      "post": 3
+    },
+    "ow_death": {
+      "strength": 0.15,
+      "label": "Eliminated",
+      "dedupe": 10,
       "pre": 7,
       "post": 3
     }
@@ -186,6 +200,13 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "Eliminations and VICTORY were read on real footage ('YOU WERE ELIMINATED BY' is a death, not a kill). Team kill / POTG are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "ow_elim",
+      "ow_victory"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

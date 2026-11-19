@@ -2837,6 +2837,7 @@ const de: Record<string, string> = {
   "game.pick_auto": "Suche für mich",
   "game.pick_another": "Andere Spiele",
   "game.detected": "Gefunden: {game}",
+  "game.checked_hint": "Bereits bei echten Videos geprüft: {events}.",
 };
 
 export default de;

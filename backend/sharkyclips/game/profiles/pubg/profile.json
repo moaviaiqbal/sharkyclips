@@ -72,14 +72,14 @@
     "pubg_kill": {
       "strength": 0.35,
       "label": "Kill",
-      "dedupe": 4,
+      "dedupe": 6,
       "pre": 7,
       "post": 3
     },
     "pubg_knock": {
       "strength": 0.2,
       "label": "Knock",
-      "dedupe": 4,
+      "dedupe": 8,
       "pre": 7,
       "post": 3
     },
@@ -157,6 +157,13 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "'YOU KILLED <name> with <weapon>' and 'YOU KNOCKED OUT' were read on real footage. The chicken dinner screen is not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "pubg_kill",
+      "pubg_knock"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }

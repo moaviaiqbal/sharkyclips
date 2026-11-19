@@ -176,6 +176,12 @@
     "pre": 7,
     "post": 3
   },
-  "notes": "HUD boxes and texts come from game knowledge, not from real footage yet (verify).",
-  "tr_hud": "verify"
+  "notes": "'YOU ARE THE NEW KILL LEADER' was read on real footage. Squad wipe and champion screens are not checked yet.",
+  "tr_hud": "verify",
+  "checked": {
+    "events": [
+      "apex_kill_leader"
+    ],
+    "on": "2026-11-19, public 1080p English-client videos"
+  }
 }
