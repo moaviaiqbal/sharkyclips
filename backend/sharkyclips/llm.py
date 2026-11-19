@@ -451,6 +451,10 @@ class LLM:
         `soft` problems are asked to be fixed too, but when the retries run out an answer
         with only soft problems is still returned (listed in data["_soft_errors"])."""
         best_soft: dict | None = None
+        from . import perf
+
+        if perf.light():  # 1.2.53: each retry costs minutes on a slow CPU; Easy falls back to templates
+            retries = min(retries, 1)
         messages = [{"role": "system", "content": system}, {"role": "user", "content": prompt}]
         last_errors: list[str] = []
         for attempt in range(retries + 1):
@@ -554,8 +558,8 @@ def placement(name: str, num_ctx: int) -> dict:
         # 1.2.53: CPU only / no usable GPU: num_gpu 0 keeps Ollama off a weak integrated GPU
         # (Vulkan on Intel UHD is slower than the CPU and eats the shared RAM)
         base["num_gpu"] = 0
-        if k["cpu_threads"]:
-            base["num_thread"] = k["cpu_threads"]
+        if k.get("llm_threads"):
+            base["num_thread"] = k["llm_threads"]
     g = governor.get()
     if g is None:
         return base

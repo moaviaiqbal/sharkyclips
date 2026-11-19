@@ -56,7 +56,7 @@ def test_light_preset_on_a_weak_pc(monkeypatch):
     assert perf.is_weak() and perf.device() == "cpu" and perf.light()
     k = perf.knobs()
     assert k["whisper_model"] == "small" and k["llm_model"] == perf.LIGHT_LLM and not k["voices"]
-    assert k["cpu_threads"] == 4 and k["one_job"]
+    assert k["cpu_threads"] == 2 and k["one_job"]  # physical cores
     assert perf.first_run_pick() and config.get("performance_preset") == "light"
     est = perf.estimate(17 * 60)
     assert est["slow_pc"] and est["seconds"] > 0

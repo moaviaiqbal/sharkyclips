@@ -335,10 +335,14 @@ def _cache_key(model: str, out_lang: str, c: dict, mode: str, transcript: dict, 
 def _context(transcript: dict, start: float, end: float) -> str:
     # 1.2.53 (#1b): more of the story around the clip (what led to it, what came after), so the
     # judge can tell a real payoff from a random shout. At most ~30 context lines.
-    lines = sentences(transcript, max(0, start - 60), end + 25)
+    from . import perf
+
+    # Light preset (slow CPU): reading the prompt is most of the time, so less context there
+    pre, post, n_pre, n_post = (20, 8, 6, 3) if perf.light() else (60, 25, 20, 10)
+    lines = sentences(transcript, max(0, start - pre), end + post)
     inside = [x for x in lines if start <= (x["start"] + x["end"]) / 2 <= end]
-    before = [x for x in lines if (x["start"] + x["end"]) / 2 < start][-20:]
-    after = [x for x in lines if (x["start"] + x["end"]) / 2 > end][:10]
+    before = [x for x in lines if (x["start"] + x["end"]) / 2 < start][-n_pre:]
+    after = [x for x in lines if (x["start"] + x["end"]) / 2 > end][:n_post]
     lines = before + inside + after
     out = []
     for x in lines:
@@ -531,6 +535,13 @@ def _description_checker(out_lang: str, game_id: str | None = None) -> Callable[
         return errs
 
     return check
+
+
+def _template_description(title: str, lang: str) -> str:
+    """Light preset: the description without an AI call (the clip's title + a question)."""
+    q = re.findall(r'"([^"]+)"', DESCRIPTION_QUESTIONS.get(lang) or DESCRIPTION_QUESTIONS["en"])
+    title = (title or "").strip()
+    return (title + "\n\n" + (q[0] if q else "")).strip()
 
 
 def write_description(model, meta: dict, mode: str, c: dict, transcript: dict, out_lang: str, j: dict,
@@ -731,6 +742,9 @@ def analyze_project(project: Project, out_lang: str | None = None, force: bool =
 
     style = titles_mod.style_digest(out_lang, mode, gid)
     fast = llm.fast_analysis()
+    from . import perf
+
+    light = perf.light()  # 1.2.53: no subtitle translation, template description (slow CPU)
     profile = "fast" if fast else "normal"
     gl = None
     gtag = f"{game['id']}:{banks.BANK_VERSION}" if mode == "gaming" else "-"
@@ -885,6 +899,8 @@ def analyze_project(project: Project, out_lang: str | None = None, force: bool =
                 if not mine:  # My style: written above, in the creator's layout
                     if dfile.is_file() and not force:
                         raw = read_json(dfile)["text"]
+                    elif light:  # 1.2.53 Light preset: the title + a question, no extra AI call
+                        raw = _template_description((pub["titles"] or [""])[0], out_lang)
                     else:
                         raw = write_description(model, meta, mode, w, transcript, out_lang, j,
                                                 (pub["titles"] or [""])[0], gl, game=game, facts=facts)
@@ -898,7 +914,7 @@ def analyze_project(project: Project, out_lang: str | None = None, force: bool =
                 pub["description"] = None
 
             # subtitles in the output language (segment timing kept)
-            if translate and not meta_only and spoken and out_lang != spoken and lines:
+            if translate and not light and not meta_only and spoken and out_lang != spoken and lines:
                 tkey = _cache_key(model.model, out_lang, c, mode, transcript, extra=f"tr:{start}:{end}")
                 tfile = cache_dir / f"translate_{tkey}.json"
                 if tfile.is_file() and not force:

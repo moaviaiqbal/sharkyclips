@@ -587,10 +587,15 @@ def write(model, *, system: str, context: str, lang: str, lang_label: str, mode:
         suspects = {i + 1: ws for i, t in enumerate(drafts)
                     if (ws := lexicon.unknown_words(t["text"], lang, glossary.allowed))}
 
-        proof = model.json(PROOF_SYSTEM, proof_prompt(
-            lang_label=lang_label, lang=lang, what_happens=what_happens, clip_lines=clip_lines,
-            glossary=glossary, titles=drafts, suspects=suspects, hook_text=hook_text, cover_text=cover_text,
-            punchy=punchy), PROOF_SCHEMA, temperature=0.2, num_predict=900)
+        from .. import perf
+
+        if perf.light():  # 1.2.53 Light preset: no proofread call (the local checks below still run)
+            proof = {"titles": [], "hook_text": hook_text, "cover_text": cover_text}
+        else:
+            proof = model.json(PROOF_SYSTEM, proof_prompt(
+                lang_label=lang_label, lang=lang, what_happens=what_happens, clip_lines=clip_lines,
+                glossary=glossary, titles=drafts, suspects=suspects, hook_text=hook_text, cover_text=cover_text,
+                punchy=punchy), PROOF_SCHEMA, temperature=0.2, num_predict=900)
         by_i = {x["i"]: x for x in proof["titles"]}
         if _round == 0:
             hook_text, cover_text = proof["hook_text"].strip() or hook_text, proof["cover_text"].strip() or cover_text
@@ -633,8 +638,8 @@ def write(model, *, system: str, context: str, lang: str, lang_label: str, mode:
                 problems.append(f"'{final['text']}': {reason}")
                 continue
             pool.append(final)
-        if len(pool) >= (3 if fast else N_TITLES - 1):
-            break
+        if len(pool) >= (3 if fast else N_TITLES - 1) or (pool and perf.light()):
+            break  # Light: one draft round is enough when anything survived
 
     titles = pick(pool, slang={w.casefold() for w in glossary.streamer_words}, punchy=punchy, lang=lang) if pool else []
     hook, _f = lexicon.polish(glossary.canonicalize(hook_text), lang, keep=glossary.keep_case,

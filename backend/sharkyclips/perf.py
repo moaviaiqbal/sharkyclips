@@ -117,16 +117,21 @@ def knobs(m: Machine | None = None) -> dict:
     lt = light(m)
     dev = device(m)
     if not lt:
-        return {"light": False, "device": dev, "whisper_model": None, "cpu_threads": None, "llm_model": None,
+        return {"light": False, "device": dev, "whisper_model": None, "cpu_threads": None, "llm_threads": None,
+                "llm_model": None,
                 "llm_ctx": None, "template_titles": False, "voices": True, "ocr_spacing": 1.0, "ocr_fps": 2.0,
                 "one_job": False, "preview_height": None}
     # Whisper int8 on the CPU: "small" is the best quality / speed trade-off; "base" on 2 threads
     wmodel = "base" if (m.threads <= 2 or m.ram_gb < 4) else "small"
-    # CTranslate2 int8 gains a little from hyper-threads on 2-4 core laptops; leave one for the UI
-    threads = max(1, min(m.threads - (1 if m.threads > 4 else 0), 8))
+    # Measured on a 2-core / 4-thread laptop (1.2.53 low-end profile): Whisper (CTranslate2) is
+    # 1.4x faster on the physical cores only (2 threads: 121 s vs 167 s for 17 min of audio), the
+    # LLM (llama.cpp) is 1.6x faster with every thread (4: 736 s vs 1148 s).
+    threads = max(1, min(m.cores, 8))
+    llm_threads = max(1, min(m.threads, 8))
     template = bool(m.ram_gb and m.ram_gb < TINY_RAM_GB) or config.get("llm_enabled") is False
     llm_model = None if template else (LIGHT_LLM if m.ram_gb < WEAK_RAM_GB else None)
     return {"light": True, "device": dev, "whisper_model": wmodel if dev == "cpu" else None, "cpu_threads": threads,
+            "llm_threads": llm_threads,
             "llm_model": llm_model, "llm_ctx": LIGHT_CTX, "template_titles": template,
             "voices": bool(config.get("voices_on_light")), "ocr_spacing": 2.0, "ocr_fps": 1.0,
             "one_job": True, "preview_height": 360}
